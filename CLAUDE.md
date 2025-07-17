@@ -19,6 +19,55 @@ This is the GRAPHITE (Graphite Recursive Asset Pipeline – Hypergraph Infinite 
 - 🔄 Creating volume-based documentation from archived sources
 - 🔄 Integrating all 28 chapters into new structure
 
+## Chapter Progress Tracker
+
+### Volume 1: Foundation & Core Systems
+- [ ] Part 1: Introduction & Architecture (Ch 1-3)
+  - [ ] Chapter 1: Introduction & Overview - **Not Started**
+  - [ ] Chapter 2: Core Concepts - **Not Started**
+  - [ ] Chapter 3: Architecture Overview - **Not Started**
+- [ ] Part 2: Data & Runtime (Ch 4-6)
+  - [ ] Chapter 4: Data Structures - **Not Started**
+  - [ ] Chapter 5: File Format Specification - **Not Started**
+  - [ ] Chapter 6: Runtime API - **Not Started**
+- [ ] Part 3: System Services (Ch 7-9)
+  - [ ] Chapter 7: Memory Management - **Not Started**
+  - [ ] Chapter 8: Streaming & Loading - **Not Started**
+  - [ ] Chapter 9: Caching System - **Not Started**
+- [ ] Part 4: Platform & Security (Ch 10-11)
+  - [ ] Chapter 10: Security & Encryption - **Not Started**
+  - [ ] Chapter 11: Platform Abstraction Layer - **Not Started**
+
+### Volume 2: Development & Integration
+- [ ] Part 5: Development Tools (Ch 12-14)
+  - [ ] Chapter 12: Build System - **Not Started**
+  - [ ] Chapter 13: Command Line Tools - **Not Started**
+  - [ ] Chapter 14: Testing Framework - **Not Started**
+- [ ] Part 6: Integration & Migration (Ch 22-23, 25)
+  - [ ] Chapter 22: Editor Integration - **Not Started**
+  - [ ] Chapter 23: Language Bindings - **Not Started**
+  - [ ] Chapter 25: Migration & Compatibility - **Not Started**
+- [ ] Part 7: Real-World Application (Ch 24)
+  - [ ] Chapter 24: Real-World Case Studies - **Not Started**
+
+### Volume 3: Advanced Systems & Future
+- [ ] Part 8: Performance & Optimization (Ch 15-16)
+  - [ ] Chapter 15: Performance Optimization - **Not Started**
+  - [ ] Chapter 16: Advanced Integration Patterns - **Not Started**
+- [ ] Part 9: Advanced Features (Ch 17-19)
+  - [ ] Chapter 17: Virtual Bundle System - **Not Started**
+  - [ ] Chapter 18: Graph Analysis Tools - **Not Started**
+  - [ ] Chapter 19: Distributed Systems - **Not Started**
+- [ ] Part 10: Production & Analytics (Ch 20-21)
+  - [ ] Chapter 20: Telemetry & Analytics - **Not Started**
+  - [ ] Chapter 21: Advanced Features - **Not Started**
+- [ ] Part 11: Ecosystem & Future (Ch 26-28)
+  - [ ] Chapter 26: Ecosystem & Tooling - **Not Started**
+  - [ ] Chapter 27: Future Roadmap - **Not Started**
+  - [ ] Chapter 28: Appendices - **Not Started**
+
+**Status Key**: Not Started | In Progress | Complete | Needs Review
+
 ## Critical Planning Documents
 
 Before beginning any documentation work, review these essential resources:
@@ -214,6 +263,42 @@ grep -r "specific term" docs/archive/
 
 # Preview markdown
 # Use your markdown preview tool of choice
+```
+
+## General Prompt for New Agents
+
+When starting a new session to continue this project, use this prompt:
+
+```
+I'm working on the GRAPHITE documentation rewrite project. Please read CLAUDE.md first to understand the project status and structure.
+
+Current task: [Check the Chapter Progress Tracker in CLAUDE.md and work on the next uncompleted chapter]
+
+Please:
+1. Review the progress tracker to see what's been completed
+2. Check the mapping.md file to find source content locations
+3. Follow the plan.md guidelines for the chapter I'm working on
+4. Update the progress tracker in CLAUDE.md when starting and completing work
+5. Commit changes with descriptive messages following the project convention
+
+The goal is to transform the 28-chapter technical specification into a well-organized 3-volume documentation set while maintaining all technical depth and adding helpful navigation/diagrams.
+```
+
+## How to Update Progress
+
+When working on a chapter:
+1. Update status to **In Progress** when starting
+2. Update to **Complete** when finished
+3. Update to **Needs Review** if you encounter issues or need clarification
+4. Always commit CLAUDE.md updates so the next agent knows the current state
+
+Example update:
+```markdown
+- [ ] Chapter 1: Introduction & Overview - **In Progress**
+```
+Changes to:
+```markdown
+- [x] Chapter 1: Introduction & Overview - **Complete**
 ```
 
 ---
