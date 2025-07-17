@@ -12,10 +12,34 @@ This is the GRAPHITE (Graphite Recursive Asset Pipeline – Hypergraph Infinite 
 - ✅ Created volume directory structure
 - ✅ Archived original files in `/docs/archive/`
 - ✅ Moved branding assets to `/marketing/branding/`
+- ✅ Created content mapping in `/docs/rewrite/mapping.md`
+- ✅ Created implementation plan in `/docs/rewrite/plan.md`
 
 ### In Progress
 - 🔄 Creating volume-based documentation from archived sources
 - 🔄 Integrating all 28 chapters into new structure
+
+## Critical Planning Documents
+
+Before beginning any documentation work, review these essential resources:
+
+### Content Mapping (`/docs/rewrite/mapping.md`)
+- **Purpose**: Maps archive files to the new structure with exact line numbers
+- **Key Information**:
+  - Location of each chapter in archive files
+  - Line-by-line boundaries for sections 15-28
+  - Discovery that spec.md is NOT the full 28-chapter version
+  - Strategy for reconstructing chapters 1-14 from multiple sources
+- **Use This For**: Finding specific content in archive files
+
+### Implementation Plan (`/docs/rewrite/plan.md`)
+- **Purpose**: Detailed roadmap for writing all 28 chapters
+- **Key Information**:
+  - Two-phase strategy (reconstruction vs extraction)
+  - Per-chapter source identification and enhancement plans
+  - 5-week implementation timeline
+  - Quality assurance checklists
+- **Use This For**: Understanding what to write and when
 
 ## Documentation Structure
 
