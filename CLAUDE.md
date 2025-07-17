@@ -23,9 +23,9 @@ This is the GRAPHITE (Graphite Recursive Asset Pipeline – Hypergraph Infinite 
 
 ### Volume 1: Foundation & Core Systems
 - [ ] Part 1: Introduction & Architecture (Ch 1-3)
-  - [ ] Chapter 1: Introduction & Overview - **Not Started**
-  - [ ] Chapter 2: Core Concepts - **Not Started**
-  - [ ] Chapter 3: Architecture Overview - **Not Started**
+  - [x] Chapter 1: Introduction & Overview - **Complete**
+  - [x] Chapter 2: Core Concepts - **Complete**
+  - [x] Chapter 3: Architecture Overview - **Complete**
 - [ ] Part 2: Data & Runtime (Ch 4-6)
   - [ ] Chapter 4: Data Structures - **Not Started**
   - [ ] Chapter 5: File Format Specification - **Not Started**
