@@ -1,0 +1,129 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Obsidian
+.obsidian/
+
+# C/C++ compilation
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+*.out
+*.app
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Build directories
+build/
+cmake-build-*/
+out/
+bin/
+obj/
+
+# CMake
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.cproject
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# Dependencies
+vendor/
+dependencies/
+third_party/
+libs/
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+core
+vgcore.*
+*.stackdump
+
+# Logs
+*.log
+logs/
+
+# Documentation build
+docs/build/
+docs/_build/
+doxygen/
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Test coverage
+*.gcov
+*.gcda
+*.gcno
+coverage/
+*.coverage
+.coverage.*
+htmlcov/
+
+# Package files
+*.tar.gz
+*.zip
+*.7z
+*.dmg
+*.iso
+*.jar
+*.rar
+*.tar
+*.gz
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# ctags
+tags
+TAGS
