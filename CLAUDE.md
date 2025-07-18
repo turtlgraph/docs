@@ -14,15 +14,18 @@ This is the GRAPHITE (Graphite Recursive Asset Pipeline – Hypergraph Infinite 
 - ✅ Moved branding assets to `/marketing/branding/`
 - ✅ Created content mapping in `/docs/rewrite/mapping.md`
 - ✅ Created implementation plan in `/docs/rewrite/plan.md`
+- ✅ **Volume 1 Complete**: All 11 chapters (Parts 1-4) documented with enhanced diagrams
 
 ### In Progress
-- 🔄 Creating volume-based documentation from archived sources
-- 🔄 Integrating all 28 chapters into new structure
+- 🔄 Volume 2: Development & Integration (Chapters 12-14, 22-25)
+- 🔄 Volume 3: Advanced Systems & Future (Chapters 15-21, 26-28)
+
+**Progress: 11/28 chapters complete (39%)**
 
 ## Chapter Progress Tracker
 
-### Volume 1: Foundation & Core Systems
-- [ ] Part 1: Introduction & Architecture (Ch 1-3)
+### Volume 1: Foundation & Core Systems ✅
+- [x] Part 1: Introduction & Architecture (Ch 1-3)
   - [x] Chapter 1: Introduction & Overview - **Complete**
   - [x] Chapter 2: Core Concepts - **Complete**
   - [x] Chapter 3: Architecture Overview - **Complete**
