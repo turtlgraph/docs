@@ -79,6 +79,10 @@ TurtlGraph is a revolutionary graph-native asset management system that brings G
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on contributing to the documentation.
 
+## 👤 Author
+
+Created by J. Kirby Ross <james@flyingrobots.dev> ([GitHub](https://github.com/flyingrobots))
+
 ## 📄 License
 
 This documentation is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
