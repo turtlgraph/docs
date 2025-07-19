@@ -1,37 +1,19 @@
 # TurtlGraph Documentation
 
 ```
-                    ___-------___
-                _-~~             ~~-_
-              _-~                    /~-_
-           /^\__/^\         /~  \   /    \
-         /|  O|| O|        /      \|      \
-        | |___||__|      /       /|        \
-        |          \    /      /  |          \
-        |   (_______) /______/    |           \
-        |         / /         \   |             \
-         \       | |           \ |               \
-          \     | |             \|                |
-           |    | |              ||               |
-           |    | |              ||  ____----~~~~ |
-           |    | |              |~~             /
-           |    |_|             /                /
-           |                   |                /
-           |                  |               /
-           |~-__           _-~              /
-          /~    ~~----~~~                  /
-         /                                /
-        |                               /
-        |                             /
-        |                          /
-        |                       /
-        |                    /
-         \                /
-           ~~-__    _-~~
-                ~~~
+     _..---.--.  turt.
+   .'\ __|/O.__)
+  /__.' _/ .-'_\
+ (____.'.-_\____) 
+  (_/ _)__(_ \_)\_
+   (_..)--(.._)'--'
 ```
 
 > Comprehensive documentation for the TurtlGraph graph-native asset management system.
+
+## TurtlGraph 
+
+__TurtlGraph__ is the complete toolkit for graph-native asset management, built on [HyperDAG foundation](https://github.com/hyperdag/core)
 
 ## 📚 Documentation Structure
 
