@@ -17,11 +17,11 @@
   - [19.3 SIMD Optimization](#193-simd-optimization)
 
 ### Overview
-This part explores GRAPHITE's advanced features that enable real-time development workflows and distributed computing capabilities. Chapter 17 covers the hot reload system for instant asset updates, Chapter 18 details the sophisticated streaming architecture for large-scale asset management, and Chapter 19 addresses cross-platform considerations and distributed system support.
+This part explores TurtlGraph's advanced features that enable real-time development workflows and distributed computing capabilities. Chapter 17 covers the hot reload system for instant asset updates, Chapter 18 details the sophisticated streaming architecture for large-scale asset management, and Chapter 19 addresses cross-platform considerations and distributed system support.
 
 ### Chapter 17: Virtual Bundle System
 
-GRAPHITE's hot reload system enables real-time asset updates during development and live service updates in production with sub-100ms reload times.
+TurtlGraph's hot reload system enables real-time asset updates during development and live service updates in production with sub-100ms reload times.
 
 #### 17.1 Hot Reload Architecture
 
@@ -36,7 +36,7 @@ typedef struct {
     size_t staging_size;        // Size of staging mapping
     atomic_bool reload_pending; // Atomic reload flag
     atomic_uint64_t version;    // Current version counter
-} graphite_hot_reload_context;
+} hyperdag_hot_reload_context;
 
 // Hot reload configuration
 typedef struct {
@@ -45,16 +45,16 @@ typedef struct {
     uint32_t debounce_ms;          // Debounce file changes
     bool atomic_reload;            // Use atomic pointer swap
     bool preserve_handle_state;    // Keep existing handles valid
-    graphite_reload_callback callback; // Notification callback
+    hyperdag_reload_callback callback; // Notification callback
     void* user_data;
-} graphite_hot_reload_config;
+} hyperdag_hot_reload_config;
 
 // Initialize hot reload system
-graphite_hot_reload_context* graphite_hot_reload_init(
-    const graphite_hot_reload_config* config
+hyperdag_hot_reload_context* hyperdag_hot_reload_init(
+    const hyperdag_hot_reload_config* config
 );
 
-void graphite_hot_reload_shutdown(graphite_hot_reload_context* context);
+void hyperdag_hot_reload_shutdown(hyperdag_hot_reload_context* context);
 ```
 
 ```mermaid
@@ -80,41 +80,41 @@ typedef struct {
     atomic_ptr staging_ptr;     // Staging bundle for reload
     atomic_uint64_t version;    // Version counter
     rwlock_t reader_lock;       // Reader-writer lock
-} graphite_atomic_bundle;
+} hyperdag_atomic_bundle;
 
 // Reader acquisition (fast path)
-static inline const graphite_bundle* graphite_acquire_reader(
-    graphite_atomic_bundle* atomic_bundle,
+static inline const hyperdag_bundle* hyperdag_acquire_reader(
+    hyperdag_atomic_bundle* atomic_bundle,
     uint64_t* version_out
 ) {
     rwlock_read_lock(&atomic_bundle->reader_lock);
-    const graphite_bundle* bundle = atomic_load(&atomic_bundle->bundle_ptr);
+    const hyperdag_bundle* bundle = atomic_load(&atomic_bundle->bundle_ptr);
     *version_out = atomic_load(&atomic_bundle->version);
     return bundle;
 }
 
-static inline void graphite_release_reader(
-    graphite_atomic_bundle* atomic_bundle
+static inline void hyperdag_release_reader(
+    hyperdag_atomic_bundle* atomic_bundle
 ) {
     rwlock_read_unlock(&atomic_bundle->reader_lock);
 }
 
 // Writer swap (reload path)
-graphite_result graphite_atomic_swap_bundle(
-    graphite_atomic_bundle* atomic_bundle,
-    graphite_bundle* new_bundle
+hyperdag_result hyperdag_atomic_swap_bundle(
+    hyperdag_atomic_bundle* atomic_bundle,
+    hyperdag_bundle* new_bundle
 ) {
     rwlock_write_lock(&atomic_bundle->reader_lock);
     
-    graphite_bundle* old_bundle = atomic_load(&atomic_bundle->bundle_ptr);
+    hyperdag_bundle* old_bundle = atomic_load(&atomic_bundle->bundle_ptr);
     atomic_store(&atomic_bundle->bundle_ptr, new_bundle);
     atomic_fetch_add(&atomic_bundle->version, 1);
     
     rwlock_write_unlock(&atomic_bundle->reader_lock);
     
     // Schedule old bundle cleanup
-    graphite_schedule_cleanup(old_bundle);
-    return GRAPHITE_SUCCESS;
+    hyperdag_schedule_cleanup(old_bundle);
+    return HYPERDAG_SUCCESS;
 }
 ```
 
@@ -125,21 +125,21 @@ graphite_result graphite_atomic_swap_bundle(
 ```c
 // File system event types
 typedef enum {
-    GRAPHITE_FS_CREATED,
-    GRAPHITE_FS_MODIFIED,
-    GRAPHITE_FS_DELETED,
-    GRAPHITE_FS_MOVED
-} graphite_fs_event_type;
+    HYPERDAG_FS_CREATED,
+    HYPERDAG_FS_MODIFIED,
+    HYPERDAG_FS_DELETED,
+    HYPERDAG_FS_MOVED
+} hyperdag_fs_event_type;
 
 typedef struct {
-    graphite_fs_event_type type;
+    hyperdag_fs_event_type type;
     const char* path;
     const char* old_path;   // For move events
     uint64_t timestamp;
-} graphite_fs_event;
+} hyperdag_fs_event;
 
-typedef void (*graphite_fs_callback)(
-    const graphite_fs_event* event,
+typedef void (*hyperdag_fs_callback)(
+    const hyperdag_fs_event* event,
     void* user_data
 );
 
@@ -150,38 +150,38 @@ typedef void (*graphite_fs_callback)(
         HANDLE directory_handle;
         OVERLAPPED overlapped;
         char buffer[8192];
-        graphite_fs_callback callback;
+        hyperdag_fs_callback callback;
         void* user_data;
-    } graphite_fs_watcher_win32;
+    } hyperdag_fs_watcher_win32;
 #elif defined(__linux__)
     // Linux: inotify
     typedef struct {
         int inotify_fd;
         int watch_descriptor;
-        graphite_fs_callback callback;
+        hyperdag_fs_callback callback;
         void* user_data;
-    } graphite_fs_watcher_linux;
+    } hyperdag_fs_watcher_linux;
 #elif defined(__APPLE__)
     // macOS: FSEvents
     typedef struct {
         FSEventStreamRef stream;
         CFRunLoopRef run_loop;
-        graphite_fs_callback callback;
+        hyperdag_fs_callback callback;
         void* user_data;
-    } graphite_fs_watcher_macos;
+    } hyperdag_fs_watcher_macos;
 #endif
 
 // Unified interface
-typedef struct graphite_fs_watcher graphite_fs_watcher;
+typedef struct hyperdag_fs_watcher hyperdag_fs_watcher;
 
-graphite_fs_watcher* graphite_fs_watcher_create(
+hyperdag_fs_watcher* hyperdag_fs_watcher_create(
     const char* path,
     bool recursive,
-    graphite_fs_callback callback,
+    hyperdag_fs_callback callback,
     void* user_data
 );
 
-void graphite_fs_watcher_destroy(graphite_fs_watcher* watcher);
+void hyperdag_fs_watcher_destroy(hyperdag_fs_watcher* watcher);
 ```
 
 ```mermaid
@@ -208,22 +208,22 @@ typedef struct {
     uint32_t max_delay_ms;      // Maximum delay before forcing trigger
     bool coalesce_events;       // Merge multiple changes to same file
     const char** ignore_patterns; // Patterns to ignore (*.tmp, *.lock)
-} graphite_debounce_config;
+} hyperdag_debounce_config;
 
 // Debounced file watcher
 typedef struct {
-    graphite_fs_watcher* watcher;
+    hyperdag_fs_watcher* watcher;
     hashtable* pending_changes;  // path -> timestamp
     timer_t debounce_timer;
-    graphite_debounce_config config;
-    graphite_fs_callback final_callback;
+    hyperdag_debounce_config config;
+    hyperdag_fs_callback final_callback;
     void* user_data;
-} graphite_debounced_watcher;
+} hyperdag_debounced_watcher;
 
 // Process debounced changes
-static void graphite_debounce_timer_callback(timer_t timer, void* user_data) {
-    graphite_debounced_watcher* debounced = user_data;
-    uint64_t now = graphite_get_time_ms();
+static void hyperdag_debounce_timer_callback(timer_t timer, void* user_data) {
+    hyperdag_debounced_watcher* debounced = user_data;
+    uint64_t now = hyperdag_get_time_ms();
     
     // Check which changes are ready
     hashtable_iterator iter;
@@ -235,8 +235,8 @@ static void graphite_debounce_timer_callback(timer_t timer, void* user_data) {
         
         if (now - change_time >= debounced->config.debounce_ms) {
             // Change is debounced, trigger callback
-            graphite_fs_event event = {
-                .type = GRAPHITE_FS_MODIFIED,
+            hyperdag_fs_event event = {
+                .type = HYPERDAG_FS_MODIFIED,
                 .path = path,
                 .timestamp = change_time
             };
@@ -262,22 +262,22 @@ typedef struct {
     const char** dependencies;
     size_t dependency_count;
     bool needs_rebuild;
-} graphite_asset_state;
+} hyperdag_asset_state;
 
 // Hot reload rebuild context
 typedef struct {
-    hashtable* asset_states;    // path -> graphite_asset_state
+    hashtable* asset_states;    // path -> hyperdag_asset_state
     graph* dependency_graph;    // Asset dependency graph
     queue* rebuild_queue;       // Assets pending rebuild
     threadpool* worker_pool;    // Parallel rebuild workers
-} graphite_rebuild_context;
+} hyperdag_rebuild_context;
 
 // Check if asset needs rebuild
-bool graphite_asset_needs_rebuild(
-    const graphite_rebuild_context* context,
+bool hyperdag_asset_needs_rebuild(
+    const hyperdag_rebuild_context* context,
     const char* asset_path
 ) {
-    graphite_asset_state* state = hashtable_get(context->asset_states, asset_path);
+    hyperdag_asset_state* state = hashtable_get(context->asset_states, asset_path);
     if (!state) return true;  // Unknown asset, rebuild
     
     // Check file modification time
@@ -290,7 +290,7 @@ bool graphite_asset_needs_rebuild(
     
     // Check dependencies
     for (size_t i = 0; i < state->dependency_count; i++) {
-        if (graphite_asset_needs_rebuild(context, state->dependencies[i])) {
+        if (hyperdag_asset_needs_rebuild(context, state->dependencies[i])) {
             return true;  // Dependency changed
         }
     }
@@ -322,29 +322,29 @@ graph TD
 // Worker thread for asset rebuilding
 typedef struct {
     const char* asset_path;
-    graphite_rebuild_context* context;
-    graphite_transform_config* transform_config;
-} graphite_rebuild_task;
+    hyperdag_rebuild_context* context;
+    hyperdag_transform_config* transform_config;
+} hyperdag_rebuild_task;
 
-static void* graphite_rebuild_worker(void* arg) {
-    graphite_rebuild_task* task = arg;
+static void* hyperdag_rebuild_worker(void* arg) {
+    hyperdag_rebuild_task* task = arg;
     
     // Apply transforms to asset
-    graphite_result result = graphite_apply_transforms(
+    hyperdag_result result = hyperdag_apply_transforms(
         task->asset_path,
         task->transform_config
     );
     
-    if (result == GRAPHITE_SUCCESS) {
+    if (result == HYPERDAG_SUCCESS) {
         // Update asset state
-        graphite_asset_state* state = hashtable_get(
+        hyperdag_asset_state* state = hashtable_get(
             task->context->asset_states,
             task->asset_path
         );
         
         if (state) {
-            state->content_hash = graphite_hash_file(task->asset_path);
-            state->modification_time = graphite_get_file_mtime(task->asset_path);
+            state->content_hash = hyperdag_hash_file(task->asset_path);
+            state->modification_time = hyperdag_get_file_mtime(task->asset_path);
             state->needs_rebuild = false;
         }
     }
@@ -354,18 +354,18 @@ static void* graphite_rebuild_worker(void* arg) {
 }
 
 // Process rebuild queue
-void graphite_process_rebuild_queue(graphite_rebuild_context* context) {
+void hyperdag_process_rebuild_queue(hyperdag_rebuild_context* context) {
     while (!queue_empty(context->rebuild_queue)) {
         const char* asset_path = queue_pop(context->rebuild_queue);
         
         // Create rebuild task
-        graphite_rebuild_task* task = malloc(sizeof(graphite_rebuild_task));
+        hyperdag_rebuild_task* task = malloc(sizeof(hyperdag_rebuild_task));
         task->asset_path = asset_path;
         task->context = context;
-        task->transform_config = graphite_get_transform_config(asset_path);
+        task->transform_config = hyperdag_get_transform_config(asset_path);
         
         // Submit to thread pool
-        threadpool_submit(context->worker_pool, graphite_rebuild_worker, task);
+        threadpool_submit(context->worker_pool, hyperdag_rebuild_worker, task);
     }
     
     // Wait for all rebuilds to complete
@@ -380,51 +380,51 @@ void graphite_process_rebuild_queue(graphite_rebuild_context* context) {
 ```c
 // Unity integration
 typedef struct {
-    graphite_hot_reload_context* reload_context;
+    hyperdag_hot_reload_context* reload_context;
     UnityEngine_AssetDatabase* asset_db;
     void* asset_cache;
-} graphite_unity_hot_reload;
+} hyperdag_unity_hot_reload;
 
 // Hot reload callback for Unity
-static void graphite_unity_reload_callback(
-    const graphite_bundle* old_bundle,
-    const graphite_bundle* new_bundle,
+static void hyperdag_unity_reload_callback(
+    const hyperdag_bundle* old_bundle,
+    const hyperdag_bundle* new_bundle,
     void* user_data
 ) {
-    graphite_unity_hot_reload* unity_reload = user_data;
+    hyperdag_unity_hot_reload* unity_reload = user_data;
     
     // Invalidate Unity asset cache
     UnityEngine_AssetDatabase_Refresh(unity_reload->asset_db);
     
     // Update native plugin asset references
-    graphite_unity_update_asset_references(old_bundle, new_bundle);
+    hyperdag_unity_update_asset_references(old_bundle, new_bundle);
     
     // Trigger Unity reimport for changed assets
-    graphite_unity_trigger_reimport(new_bundle);
+    hyperdag_unity_trigger_reimport(new_bundle);
 }
 
 // Unreal Engine integration
 typedef struct {
-    graphite_hot_reload_context* reload_context;
+    hyperdag_hot_reload_context* reload_context;
     UAssetRegistry* asset_registry;
     FAssetData* cached_assets;
-} graphite_unreal_hot_reload;
+} hyperdag_unreal_hot_reload;
 
-static void graphite_unreal_reload_callback(
-    const graphite_bundle* old_bundle,
-    const graphite_bundle* new_bundle,
+static void hyperdag_unreal_reload_callback(
+    const hyperdag_bundle* old_bundle,
+    const hyperdag_bundle* new_bundle,
     void* user_data
 ) {
-    graphite_unreal_hot_reload* unreal_reload = user_data;
+    hyperdag_unreal_hot_reload* unreal_reload = user_data;
     
     // Mark assets for reload in Unreal's asset system
-    graphite_unreal_mark_assets_dirty(old_bundle, new_bundle);
+    hyperdag_unreal_mark_assets_dirty(old_bundle, new_bundle);
     
     // Broadcast asset change notifications
     unreal_reload->asset_registry->AssetRenamed.Broadcast(FAssetData(), FAssetData());
     
     // Force garbage collection of old assets
-    graphite_unreal_force_gc();
+    hyperdag_unreal_force_gc();
 }
 ```
 
@@ -438,18 +438,18 @@ typedef struct {
     void* copy_buffer;          // Temporary copy buffer
     size_t copy_size;           // Size of copy buffer
     atomic_bool buffer_in_use;  // Atomic flag for buffer usage
-} graphite_reload_buffers;
+} hyperdag_reload_buffers;
 
 // Optimize reload for minimal allocation
-graphite_result graphite_optimized_reload(
-    graphite_hot_reload_context* context,
+hyperdag_result hyperdag_optimized_reload(
+    hyperdag_hot_reload_context* context,
     const char* new_bundle_path,
-    graphite_reload_buffers* buffers
+    hyperdag_reload_buffers* buffers
 ) {
     // Try to use pre-allocated buffers
     if (!atomic_exchange(&buffers->buffer_in_use, true)) {
         // Got the buffers, use them for reload
-        graphite_result result = graphite_reload_with_buffers(
+        hyperdag_result result = hyperdag_reload_with_buffers(
             context,
             new_bundle_path,
             buffers->staging_buffer,
@@ -460,14 +460,14 @@ graphite_result graphite_optimized_reload(
         return result;
     } else {
         // Buffers in use, fall back to allocation
-        return graphite_reload_with_allocation(context, new_bundle_path);
+        return hyperdag_reload_with_allocation(context, new_bundle_path);
     }
 }
 ```
 
 ### Chapter 18: Graph Analysis Tools
 
-GRAPHITE's streaming system enables efficient loading of large worlds and assets on-demand, with predictive prefetching and memory-aware resource management.
+TurtlGraph's streaming system enables efficient loading of large worlds and assets on-demand, with predictive prefetching and memory-aware resource management.
 
 #### 18.1 Streaming Core Architecture
 
@@ -476,27 +476,27 @@ GRAPHITE's streaming system enables efficient loading of large worlds and assets
 ```c
 // Streaming priority levels
 typedef enum {
-    GRAPHITE_PRIORITY_CRITICAL = 0,  // Required for current frame
-    GRAPHITE_PRIORITY_HIGH = 1,      // Required for next frame
-    GRAPHITE_PRIORITY_MEDIUM = 2,    // Required soon
-    GRAPHITE_PRIORITY_LOW = 3,       // Background/predictive
-    GRAPHITE_PRIORITY_COUNT = 4
-} graphite_streaming_priority;
+    HYPERDAG_PRIORITY_CRITICAL = 0,  // Required for current frame
+    HYPERDAG_PRIORITY_HIGH = 1,      // Required for next frame
+    HYPERDAG_PRIORITY_MEDIUM = 2,    // Required soon
+    HYPERDAG_PRIORITY_LOW = 3,       // Background/predictive
+    HYPERDAG_PRIORITY_COUNT = 4
+} hyperdag_streaming_priority;
 
 // Streaming request
 typedef struct {
     uint64_t asset_id;
-    graphite_streaming_priority priority;
+    hyperdag_streaming_priority priority;
     uint64_t request_time;
     uint32_t estimated_size;
     float distance_factor;       // For LOD-based streaming
     void* user_data;
-    graphite_stream_callback callback;
-} graphite_stream_request;
+    hyperdag_stream_callback callback;
+} hyperdag_stream_request;
 
 // Streaming context
 typedef struct {
-    priority_queue* request_queues[GRAPHITE_PRIORITY_COUNT];
+    priority_queue* request_queues[HYPERDAG_PRIORITY_COUNT];
     thread_pool* io_pool;
     thread_pool* decompression_pool;
     memory_pool* streaming_pool;
@@ -516,7 +516,7 @@ typedef struct {
     atomic_uint64_t requests_completed;
     atomic_uint64_t cache_hits;
     atomic_uint64_t cache_misses;
-} graphite_streaming_context;
+} hyperdag_streaming_context;
 ```
 
 ```mermaid
@@ -555,29 +555,29 @@ typedef struct {
     float lru_factor;            // Weight for LRU eviction
     float size_factor;           // Weight for size-based eviction
     float priority_factor;       // Weight for priority-based eviction
-} graphite_memory_budget;
+} hyperdag_memory_budget;
 
 // Memory pressure handling
 typedef enum {
-    GRAPHITE_PRESSURE_NONE,      // Memory usage < 70% budget
-    GRAPHITE_PRESSURE_MILD,      // Memory usage 70-85% budget
-    GRAPHITE_PRESSURE_MODERATE,  // Memory usage 85-95% budget
-    GRAPHITE_PRESSURE_SEVERE     // Memory usage > 95% budget
-} graphite_memory_pressure;
+    TurtlGraph_PRESSURE_NONE,      // Memory usage < 70% budget
+    TurtlGraph_PRESSURE_MILD,      // Memory usage 70-85% budget
+    TurtlGraph_PRESSURE_MODERATE,  // Memory usage 85-95% budget
+    TurtlGraph_PRESSURE_SEVERE     // Memory usage > 95% budget
+} hyperdag_memory_pressure;
 
 // Memory management functions
-graphite_memory_pressure graphite_check_memory_pressure(
-    const graphite_streaming_context* context
+hyperdag_memory_pressure hyperdag_check_memory_pressure(
+    const hyperdag_streaming_context* context
 ) {
     size_t current = atomic_load(&context->current_memory_usage);
     size_t total = context->memory_budget.total_budget;
     
     float usage_ratio = (float)current / total;
     
-    if (usage_ratio < 0.70f) return GRAPHITE_PRESSURE_NONE;
-    if (usage_ratio < 0.85f) return GRAPHITE_PRESSURE_MILD;
-    if (usage_ratio < 0.95f) return GRAPHITE_PRESSURE_MODERATE;
-    return GRAPHITE_PRESSURE_SEVERE;
+    if (usage_ratio < 0.70f) return TurtlGraph_PRESSURE_NONE;
+    if (usage_ratio < 0.85f) return TurtlGraph_PRESSURE_MILD;
+    if (usage_ratio < 0.95f) return TurtlGraph_PRESSURE_MODERATE;
+    return TurtlGraph_PRESSURE_SEVERE;
 }
 ```
 
@@ -596,7 +596,7 @@ typedef struct {
     float prediction_threshold;         // Confidence threshold
     uint32_t prediction_horizon_ms;     // How far ahead to predict
     uint32_t max_predictions;           // Max concurrent predictions
-} graphite_prediction_context;
+} hyperdag_prediction_context;
 
 // Feature extraction from game state
 typedef struct {
@@ -607,18 +607,18 @@ typedef struct {
     uint32_t current_state;             // Game state (menu, gameplay, etc.)
     float time_in_state;                // Time spent in current state
     uint32_t recent_asset_accesses[16]; // Recently accessed assets
-} graphite_game_features;
+} hyperdag_game_features;
 
 // Run prediction model
-graphite_result graphite_predict_asset_needs(
-    graphite_prediction_context* context,
-    const graphite_game_features* features,
-    graphite_prediction_result* predictions,
+hyperdag_result hyperdag_predict_asset_needs(
+    hyperdag_prediction_context* context,
+    const hyperdag_game_features* features,
+    hyperdag_prediction_result* predictions,
     size_t max_predictions
 ) {
     // Normalize features for neural network
     float normalized_features[64];
-    graphite_normalize_features(features, normalized_features);
+    hyperdag_normalize_features(features, normalized_features);
     
     // Run inference
     float* output = neural_network_predict(context->prediction_model, 
@@ -640,19 +640,19 @@ graphite_result graphite_predict_asset_needs(
     
     // Submit predictions to streaming system
     for (size_t i = 0; i < prediction_count; i++) {
-        graphite_stream_request request = {
+        hyperdag_stream_request request = {
             .asset_id = predictions[i].asset_id,
-            .priority = GRAPHITE_PRIORITY_LOW,
-            .request_time = graphite_get_time_ms(),
-            .estimated_size = graphite_get_asset_size(predictions[i].asset_id),
+            .priority = TurtlGraph_PRIORITY_LOW,
+            .request_time = hyperdag_get_time_ms(),
+            .estimated_size = hyperdag_get_asset_size(predictions[i].asset_id),
             .user_data = NULL,
             .callback = NULL
         };
         
-        graphite_submit_stream_request(context->streaming_context, &request);
+        hyperdag_submit_stream_request(context->streaming_context, &request);
     }
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
 ```
 
@@ -680,7 +680,7 @@ typedef struct {
     float movement_vector[3];   // Movement direction
     float speed;                // Movement speed
     uint32_t area_id;           // Current area/zone
-} graphite_spatial_context;
+} hyperdag_spatial_context;
 
 // Pattern-based prediction
 typedef struct {
@@ -690,17 +690,17 @@ typedef struct {
     size_t predicted_count;
     float confidence;
     uint32_t delay_ms;
-} graphite_access_pattern;
+} hyperdag_access_pattern;
 
 // Database of learned access patterns
 typedef struct {
     hashtable* patterns;        // trigger_asset -> pattern array
     sliding_window* history;    // Recent access history
     uint32_t pattern_length;    // Length of patterns to learn
-} graphite_pattern_database;
+} hyperdag_pattern_database;
 
 // Learn access patterns from history
-void graphite_learn_patterns(graphite_pattern_database* db) {
+void hyperdag_learn_patterns(hyperdag_pattern_database* db) {
     uint32_t* recent_accesses = sliding_window_get_data(db->history);
     size_t access_count = sliding_window_get_count(db->history);
     
@@ -711,13 +711,13 @@ void graphite_learn_patterns(graphite_pattern_database* db) {
         // Find existing pattern or create new one
         dynamic_array* patterns = hashtable_get(db->patterns, &trigger);
         if (!patterns) {
-            patterns = dynamic_array_create(sizeof(graphite_access_pattern));
+            patterns = dynamic_array_create(sizeof(hyperdag_access_pattern));
             hashtable_insert(db->patterns, &trigger, patterns);
         }
         
         // Create new pattern
-        graphite_access_pattern pattern = {
-            .pattern_id = graphite_generate_pattern_id(),
+        hyperdag_access_pattern pattern = {
+            .pattern_id = hyperdag_generate_pattern_id(),
             .trigger_asset = trigger,
             .predicted_assets = malloc(sizeof(uint32_t) * (db->pattern_length - 1)),
             .predicted_count = db->pattern_length - 1,
@@ -733,8 +733,8 @@ void graphite_learn_patterns(graphite_pattern_database* db) {
         // Check if pattern already exists
         bool found_existing = false;
         for (size_t j = 0; j < patterns->count; j++) {
-            graphite_access_pattern* existing = dynamic_array_get(patterns, j);
-            if (graphite_patterns_match(&pattern, existing)) {
+            hyperdag_access_pattern* existing = dynamic_array_get(patterns, j);
+            if (hyperdag_patterns_match(&pattern, existing)) {
                 existing->confidence += 0.1f;  // Increase confidence
                 found_existing = true;
                 free(pattern.predicted_assets);
@@ -765,11 +765,11 @@ typedef struct {
     // Request tracking
     hashtable* active_requests;  // sqe -> request mapping
     atomic_uint32_t active_count;
-} graphite_uring_context;
+} hyperdag_uring_context;
 
 // Initialize io_uring for streaming
-graphite_result graphite_uring_init(
-    graphite_uring_context* context,
+hyperdag_result hyperdag_uring_init(
+    hyperdag_uring_context* context,
     uint32_t queue_depth
 ) {
     context->queue_depth = queue_depth;
@@ -777,7 +777,7 @@ graphite_result graphite_uring_init(
     // Initialize io_uring with specified queue depth
     int ret = io_uring_queue_init(queue_depth, &context->ring, 0);
     if (ret < 0) {
-        return GRAPHITE_ERROR_IO_INIT;
+        return HYPERDAG_ERROR_IO_INIT;
     }
     
     // Allocate tracking structures
@@ -785,13 +785,13 @@ graphite_result graphite_uring_init(
                                                hash_ptr, compare_ptr);
     atomic_init(&context->active_count, 0);
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
 
 // Submit async read request
-graphite_result graphite_uring_read_async(
-    graphite_uring_context* context,
-    const graphite_stream_request* request,
+hyperdag_result hyperdag_uring_read_async(
+    hyperdag_uring_context* context,
+    const hyperdag_stream_request* request,
     int fd,
     void* buffer,
     size_t size,
@@ -800,7 +800,7 @@ graphite_result graphite_uring_read_async(
     // Get submission queue entry
     struct io_uring_sqe* sqe = io_uring_get_sqe(&context->ring);
     if (!sqe) {
-        return GRAPHITE_ERROR_QUEUE_FULL;
+        return HYPERDAG_ERROR_QUEUE_FULL;
     }
     
     // Prepare read operation
@@ -816,17 +816,17 @@ graphite_result graphite_uring_read_async(
     if (submitted < 0) {
         hashtable_remove(context->active_requests, sqe);
         atomic_fetch_sub(&context->active_count, 1);
-        return GRAPHITE_ERROR_IO_SUBMIT;
+        return HYPERDAG_ERROR_IO_SUBMIT;
     }
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
 #endif // __linux__
 
 // Cross-platform async I/O abstraction
 typedef struct {
 #ifdef __linux__
-    graphite_uring_context uring;
+    hyperdag_uring_context uring;
 #elif defined(_WIN32)
     HANDLE completion_port;
     OVERLAPPED* overlapped_pool;
@@ -837,7 +837,7 @@ typedef struct {
     
     thread_pool* callback_pool;
     atomic_uint32_t active_operations;
-} graphite_async_io_context;
+} hyperdag_async_io_context;
 ```
 
 ```mermaid
@@ -859,7 +859,7 @@ graph TD
 
 ### Chapter 19: Distributed Systems
 
-GRAPHITE is designed for seamless operation across all major platforms, with careful attention to architecture-specific optimizations and platform limitations.
+TurtlGraph is designed for seamless operation across all major platforms, with careful attention to architecture-specific optimizations and platform limitations.
 
 #### 19.1 Platform Abstraction Layer
 
@@ -868,42 +868,42 @@ GRAPHITE is designed for seamless operation across all major platforms, with car
 ```c
 // Platform detection macros
 #if defined(_WIN32) || defined(_WIN64)
-    #define GRAPHITE_PLATFORM_WINDOWS
+    #define TurtlGraph_PLATFORM_WINDOWS
 #elif defined(__linux__)
-    #define GRAPHITE_PLATFORM_LINUX
+    #define TurtlGraph_PLATFORM_LINUX
 #elif defined(__APPLE__)
     #include <TargetConditionals.h>
     #if TARGET_OS_MAC
-        #define GRAPHITE_PLATFORM_MACOS
+        #define TurtlGraph_PLATFORM_MACOS
     #elif TARGET_OS_IPHONE
-        #define GRAPHITE_PLATFORM_IOS
+        #define TurtlGraph_PLATFORM_IOS
     #endif
 #elif defined(__ANDROID__)
-    #define GRAPHITE_PLATFORM_ANDROID
+    #define TurtlGraph_PLATFORM_ANDROID
 #elif defined(__EMSCRIPTEN__)
-    #define GRAPHITE_PLATFORM_WEB
+    #define TurtlGraph_PLATFORM_WEB
 #endif
 
 // Architecture detection
 #if defined(_M_X64) || defined(__x86_64__)
-    #define GRAPHITE_ARCH_X64
+    #define TurtlGraph_ARCH_X64
 #elif defined(_M_IX86) || defined(__i386__)
-    #define GRAPHITE_ARCH_X86
+    #define TurtlGraph_ARCH_X86
 #elif defined(_M_ARM64) || defined(__aarch64__)
-    #define GRAPHITE_ARCH_ARM64
+    #define TurtlGraph_ARCH_ARM64
 #elif defined(_M_ARM) || defined(__arm__)
-    #define GRAPHITE_ARCH_ARM32
+    #define TurtlGraph_ARCH_ARM32
 #endif
 
 // Endianness detection
 #include <stdint.h>
-static inline bool graphite_is_little_endian(void) {
+static inline bool hyperdag_is_little_endian(void) {
     const uint16_t test = 0x0001;
     return *(const uint8_t*)&test == 1;
 }
 
-#define GRAPHITE_LITTLE_ENDIAN (graphite_is_little_endian())
-#define GRAPHITE_BIG_ENDIAN (!graphite_is_little_endian())
+#define TurtlGraph_LITTLE_ENDIAN (hyperdag_is_little_endian())
+#define TurtlGraph_BIG_ENDIAN (!hyperdag_is_little_endian())
 ```
 
 ##### 19.1.2 File System Abstraction
@@ -917,46 +917,46 @@ typedef struct {
     bool is_memory_mapped;      // Whether file is memory-mapped
     void* mapped_memory;        // Memory-mapped region
     size_t mapped_size;         // Size of mapped region
-} graphite_file;
+} hyperdag_file;
 
 // Cross-platform file operations
-graphite_result graphite_file_open(
-    graphite_file* file,
+hyperdag_result hyperdag_file_open(
+    hyperdag_file* file,
     const char* path,
     uint32_t flags
 );
 
-graphite_result graphite_file_close(graphite_file* file);
+hyperdag_result hyperdag_file_close(hyperdag_file* file);
 
-graphite_result graphite_file_read(
-    graphite_file* file,
+hyperdag_result hyperdag_file_read(
+    hyperdag_file* file,
     void* buffer,
     size_t size,
     size_t offset,
     size_t* bytes_read
 );
 
-graphite_result graphite_file_mmap(
-    graphite_file* file,
+hyperdag_result hyperdag_file_mmap(
+    hyperdag_file* file,
     size_t offset,
     size_t size,
     void** mapped_ptr
 );
 
 // Platform-specific implementations
-#ifdef GRAPHITE_PLATFORM_WINDOWS
-graphite_result graphite_file_open_win32(
-    graphite_file* file,
+#ifdef TurtlGraph_PLATFORM_WINDOWS
+hyperdag_result hyperdag_file_open_win32(
+    hyperdag_file* file,
     const char* path,
     uint32_t flags
 ) {
     DWORD access = 0;
     DWORD creation = 0;
     
-    if (flags & GRAPHITE_FILE_READ) access |= GENERIC_READ;
-    if (flags & GRAPHITE_FILE_WRITE) access |= GENERIC_WRITE;
+    if (flags & TurtlGraph_FILE_READ) access |= GENERIC_READ;
+    if (flags & TurtlGraph_FILE_WRITE) access |= GENERIC_WRITE;
     
-    creation = (flags & GRAPHITE_FILE_CREATE) ? CREATE_ALWAYS : OPEN_EXISTING;
+    creation = (flags & TurtlGraph_FILE_CREATE) ? CREATE_ALWAYS : OPEN_EXISTING;
     
     HANDLE handle = CreateFileA(
         path,
@@ -969,13 +969,13 @@ graphite_result graphite_file_open_win32(
     );
     
     if (handle == INVALID_HANDLE_VALUE) {
-        return GRAPHITE_ERROR_FILE_OPEN;
+        return HYPERDAG_ERROR_FILE_OPEN;
     }
     
     LARGE_INTEGER file_size;
     if (!GetFileSizeEx(handle, &file_size)) {
         CloseHandle(handle);
-        return GRAPHITE_ERROR_FILE_SIZE;
+        return HYPERDAG_ERROR_FILE_SIZE;
     }
     
     file->handle = handle;
@@ -985,39 +985,39 @@ graphite_result graphite_file_open_win32(
     file->mapped_memory = NULL;
     file->mapped_size = 0;
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
-#endif // GRAPHITE_PLATFORM_WINDOWS
+#endif // TurtlGraph_PLATFORM_WINDOWS
 
-#ifdef GRAPHITE_PLATFORM_LINUX
-graphite_result graphite_file_open_linux(
-    graphite_file* file,
+#ifdef TurtlGraph_PLATFORM_LINUX
+hyperdag_result hyperdag_file_open_linux(
+    hyperdag_file* file,
     const char* path,
     uint32_t flags
 ) {
     int open_flags = 0;
     
-    if ((flags & GRAPHITE_FILE_READ) && (flags & GRAPHITE_FILE_WRITE)) {
+    if ((flags & TurtlGraph_FILE_READ) && (flags & TurtlGraph_FILE_WRITE)) {
         open_flags = O_RDWR;
-    } else if (flags & GRAPHITE_FILE_WRITE) {
+    } else if (flags & TurtlGraph_FILE_WRITE) {
         open_flags = O_WRONLY;
     } else {
         open_flags = O_RDONLY;
     }
     
-    if (flags & GRAPHITE_FILE_CREATE) {
+    if (flags & TurtlGraph_FILE_CREATE) {
         open_flags |= O_CREAT | O_TRUNC;
     }
     
     int fd = open(path, open_flags, 0644);
     if (fd < 0) {
-        return GRAPHITE_ERROR_FILE_OPEN;
+        return HYPERDAG_ERROR_FILE_OPEN;
     }
     
     struct stat st;
     if (fstat(fd, &st) < 0) {
         close(fd);
-        return GRAPHITE_ERROR_FILE_SIZE;
+        return HYPERDAG_ERROR_FILE_SIZE;
     }
     
     file->handle = (void*)(intptr_t)fd;
@@ -1027,9 +1027,9 @@ graphite_result graphite_file_open_linux(
     file->mapped_memory = NULL;
     file->mapped_size = 0;
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
-#endif // GRAPHITE_PLATFORM_LINUX
+#endif // TurtlGraph_PLATFORM_LINUX
 ```
 
 #### 19.2 Memory Management
@@ -1038,25 +1038,25 @@ graphite_result graphite_file_open_linux(
 
 ```c
 // Memory alignment requirements per platform
-#ifdef GRAPHITE_ARCH_X64
-    #define GRAPHITE_CACHE_LINE_SIZE 64
-    #define GRAPHITE_PAGE_SIZE 4096
-#elif defined(GRAPHITE_ARCH_ARM64)
-    #define GRAPHITE_CACHE_LINE_SIZE 64
-    #define GRAPHITE_PAGE_SIZE 4096  // Can be 16KB on some systems
-#elif defined(GRAPHITE_ARCH_X86)
-    #define GRAPHITE_CACHE_LINE_SIZE 64
-    #define GRAPHITE_PAGE_SIZE 4096
-#elif defined(GRAPHITE_ARCH_ARM32)
-    #define GRAPHITE_CACHE_LINE_SIZE 32
-    #define GRAPHITE_PAGE_SIZE 4096
+#ifdef TurtlGraph_ARCH_X64
+    #define TurtlGraph_CACHE_LINE_SIZE 64
+    #define TurtlGraph_PAGE_SIZE 4096
+#elif defined(TurtlGraph_ARCH_ARM64)
+    #define TurtlGraph_CACHE_LINE_SIZE 64
+    #define TurtlGraph_PAGE_SIZE 4096  // Can be 16KB on some systems
+#elif defined(TurtlGraph_ARCH_X86)
+    #define TurtlGraph_CACHE_LINE_SIZE 64
+    #define TurtlGraph_PAGE_SIZE 4096
+#elif defined(TurtlGraph_ARCH_ARM32)
+    #define TurtlGraph_CACHE_LINE_SIZE 32
+    #define TurtlGraph_PAGE_SIZE 4096
 #endif
 
 // Aligned allocation wrapper
-static inline void* graphite_aligned_alloc(size_t size, size_t alignment) {
-#ifdef GRAPHITE_PLATFORM_WINDOWS
+static inline void* hyperdag_aligned_alloc(size_t size, size_t alignment) {
+#ifdef TurtlGraph_PLATFORM_WINDOWS
     return _aligned_malloc(size, alignment);
-#elif defined(GRAPHITE_PLATFORM_LINUX) || defined(GRAPHITE_PLATFORM_MACOS)
+#elif defined(TurtlGraph_PLATFORM_LINUX) || defined(TurtlGraph_PLATFORM_MACOS)
     void* ptr;
     if (posix_memalign(&ptr, alignment, size) == 0) {
         return ptr;
@@ -1074,11 +1074,11 @@ static inline void* graphite_aligned_alloc(size_t size, size_t alignment) {
 }
 
 // Large page allocation for performance-critical areas
-graphite_result graphite_alloc_large_pages(
+hyperdag_result hyperdag_alloc_large_pages(
     void** ptr,
     size_t size
 ) {
-#ifdef GRAPHITE_PLATFORM_WINDOWS
+#ifdef TurtlGraph_PLATFORM_WINDOWS
     // Windows: VirtualAlloc with MEM_LARGE_PAGES
     *ptr = VirtualAlloc(
         NULL,
@@ -1086,9 +1086,9 @@ graphite_result graphite_alloc_large_pages(
         MEM_COMMIT | MEM_RESERVE | MEM_LARGE_PAGES,
         PAGE_READWRITE
     );
-    return *ptr ? GRAPHITE_SUCCESS : GRAPHITE_ERROR_ALLOCATION;
+    return *ptr ? HYPERDAG_SUCCESS : HYPERDAG_ERROR_ALLOCATION;
     
-#elif defined(GRAPHITE_PLATFORM_LINUX)
+#elif defined(TurtlGraph_PLATFORM_LINUX)
     // Linux: mmap with MAP_HUGETLB
     *ptr = mmap(
         NULL,
@@ -1098,9 +1098,9 @@ graphite_result graphite_alloc_large_pages(
         -1,
         0
     );
-    return (*ptr != MAP_FAILED) ? GRAPHITE_SUCCESS : GRAPHITE_ERROR_ALLOCATION;
+    return (*ptr != MAP_FAILED) ? HYPERDAG_SUCCESS : HYPERDAG_ERROR_ALLOCATION;
     
-#elif defined(GRAPHITE_PLATFORM_MACOS)
+#elif defined(TurtlGraph_PLATFORM_MACOS)
     // macOS: vm_allocate with superpage support
     vm_address_t address = 0;
     kern_return_t result = vm_allocate(
@@ -1110,12 +1110,12 @@ graphite_result graphite_alloc_large_pages(
         VM_FLAGS_ANYWHERE | VM_FLAGS_SUPERPAGE_SIZE_2MB
     );
     *ptr = (void*)address;
-    return (result == KERN_SUCCESS) ? GRAPHITE_SUCCESS : GRAPHITE_ERROR_ALLOCATION;
+    return (result == KERN_SUCCESS) ? HYPERDAG_SUCCESS : HYPERDAG_ERROR_ALLOCATION;
     
 #else
     // Fallback to regular allocation
-    *ptr = graphite_aligned_alloc(size, GRAPHITE_PAGE_SIZE);
-    return *ptr ? GRAPHITE_SUCCESS : GRAPHITE_ERROR_ALLOCATION;
+    *ptr = hyperdag_aligned_alloc(size, TurtlGraph_PAGE_SIZE);
+    return *ptr ? HYPERDAG_SUCCESS : HYPERDAG_ERROR_ALLOCATION;
 #endif
 }
 ```
@@ -1143,14 +1143,14 @@ typedef struct {
     uint32_t cpu_count;
     uint32_t* cpu_to_node;      // CPU ID -> NUMA node mapping
     size_t* node_memory;        // Available memory per node
-} graphite_numa_topology;
+} hyperdag_numa_topology;
 
-#ifdef GRAPHITE_PLATFORM_LINUX
+#ifdef TurtlGraph_PLATFORM_LINUX
 #include <numa.h>
 #include <numaif.h>
 
-graphite_result graphite_detect_numa_topology(
-    graphite_numa_topology* topology
+hyperdag_result hyperdag_detect_numa_topology(
+    hyperdag_numa_topology* topology
 ) {
     if (numa_available() < 0) {
         // NUMA not available, use single node
@@ -1165,7 +1165,7 @@ graphite_result graphite_detect_numa_topology(
         }
         
         topology->node_memory[0] = sysconf(_SC_PHYS_PAGES) * sysconf(_SC_PAGE_SIZE);
-        return GRAPHITE_SUCCESS;
+        return HYPERDAG_SUCCESS;
     }
     
     topology->node_count = numa_max_node() + 1;
@@ -1185,11 +1185,11 @@ graphite_result graphite_detect_numa_topology(
         topology->node_memory[node] = total_mem;
     }
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
 
 // NUMA-aware allocation
-void* graphite_numa_alloc(size_t size, uint32_t preferred_node) {
+void* hyperdag_numa_alloc(size_t size, uint32_t preferred_node) {
     if (numa_available() < 0) {
         return malloc(size);
     }
@@ -1197,26 +1197,26 @@ void* graphite_numa_alloc(size_t size, uint32_t preferred_node) {
     // Allocate on preferred NUMA node
     return numa_alloc_onnode(size, preferred_node);
 }
-#endif // GRAPHITE_PLATFORM_LINUX
+#endif // TurtlGraph_PLATFORM_LINUX
 
 // Cross-platform worker thread affinity
-graphite_result graphite_set_thread_affinity(
+hyperdag_result hyperdag_set_thread_affinity(
     pthread_t thread,
     uint32_t cpu_id
 ) {
-#ifdef GRAPHITE_PLATFORM_LINUX
+#ifdef TurtlGraph_PLATFORM_LINUX
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
     CPU_SET(cpu_id, &cpuset);
     return pthread_setaffinity_np(thread, sizeof(cpuset), &cpuset) == 0 ?
-           GRAPHITE_SUCCESS : GRAPHITE_ERROR_AFFINITY;
+           HYPERDAG_SUCCESS : HYPERDAG_ERROR_AFFINITY;
            
-#elif defined(GRAPHITE_PLATFORM_WINDOWS)
+#elif defined(TurtlGraph_PLATFORM_WINDOWS)
     DWORD_PTR mask = 1ULL << cpu_id;
     return SetThreadAffinityMask(GetCurrentThread(), mask) != 0 ?
-           GRAPHITE_SUCCESS : GRAPHITE_ERROR_AFFINITY;
+           HYPERDAG_SUCCESS : HYPERDAG_ERROR_AFFINITY;
            
-#elif defined(GRAPHITE_PLATFORM_MACOS)
+#elif defined(TurtlGraph_PLATFORM_MACOS)
     // macOS: Use thread affinity policy
     thread_affinity_policy_data_t policy = { cpu_id };
     return thread_policy_set(
@@ -1224,11 +1224,11 @@ graphite_result graphite_set_thread_affinity(
         THREAD_AFFINITY_POLICY,
         (thread_policy_t)&policy,
         THREAD_AFFINITY_POLICY_COUNT
-    ) == KERN_SUCCESS ? GRAPHITE_SUCCESS : GRAPHITE_ERROR_AFFINITY;
+    ) == KERN_SUCCESS ? HYPERDAG_SUCCESS : HYPERDAG_ERROR_AFFINITY;
     
 #else
     // Platform doesn't support thread affinity
-    return GRAPHITE_ERROR_NOT_SUPPORTED;
+    return HYPERDAG_ERROR_NOT_SUPPORTED;
 #endif
 }
 ```
@@ -1247,12 +1247,12 @@ typedef struct {
     bool avx512_available;
     bool neon_available;
     bool neon64_available;
-} graphite_simd_caps;
+} hyperdag_simd_caps;
 
-static graphite_simd_caps g_simd_caps = {0};
+static hyperdag_simd_caps g_simd_caps = {0};
 
-void graphite_detect_simd_capabilities(void) {
-#ifdef GRAPHITE_ARCH_X64
+void hyperdag_detect_simd_capabilities(void) {
+#ifdef TurtlGraph_ARCH_X64
     // x86/x64 CPUID detection
     uint32_t eax, ebx, ecx, edx;
     
@@ -1273,12 +1273,12 @@ void graphite_detect_simd_capabilities(void) {
     // Check for AVX-512
     g_simd_caps.avx512_available = (ebx & (1 << 16)) != 0;
     
-#elif defined(GRAPHITE_ARCH_ARM64)
+#elif defined(TurtlGraph_ARCH_ARM64)
     // ARM64: NEON is standard
     g_simd_caps.neon_available = true;
     g_simd_caps.neon64_available = true;
     
-#elif defined(GRAPHITE_ARCH_ARM32)
+#elif defined(TurtlGraph_ARCH_ARM32)
     // ARM32: Check for NEON availability
     #ifdef __ARM_NEON
         g_simd_caps.neon_available = true;

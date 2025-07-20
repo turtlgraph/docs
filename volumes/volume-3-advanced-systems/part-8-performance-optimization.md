@@ -14,37 +14,37 @@
   - [16.4 CDN Optimization Strategies](#164-cdn-optimization-strategies)
 
 ### Overview
-This part covers advanced performance optimization techniques and integration patterns for GRAPHITE. Chapter 15 focuses on asset pipeline integration, enabling seamless incorporation into existing build systems and workflows. Chapter 16 explores content delivery network integration, providing efficient distribution mechanisms for large-scale deployments.
+This part covers advanced performance optimization techniques and integration patterns for TurtlGraph. Chapter 15 focuses on asset pipeline integration, enabling seamless incorporation into existing build systems and workflows. Chapter 16 explores content delivery network integration, providing efficient distribution mechanisms for large-scale deployments.
 
 ### Chapter 15: Performance Optimization
 
-GRAPHITE is designed for seamless integration into existing asset build pipelines, providing comprehensive hooks for automated bundle generation, dependency tracking, and incremental builds.
+TurtlGraph is designed for seamless integration into existing asset build pipelines, providing comprehensive hooks for automated bundle generation, dependency tracking, and incremental builds.
 
 #### 15.1 Build System Integration
 
 ##### 15.1.1 CMake Integration
 
 ```cmake
-# FindGRAPHITE.cmake module
-find_package(GRAPHITE REQUIRED)
+# FindTurtlGraph.cmake module
+find_package(TurtlGraph REQUIRED)
 
 # Create bundle target
-graphite_add_bundle(MyGame_Assets
+hyperdag_add_bundle(MyGame_Assets
     SOURCES ${ASSET_FILES}
-    OUTPUT ${CMAKE_BINARY_DIR}/assets/game.graphite
+    OUTPUT ${CMAKE_BINARY_DIR}/assets/game.turtlgraph
     COMPRESSION zstd
     INTEGRITY blake3
     HOT_RELOAD $<CONFIG:Debug>
 )
 
 # Dependency tracking
-graphite_add_dependencies(MyGame_Assets
+hyperdag_add_dependencies(MyGame_Assets
     DEPENDS texture_processor mesh_optimizer
     TRIGGERS ${SHADER_FILES} ${TEXTURE_FILES}
 )
 
 # Custom build rules
-graphite_add_transform(texture_transform
+hyperdag_add_transform(texture_transform
     INPUT_PATTERN "*.png;*.jpg;*.tga"
     OUTPUT_PATTERN "*.g_tex"
     COMMAND texture_processor --format bc7 --mips --output $output $input
@@ -55,7 +55,7 @@ graphite_add_transform(texture_transform
 ```mermaid
 graph TD
     subgraph "CMake Build Flow"
-        CMAKE[CMake Configure] --> FIND[Find GRAPHITE]
+        CMAKE[CMake Configure] --> FIND[Find TurtlGraph]
         FIND --> TARGETS[Create Targets]
         TARGETS --> DEPS[Track Dependencies]
         DEPS --> TRANSFORMS[Apply Transforms]
@@ -69,45 +69,45 @@ graph TD
 ##### 15.1.2 Ninja Integration
 
 ```ninja
-# Direct ninja rule for GRAPHITE bundles
-rule graphite_pack
-  command = graphite pack --config $config --output $out $in
-  description = Packing GRAPHITE bundle $out
+# Direct ninja rule for TurtlGraph bundles
+rule hyperdag_pack
+  command = turtlgraph pack --config $config --output $out $in
+  description = Packing TurtlGraph bundle $out
   deps = gcc
   depfile = $out.d
 
-build assets/game.graphite: graphite_pack $assets | graphite_config.json
+build assets/game.turtlgraph: hyperdag_pack $assets | hyperdag_config.json
   config = release
 
 # Incremental rebuild support
-rule graphite_incremental
-  command = graphite update --bundle $bundle --changed $in
-  description = Updating GRAPHITE bundle $bundle
+rule hyperdag_incremental
+  command = turtlgraph update --bundle $bundle --changed $in
+  description = Updating TurtlGraph bundle $bundle
   deps = gcc
   depfile = $bundle.d
 
-build assets/game.graphite: graphite_incremental assets/textures/player.png
-  bundle = assets/game.graphite
+build assets/game.turtlgraph: hyperdag_incremental assets/textures/player.png
+  bundle = assets/game.turtlgraph
 ```
 
 ##### 15.1.3 Bazel Integration
 
 ```python
-# //tools/graphite:defs.bzl
-def graphite_bundle(name, srcs, compression="zstd", integrity="blake3", **kwargs):
+# //tools/turtlgraph:defs.bzl
+def hyperdag_bundle(name, srcs, compression="zstd", integrity="blake3", **kwargs):
     native.genrule(
         name = name,
         srcs = srcs,
-        outs = [name + ".graphite"],
-        cmd = "$(location //tools/graphite:pack) " +
+        outs = [name + ".turtlgraph"],
+        cmd = "$(location //tools/turtlgraph:pack) " +
               "--compression=%s --integrity=%s " % (compression, integrity) +
               "--output $@ $(SRCS)",
-        tools = ["//tools/graphite:pack"],
+        tools = ["//tools/turtlgraph:pack"],
         **kwargs
     )
 
 # BUILD file usage
-graphite_bundle(
+hyperdag_bundle(
     name = "game_assets",
     srcs = glob(["assets/**/*"]),
     compression = "zstd",
@@ -119,18 +119,18 @@ graphite_bundle(
 
 ```makefile
 # Traditional Makefile support
-GRAPHITE := graphite
+TurtlGraph := turtlgraph
 ASSET_DIR := assets
 OUTPUT_DIR := build
 
-%.graphite: $(shell find $(ASSET_DIR) -type f)
-	$(GRAPHITE) pack --config release.json --output $@ $(ASSET_DIR)
+%.turtlgraph: $(shell find $(ASSET_DIR) -type f)
+	$(TurtlGraph) pack --config release.json --output $@ $(ASSET_DIR)
 
 # Dependency tracking with .d files
 include $(wildcard *.d)
 
-game.graphite: assets.d
-	$(GRAPHITE) pack --output $@ --depfile $@.d $(ASSET_DIR)
+game.turtlgraph: assets.d
+	$(TurtlGraph) pack --output $@ --depfile $@.d $(ASSET_DIR)
 ```
 
 #### 15.2 Continuous Integration Integration
@@ -147,26 +147,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Install GRAPHITE
+      - name: Install TurtlGraph
         run: |
-          wget https://github.com/graphite/releases/latest/graphite-linux-x64.tar.gz
-          tar -xzf graphite-linux-x64.tar.gz
-          sudo mv graphite /usr/local/bin/
+          wget https://github.com/turtlgraph/releases/latest/turtlgraph-linux-x64.tar.gz
+          tar -xzf turtlgraph-linux-x64.tar.gz
+          sudo mv turtlgraph /usr/local/bin/
           
       - name: Build Asset Bundles
         run: |
-          graphite pack --config ci.json --output dist/game.graphite assets/
+          turtlgraph pack --config ci.json --output dist/game.turtlgraph assets/
           
       - name: Validate Bundles
         run: |
-          graphite verify dist/game.graphite
-          graphite benchmark --quick dist/game.graphite
+          turtlgraph verify dist/game.turtlgraph
+          turtlgraph benchmark --quick dist/game.turtlgraph
           
       - name: Upload Bundles
         uses: actions/upload-artifact@v4
         with:
           name: asset-bundles
-          path: dist/*.graphite
+          path: dist/*.turtlgraph
 ```
 
 ##### 15.2.2 Jenkins Pipeline
@@ -179,8 +179,8 @@ pipeline {
         stage('Build Assets') {
             steps {
                 sh '''
-                    graphite pack --config jenkins.json \
-                        --output build/assets.graphite \
+                    turtlgraph pack --config jenkins.json \
+                        --output build/assets.turtlgraph \
                         --progress \
                         assets/
                 '''
@@ -191,13 +191,13 @@ pipeline {
             parallel {
                 stage('Integrity Check') {
                     steps {
-                        sh 'graphite verify build/assets.graphite'
+                        sh 'turtlgraph verify build/assets.turtlgraph'
                     }
                 }
                 stage('Performance Check') {
                     steps {
                         sh '''
-                            graphite benchmark build/assets.graphite > perf.txt
+                            turtlgraph benchmark build/assets.turtlgraph > perf.txt
                             python3 scripts/check_performance_regression.py perf.txt
                         '''
                     }
@@ -205,7 +205,7 @@ pipeline {
                 stage('Size Check') {
                     steps {
                         sh '''
-                            SIZE=$(stat -c%s build/assets.graphite)
+                            SIZE=$(stat -c%s build/assets.turtlgraph)
                             if [ $SIZE -gt 104857600 ]; then  # 100MB
                                 echo "Bundle size $SIZE exceeds 100MB limit"
                                 exit 1
@@ -219,7 +219,7 @@ pipeline {
     
     post {
         always {
-            archiveArtifacts artifacts: 'build/*.graphite', fingerprint: true
+            archiveArtifacts artifacts: 'build/*.turtlgraph', fingerprint: true
             publishTestResults testResultsPattern: 'test-results.xml'
         }
     }
@@ -238,19 +238,19 @@ typedef struct {
     size_t dependency_count;
     uint64_t content_hash;
     uint64_t dependency_hash;
-} graphite_asset_info;
+} hyperdag_asset_info;
 
 // Plugin interface for custom dependency extractors
 typedef struct {
     const char* file_extension;
-    graphite_asset_info* (*extract_deps)(const char* file_path);
-    void (*free_info)(graphite_asset_info* info);
-} graphite_dependency_extractor;
+    hyperdag_asset_info* (*extract_deps)(const char* file_path);
+    void (*free_info)(hyperdag_asset_info* info);
+} hyperdag_dependency_extractor;
 
 // Built-in extractors
-extern const graphite_dependency_extractor graphite_gltf_extractor;
-extern const graphite_dependency_extractor graphite_fbx_extractor;
-extern const graphite_dependency_extractor graphite_material_extractor;
+extern const hyperdag_dependency_extractor hyperdag_gltf_extractor;
+extern const hyperdag_dependency_extractor hyperdag_fbx_extractor;
+extern const hyperdag_dependency_extractor hyperdag_material_extractor;
 ```
 
 ```mermaid
@@ -271,7 +271,7 @@ graph LR
 ```json
 {
   "incremental_config": {
-    "cache_directory": ".graphite_cache",
+    "cache_directory": ".hyperdag_cache",
     "hash_algorithm": "blake3",
     "dependency_tracking": true,
     "parallel_analysis": true,
@@ -305,25 +305,25 @@ typedef struct {
     const char** output_formats;
     
     // Transform function
-    graphite_result (*transform)(
+    hyperdag_result (*transform)(
         const void* input_data,
         size_t input_size,
         const char* input_format,
         void** output_data,
         size_t* output_size,
         const char* output_format,
-        const graphite_transform_params* params
+        const hyperdag_transform_params* params
     );
     
     // Optional: validate parameters
-    bool (*validate_params)(const graphite_transform_params* params);
+    bool (*validate_params)(const hyperdag_transform_params* params);
     
     // Optional: estimate output size
-    size_t (*estimate_output_size)(size_t input_size, const graphite_transform_params* params);
-} graphite_transform_plugin;
+    size_t (*estimate_output_size)(size_t input_size, const hyperdag_transform_params* params);
+} hyperdag_transform_plugin;
 
 // Registration
-void graphite_register_transform(const graphite_transform_plugin* plugin);
+void hyperdag_register_transform(const hyperdag_transform_plugin* plugin);
 ```
 
 ```mermaid
@@ -384,7 +384,7 @@ graph TD
 
 ### Chapter 16: Advanced Integration Patterns
 
-GRAPHITE provides first-class support for CDN deployment and delta updates, enabling efficient content delivery for live service games and applications.
+TurtlGraph provides first-class support for CDN deployment and delta updates, enabling efficient content delivery for live service games and applications.
 
 #### 16.1 CDN-Optimized Bundle Structure
 
@@ -404,7 +404,7 @@ typedef struct {
     uint64_t bundle_id;         // Parent bundle identifier
     uint32_t chunk_index;       // Index within bundle
     uint32_t total_chunks;      // Total chunks in bundle
-} graphite_cdn_chunk_header;
+} hyperdag_cdn_chunk_header;
 
 // CDN manifest
 typedef struct {
@@ -415,14 +415,14 @@ typedef struct {
     uint64_t bundle_version;
     uint32_t chunk_count;
     uint32_t total_size;
-    graphite_cdn_chunk_info chunks[];
-} graphite_cdn_manifest;
+    hyperdag_cdn_chunk_info chunks[];
+} hyperdag_cdn_manifest;
 ```
 
 ```mermaid
 graph LR
     subgraph "CDN Architecture"
-        BUNDLE[GRAPHITE Bundle] --> CHUNKER[Chunk Splitter]
+        BUNDLE[TurtlGraph Bundle] --> CHUNKER[Chunk Splitter]
         CHUNKER --> C1[Chunk 1]
         CHUNKER --> C2[Chunk 2]
         CHUNKER --> C3[Chunk N]
@@ -450,23 +450,23 @@ typedef struct {
     uint32_t operation_count;   // Number of delta operations
     uint64_t base_hash;         // Hash of base bundle
     uint64_t target_hash;       // Hash of target bundle
-} graphite_delta_header;
+} hyperdag_delta_header;
 
 // Delta operations
 typedef enum {
-    GRAPHITE_DELTA_COPY,        // Copy from base
-    GRAPHITE_DELTA_INSERT,      // Insert new data
-    GRAPHITE_DELTA_DELETE,      // Delete range
-    GRAPHITE_DELTA_REPLACE      // Replace range
-} graphite_delta_operation_type;
+    TurtlGraph_DELTA_COPY,        // Copy from base
+    TurtlGraph_DELTA_INSERT,      // Insert new data
+    TurtlGraph_DELTA_DELETE,      // Delete range
+    TurtlGraph_DELTA_REPLACE      // Replace range
+} hyperdag_delta_operation_type;
 
 typedef struct {
-    graphite_delta_operation_type type;
+    hyperdag_delta_operation_type type;
     uint64_t offset;            // Offset in target
     uint32_t length;            // Length of operation
     uint64_t source_offset;     // For COPY operations
     // Followed by inline data for INSERT/REPLACE
-} graphite_delta_operation;
+} hyperdag_delta_operation;
 ```
 
 #### 16.2 CDN Deployment Tools
@@ -475,7 +475,7 @@ typedef struct {
 
 ```bash
 # Split bundle into CDN-optimized chunks
-graphite cdn-split game.graphite \
+turtlgraph cdn-split game.turtlgraph \
     --chunk-size 4MB \
     --output-dir cdn_chunks/ \
     --manifest cdn_manifest.json \
@@ -483,7 +483,7 @@ graphite cdn-split game.graphite \
     --level 9
 
 # Generate chunk URLs for CDN
-graphite cdn-upload-config \
+turtlgraph cdn-upload-config \
     --manifest cdn_manifest.json \
     --base-url https://cdn.example.com/assets/ \
     --output upload_config.json
@@ -493,18 +493,18 @@ graphite cdn-upload-config \
 
 ```bash
 # Generate delta between versions
-graphite delta-create \
-    --base game_v1.0.graphite \
-    --target game_v1.1.graphite \
+turtlgraph delta-create \
+    --base game_v1.0.turtlgraph \
+    --target game_v1.1.turtlgraph \
     --output game_v1.0_to_v1.1.delta \
     --compression zstd \
     --level 9
 
 # Validate delta
-graphite delta-verify \
-    --base game_v1.0.graphite \
+turtlgraph delta-verify \
+    --base game_v1.0.turtlgraph \
     --delta game_v1.0_to_v1.1.delta \
-    --expected game_v1.1.graphite
+    --expected game_v1.1.turtlgraph
 ```
 
 ```mermaid
@@ -535,16 +535,16 @@ typedef struct {
     uint32_t timeout_seconds;
     bool verify_chunks;
     const char* cache_directory;
-} graphite_cdn_config;
+} hyperdag_cdn_config;
 
 // Async chunk downloader
-typedef struct graphite_cdn_downloader graphite_cdn_downloader;
+typedef struct hyperdag_cdn_downloader hyperdag_cdn_downloader;
 
-graphite_cdn_downloader* graphite_cdn_create(const graphite_cdn_config* config);
-void graphite_cdn_destroy(graphite_cdn_downloader* downloader);
+hyperdag_cdn_downloader* hyperdag_cdn_create(const hyperdag_cdn_config* config);
+void hyperdag_cdn_destroy(hyperdag_cdn_downloader* downloader);
 
 // Download bundle with progress tracking
-typedef void (*graphite_progress_callback)(
+typedef void (*hyperdag_progress_callback)(
     uint64_t bytes_downloaded,
     uint64_t total_bytes,
     uint32_t chunks_completed,
@@ -552,11 +552,11 @@ typedef void (*graphite_progress_callback)(
     void* user_data
 );
 
-graphite_result graphite_cdn_download_bundle(
-    graphite_cdn_downloader* downloader,
+hyperdag_result hyperdag_cdn_download_bundle(
+    hyperdag_cdn_downloader* downloader,
     const char* manifest_url,
     const char* output_path,
-    graphite_progress_callback progress,
+    hyperdag_progress_callback progress,
     void* user_data
 );
 
@@ -567,13 +567,13 @@ typedef struct {
     uint64_t delta_size;
     bool update_available;
     const char* delta_url;
-} graphite_update_info;
+} hyperdag_update_info;
 
-graphite_result graphite_cdn_check_update(
-    graphite_cdn_downloader* downloader,
+hyperdag_result hyperdag_cdn_check_update(
+    hyperdag_cdn_downloader* downloader,
     const char* current_bundle_path,
     const char* version_check_url,
-    graphite_update_info* update_info
+    hyperdag_update_info* update_info
 );
 ```
 
@@ -581,23 +581,23 @@ graphite_result graphite_cdn_check_update(
 
 ```c
 // Apply delta patch
-graphite_result graphite_delta_apply(
+hyperdag_result hyperdag_delta_apply(
     const char* base_bundle_path,
     const char* delta_path,
     const char* output_path,
-    graphite_progress_callback progress,
+    hyperdag_progress_callback progress,
     void* user_data
 );
 
 // Verify applied delta
-graphite_result graphite_delta_verify_result(
+hyperdag_result hyperdag_delta_verify_result(
     const char* patched_bundle_path,
     const char* expected_hash,
     uint64_t expected_version
 );
 
 // Rollback support
-graphite_result graphite_delta_create_rollback(
+hyperdag_result hyperdag_delta_create_rollback(
     const char* base_bundle_path,
     const char* updated_bundle_path,
     const char* rollback_delta_path
@@ -616,21 +616,21 @@ typedef struct {
     uint32_t access_frequency;  // From analytics
     uint32_t dependency_level;  // 0 = leaf, higher = more deps
     bool is_critical;           // Required for initial load
-} graphite_asset_metadata;
+} hyperdag_asset_metadata;
 
 // Chunking strategy
 typedef enum {
-    GRAPHITE_CHUNK_UNIFORM,     // Fixed size chunks
-    GRAPHITE_CHUNK_ASSET_AWARE, // Group related assets
-    GRAPHITE_CHUNK_FREQUENCY,   // Group by access patterns
-    GRAPHITE_CHUNK_DEPENDENCY   // Group by dependency levels
-} graphite_chunking_strategy;
+    TurtlGraph_CHUNK_UNIFORM,     // Fixed size chunks
+    TurtlGraph_CHUNK_ASSET_AWARE, // Group related assets
+    TurtlGraph_CHUNK_FREQUENCY,   // Group by access patterns
+    TurtlGraph_CHUNK_DEPENDENCY   // Group by dependency levels
+} hyperdag_chunking_strategy;
 
-graphite_result graphite_cdn_optimal_chunking(
+hyperdag_result hyperdag_cdn_optimal_chunking(
     const char* bundle_path,
-    const graphite_asset_metadata* metadata,
+    const hyperdag_asset_metadata* metadata,
     size_t metadata_count,
-    graphite_chunking_strategy strategy,
+    hyperdag_chunking_strategy strategy,
     uint32_t target_chunk_size,
     const char* output_dir
 );
@@ -715,7 +715,7 @@ typedef struct {
     // Runtime Performance
     float hot_reload_time_ms;           // 50-100ms typical
     float streaming_latency_ms;         // 10-30ms with prefetch
-} graphite_performance_metrics;
+} hyperdag_performance_metrics;
 ```
 
 ### Cross-References

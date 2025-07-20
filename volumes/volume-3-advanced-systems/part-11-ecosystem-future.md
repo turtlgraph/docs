@@ -19,17 +19,17 @@
   - [Appendix E: Legal & Licensing](#appendix-e-legal--licensing)
 
 ### Overview
-This final part of Volume 3 covers the GRAPHITE ecosystem, future development roadmap, and comprehensive reference materials. Chapter 26 explores the rich ecosystem of development tools, runtime libraries, and community contributions. Chapter 27 presents the ambitious vision for GRAPHITE's future evolution. Chapter 28 provides essential reference materials including API documentation, performance benchmarks, and platform-specific implementation guidance.
+This final part of Volume 3 covers the TurtlGraph ecosystem, future development roadmap, and comprehensive reference materials. Chapter 26 explores the rich ecosystem of development tools, runtime libraries, and community contributions. Chapter 27 presents the ambitious vision for TurtlGraph's future evolution. Chapter 28 provides essential reference materials including API documentation, performance benchmarks, and platform-specific implementation guidance.
 
 ### Chapter 26: Ecosystem & Tooling
 
-GRAPHITE's success depends on a thriving ecosystem of tools, libraries, and integrations that enable developers to leverage its full potential across diverse platforms and workflows.
+TurtlGraph's success depends on a thriving ecosystem of tools, libraries, and integrations that enable developers to leverage its full potential across diverse platforms and workflows.
 
 #### 26.1 Development Tools
 
-##### 26.1.1 GRAPHITE Studio - Visual Asset Manager
+##### 26.1.1 TurtlGraph Studio - Visual Asset Manager
 
-GRAPHITE Studio provides a comprehensive visual interface for managing assets, dependencies, and bundles, making it accessible to artists and developers alike.
+TurtlGraph Studio provides a comprehensive visual interface for managing assets, dependencies, and bundles, making it accessible to artists and developers alike.
 
 **Feature Overview:**
 - **Visual Bundle Editor**: Drag-and-drop asset management
@@ -40,7 +40,7 @@ GRAPHITE Studio provides a comprehensive visual interface for managing assets, d
 
 **Studio Architecture:**
 ```typescript
-interface GraphiteStudio {
+interface TurtlGraphStudio {
     // Core functionality
     loadBundle(path: string): Promise<Bundle>;
     saveBundle(bundle: Bundle, path: string): Promise<void>;
@@ -62,7 +62,7 @@ interface GraphiteStudio {
 
 ```mermaid
 graph TD
-    subgraph "GRAPHITE Studio Architecture"
+    subgraph "TurtlGraph Studio Architecture"
         UI[User Interface] --> CORE[Core Engine]
         CORE --> VIS[Visualization Engine]
         CORE --> ANALYSIS[Analysis Engine]
@@ -82,14 +82,14 @@ graph TD
 
 ##### 26.1.2 Build System Integration
 
-GRAPHITE seamlessly integrates with modern build systems, enabling automated asset pipeline management and continuous integration workflows.
+TurtlGraph seamlessly integrates with modern build systems, enabling automated asset pipeline management and continuous integration workflows.
 
 **CMake Integration:**
 ```cmake
-find_package(GRAPHITE REQUIRED)
+find_package(HYPERDAG REQUIRED)
 
-# Add GRAPHITE bundle target
-graphite_add_bundle(
+# Add HyperDAG bundle target
+hyperdag_add_bundle(
     TARGET game_assets
     SOURCES 
         textures/
@@ -102,24 +102,24 @@ graphite_add_bundle(
 )
 
 # Link bundle to executable
-target_link_graphite_bundles(game_executable game_assets)
+target_link_hyperdag_bundles(game_executable game_assets)
 ```
 
 **Ninja Build Integration:**
 ```ninja
-rule graphite_bundle
-    command = graphite bundle --input $in --output $out --compress $compression
-    description = Building GRAPHITE bundle $out
+rule turtlgraph_bundle
+    command = turtlgraph bundle --input $in --output $out --compress $compression
+    description = Building TurtlGraph bundle $out
 
-build assets.grph: graphite_bundle textures/ models/ audio/
+build assets.grph: turtlgraph_bundle textures/ models/ audio/
     compression = 7
 ```
 
 **Bazel Integration:**
 ```python
-load("@graphite_rules//graphite:defs.bzl", "graphite_bundle")
+load("@turtlgraph_rules//turtlgraph:defs.bzl", "turtlgraph_bundle")
 
-graphite_bundle(
+turtlgraph_bundle(
     name = "game_assets",
     srcs = glob([
         "textures/**/*",
@@ -134,14 +134,14 @@ graphite_bundle(
 
 ##### 26.1.3 IDE Extensions
 
-Modern IDE integration ensures developers can work with GRAPHITE bundles as seamlessly as with source code.
+Modern IDE integration ensures developers can work with TurtlGraph bundles as seamlessly as with source code.
 
 **Visual Studio Code Extension:**
 ```json
 {
-    "name": "graphite-vscode",
-    "displayName": "GRAPHITE Asset Manager",
-    "description": "GRAPHITE bundle management for VSCode",
+    "name": "turtlgraph-vscode",
+    "displayName": "TurtlGraph Asset Manager",
+    "description": "TurtlGraph bundle management for VSCode",
     "features": [
         "Bundle syntax highlighting",
         "Asset dependency visualization", 
@@ -162,13 +162,13 @@ Modern IDE integration ensures developers can work with GRAPHITE bundles as seam
 ```mermaid
 graph LR
     subgraph "IDE Integration"
-        IDE[IDE] --> EXT[GRAPHITE Extension]
+        IDE[IDE] --> EXT[TurtlGraph Extension]
         EXT --> EXPLORER[Bundle Explorer]
         EXT --> GRAPH[Dependency Graph]
         EXT --> PREVIEW[Asset Preview]
         EXT --> BUILD[Build Commands]
         
-        BUILD --> CLI[GRAPHITE CLI]
+        BUILD --> CLI[TurtlGraph CLI]
         PREVIEW --> RUNTIME[Preview Runtime]
         GRAPH --> VIS[Visualization Engine]
     end
@@ -176,20 +176,20 @@ graph LR
 
 #### 26.2 Runtime Libraries
 
-GRAPHITE provides comprehensive language bindings and framework integrations, enabling developers to use their preferred tools and languages.
+TurtlGraph provides comprehensive language bindings and framework integrations, enabling developers to use their preferred tools and languages.
 
 ##### 26.2.1 Language Bindings
 
 **Python Binding:**
 ```python
-import graphite
+import hyperdag
 
 # Load and access bundle
-bundle = graphite.Bundle.load("assets.grph")
+bundle = hyperdag.Bundle.load("assets.grph")
 texture = bundle.get_asset("ui/button_texture.png")
 
 # Stream assets
-streamer = graphite.Streamer()
+streamer = hyperdag.Streamer()
 streamer.preload(["level_1/*", "ui/*"])
 
 # Hot reload support
@@ -198,7 +198,7 @@ bundle.enable_hot_reload(lambda asset_id: print(f"Reloaded: {asset_id}"))
 
 **Rust Binding:**
 ```rust
-use graphite::{Bundle, StreamingContext, Asset};
+use hyperdag::{Bundle, StreamingContext, Asset};
 
 // Type-safe asset loading
 let bundle = Bundle::load("assets.grph")?;
@@ -216,14 +216,14 @@ bundle.on_asset_changed(|asset_id| {
 
 **JavaScript/Node.js Binding:**
 ```javascript
-const graphite = require('graphite-native');
+const hyperdag = require('hyperdag-native');
 
 // Async bundle loading
-const bundle = await graphite.Bundle.load('assets.grph');
+const bundle = await hyperdag.Bundle.load('assets.grph');
 const texture = await bundle.getAsset('ui/button_texture.png');
 
 // Streaming support
-const streamer = new graphite.Streamer();
+const streamer = new hyperdag.Streamer();
 await streamer.preload(['level_1/*', 'ui/*']);
 
 // Event-driven hot reload
@@ -234,25 +234,25 @@ bundle.on('assetChanged', (assetId) => {
 
 ##### 26.2.2 Framework Integrations
 
-Modern web and game frameworks can leverage GRAPHITE's capabilities through tailored integrations.
+Modern web and game frameworks can leverage TurtlGraph's capabilities through tailored integrations.
 
 **React Integration:**
 ```jsx
-import { useGraphiteAsset, GraphiteProvider } from 'react-graphite';
+import { useHyperDAGAsset, HyperDAGProvider } from 'react-hyperdag';
 
 function GameUI() {
-    const buttonTexture = useGraphiteAsset('ui/button_texture.png');
-    const audioClip = useGraphiteAsset('audio/button_click.ogg');
+    const buttonTexture = useHyperDAGAsset('ui/button_texture.png');
+    const audioClip = useHyperDAGAsset('audio/button_click.ogg');
     
     return (
-        <GraphiteProvider bundle="ui_assets.grph">
+        <HyperDAGProvider bundle="ui_assets.grph">
             <button 
                 style={{ backgroundImage: `url(${buttonTexture})` }}
                 onClick={() => audioClip.play()}
             >
                 Click Me
             </button>
-        </GraphiteProvider>
+        </HyperDAGProvider>
     );
 }
 ```
@@ -267,11 +267,11 @@ function GameUI() {
 </template>
 
 <script>
-import { useGraphite } from 'vue-graphite';
+import { useHyperDAG } from 'vue-hyperdag';
 
 export default {
     setup() {
-        const { getAsset } = useGraphite('scene_assets.grph');
+        const { getAsset } = useHyperDAG('scene_assets.grph');
         
         return {
             backgroundTexture: getAsset('backgrounds/forest.jpg'),
@@ -284,11 +284,11 @@ export default {
 
 #### 26.3 Community Tools
 
-A vibrant community contributes tools, extensions, and resources that expand GRAPHITE's capabilities.
+A vibrant community contributes tools, extensions, and resources that expand TurtlGraph's capabilities.
 
 ##### 26.3.1 Asset Marketplace Integration
 
-The GRAPHITE marketplace enables developers to share and monetize high-quality assets bundled in the GRAPHITE format.
+The TurtlGraph marketplace enables developers to share and monetize high-quality assets bundled in the HyperDAG format.
 
 **Marketplace API:**
 ```c
@@ -304,14 +304,14 @@ typedef struct {
 } marketplace_asset_t;
 
 // Browse marketplace assets
-graphite_result_t graphite_marketplace_search(
+hyperdag_result_t hyperdag_marketplace_search(
     const char* query,
     marketplace_asset_t** results,
     size_t* result_count
 );
 
 // Download and integrate marketplace assets
-graphite_result_t graphite_marketplace_download(
+hyperdag_result_t hyperdag_marketplace_download(
     const char* asset_id,
     const char* local_bundle_path
 );
@@ -319,12 +319,12 @@ graphite_result_t graphite_marketplace_download(
 
 ##### 26.3.2 Quality Assurance Tools
 
-Community-driven tools ensure GRAPHITE bundles meet quality standards and perform optimally.
+Community-driven tools ensure HyperDAG bundles meet quality standards and perform optimally.
 
 **Bundle Validator:**
 ```bash
 # Comprehensive bundle validation
-graphite validate bundle.grph \
+turtlgraph validate bundle.grph \
     --check-integrity \
     --check-dependencies \
     --check-performance \
@@ -335,7 +335,7 @@ graphite validate bundle.grph \
 **Performance Profiler:**
 ```bash
 # Profile bundle loading performance
-graphite profile bundle.grph \
+turtlgraph profile bundle.grph \
     --platform pc \
     --memory-limit 1GB \
     --simulate-network-delay 50ms \
@@ -345,7 +345,7 @@ graphite profile bundle.grph \
 **Security Auditor:**
 ```bash
 # Security audit for bundles
-graphite audit bundle.grph \
+turtlgraph audit bundle.grph \
     --check-signatures \
     --scan-malware \
     --verify-checksums \
@@ -355,7 +355,7 @@ graphite audit bundle.grph \
 ```mermaid
 graph TD
     subgraph "Community Ecosystem"
-        MARKET[Asset Marketplace] --> BUNDLE[GRAPHITE Bundles]
+        MARKET[Asset Marketplace] --> BUNDLE[HyperDAG Bundles]
         TOOLS[Community Tools] --> BUNDLE
         PLUGINS[Engine Plugins] --> BUNDLE
         
@@ -371,13 +371,13 @@ graph TD
 
 ### Chapter 27: Future Roadmap
 
-GRAPHITE's future development focuses on pushing the boundaries of asset management technology while maintaining backward compatibility and developer-friendly design.
+TurtlGraph's future development focuses on pushing the boundaries of asset management technology while maintaining backward compatibility and developer-friendly design.
 
 #### 27.1 Version 2.0 Vision
 
 ##### 27.1.1 Advanced Graph Features
 
-The next generation of GRAPHITE will introduce revolutionary graph-based features that redefine asset management.
+The next generation of HyperDAG will introduce revolutionary graph-based features that redefine asset management.
 
 **Temporal Graphs:**
 - **Time-based Dependencies**: Assets that depend on temporal state
@@ -388,18 +388,18 @@ The next generation of GRAPHITE will introduce revolutionary graph-based feature
 ```c
 // Future: Temporal graph support
 typedef struct {
-    graphite_asset_id_t asset_id;
-    graphite_timestamp_t timestamp;
-    graphite_version_t version;
+    hyperdag_asset_id_t asset_id;
+    hyperdag_timestamp_t timestamp;
+    hyperdag_version_t version;
     const void* data;
     size_t data_size;
 } temporal_asset_t;
 
 // Access asset at specific point in time
-graphite_result_t graphite_get_asset_at_time(
-    graphite_bundle_t* bundle,
-    graphite_asset_id_t asset_id,
-    graphite_timestamp_t timestamp,
+hyperdag_result_t hyperdag_get_asset_at_time(
+    hyperdag_bundle_t* bundle,
+    hyperdag_asset_id_t asset_id,
+    hyperdag_timestamp_t timestamp,
     temporal_asset_t* out_asset
 );
 ```
@@ -426,22 +426,22 @@ graph TD
 
 ##### 27.1.2 Quantum-Safe Cryptography
 
-As quantum computing advances, GRAPHITE will adopt post-quantum cryptographic algorithms to ensure long-term security.
+As quantum computing advances, HyperDAG will adopt post-quantum cryptographic algorithms to ensure long-term security.
 
 **Post-Quantum Security:**
 ```c
 // Future: Quantum-resistant signatures
 typedef enum {
-    GRAPHITE_CRYPTO_KYBER,     // Post-quantum key exchange
-    GRAPHITE_CRYPTO_DILITHIUM, // Post-quantum signatures
-    GRAPHITE_CRYPTO_FALCON,    // Compact post-quantum signatures
-    GRAPHITE_CRYPTO_HYBRID     // Classical + post-quantum hybrid
-} graphite_crypto_algorithm_t;
+    HYPERDAG_CRYPTO_KYBER,     // Post-quantum key exchange
+    HYPERDAG_CRYPTO_DILITHIUM, // Post-quantum signatures
+    HYPERDAG_CRYPTO_FALCON,    // Compact post-quantum signatures
+    HYPERDAG_CRYPTO_HYBRID     // Classical + post-quantum hybrid
+} hyperdag_crypto_algorithm_t;
 
 typedef struct {
-    graphite_crypto_algorithm_t algorithm;
-    uint8_t public_key[GRAPHITE_MAX_PUBKEY_SIZE];
-    uint8_t signature[GRAPHITE_MAX_SIGNATURE_SIZE];
+    hyperdag_crypto_algorithm_t algorithm;
+    uint8_t public_key[HYPERDAG_MAX_PUBKEY_SIZE];
+    uint8_t signature[HYPERDAG_MAX_SIGNATURE_SIZE];
     size_t key_size;
     size_t signature_size;
 } quantum_safe_signature_t;
@@ -466,8 +466,8 @@ typedef struct {
     learning_rate_t learning_rate;
 } neural_optimizer_t;
 
-graphite_result_t graphite_enable_neural_optimization(
-    graphite_bundle_t* bundle,
+hyperdag_result_t hyperdag_enable_neural_optimization(
+    hyperdag_bundle_t* bundle,
     const neural_optimizer_t* optimizer
 );
 ```
@@ -476,7 +476,7 @@ graphite_result_t graphite_enable_neural_optimization(
 
 ##### 27.2.1 Next-Generation Console Support
 
-GRAPHITE will leverage cutting-edge hardware features of future gaming platforms.
+TurtlGraph will leverage cutting-edge hardware features of future gaming platforms.
 
 **PlayStation 6 / Xbox Series Z Integration:**
 - **Hardware-Accelerated Decompression**: Utilize dedicated decompression units
@@ -505,7 +505,7 @@ typedef struct {
 } cloud_processing_config_t;
 
 // Offload heavy processing to cloud
-graphite_result_t graphite_cloud_process_assets(
+hyperdag_result_t hyperdag_cloud_process_assets(
     const char* source_bundle,
     const char* output_bundle,
     const cloud_processing_config_t* config,
@@ -538,47 +538,47 @@ graph TD
 
 ##### 27.3.1 Industry Partnerships
 
-Strategic partnerships will establish GRAPHITE as the industry standard for asset management.
+Strategic partnerships will establish TurtlGraph as the industry standard for asset management.
 
 **Engine Partnerships:**
-- **Unreal Engine 6**: Native GRAPHITE integration
-- **Unity 2026**: First-class GRAPHITE support
-- **Godot 5.0**: Built-in GRAPHITE runtime
-- **Custom Engines**: GRAPHITE as industry standard
+- **Unreal Engine 6**: Native TurtlGraph integration
+- **Unity 2026**: First-class TurtlGraph support
+- **Godot 5.0**: Built-in TurtlGraph runtime
+- **Custom Engines**: TurtlGraph as industry standard
 
 **Platform Partnerships:**
-- **Steam Integration**: GRAPHITE bundle distribution
-- **Epic Games Store**: Native GRAPHITE support
-- **Console Platforms**: Direct GRAPHITE support
-- **Mobile Stores**: GRAPHITE app distribution
+- **Steam Integration**: TurtlGraph bundle distribution
+- **Epic Games Store**: Native TurtlGraph support
+- **Console Platforms**: Direct TurtlGraph support
+- **Mobile Stores**: TurtlGraph app distribution
 
 ##### 27.3.2 Academic Integration
 
-Educational initiatives will ensure the next generation of developers are GRAPHITE-native.
+Educational initiatives will ensure the next generation of developers are TurtlGraph-native.
 
 **Research Initiatives:**
-- **University Partnerships**: GRAPHITE research programs
+- **University Partnerships**: TurtlGraph research programs
 - **Academic Licensing**: Free educational licenses
-- **Research Publications**: Peer-reviewed GRAPHITE papers
+- **Research Publications**: Peer-reviewed TurtlGraph papers
 - **Conference Presentations**: GDC, SIGGRAPH presentations
 
 **Educational Resources:**
 - **Comprehensive Documentation**: University-level coursework
 - **Video Tutorials**: Step-by-step learning materials
 - **Sample Projects**: Educational game projects
-- **Certification Program**: Professional GRAPHITE certification
+- **Certification Program**: Professional TurtlGraph certification
 
 #### 27.4 Long-term Vision (5-10 Years)
 
 ##### 27.4.1 Industry Transformation
 
-GRAPHITE aims to become the universal standard for digital asset management across industries.
+TurtlGraph aims to become the universal standard for digital asset management across industries.
 
-**GRAPHITE as Universal Standard:**
+**TurtlGraph as Universal Standard:**
 - **Cross-Industry Adoption**: Beyond games to film, architecture, simulation
 - **ISO Standardization**: International standard for asset management
-- **Hardware Integration**: GPU/CPU vendors native GRAPHITE support
-- **Operating System Integration**: OS-level GRAPHITE support
+- **Hardware Integration**: GPU/CPU vendors native TurtlGraph support
+- **Operating System Integration**: OS-level TurtlGraph support
 
 ##### 27.4.2 Revolutionary Features
 
@@ -607,7 +607,7 @@ graph TD
         AR[Augmented Reality] --> SPATIAL[Spatial Mapping]
         AR --> COLLAB[Collaborative Editing]
         
-        ALL[GRAPHITE 2030] --> STANDARD
+        ALL[TurtlGraph 2030] --> STANDARD
         ALL --> QUANTUM
         ALL --> AR
     end
@@ -619,125 +619,125 @@ graph TD
 
 ##### A.1 Core Runtime API
 
-Complete function signatures for the GRAPHITE runtime, providing developers with comprehensive reference documentation.
+Complete function signatures for the HyperDAG runtime, providing developers with comprehensive reference documentation.
 
 ```c
-// Complete function signatures for GRAPHITE runtime
+// Complete function signatures for HyperDAG runtime
 
 // Initialization and cleanup
-graphite_result_t graphite_init(const graphite_init_options_t* options);
-graphite_result_t graphite_cleanup(void);
+hyperdag_result_t hyperdag_init(const hyperdag_init_options_t* options);
+hyperdag_result_t hyperdag_cleanup(void);
 
 // Bundle management
-graphite_result_t graphite_bundle_open(
+hyperdag_result_t hyperdag_bundle_open(
     const char* path, 
-    graphite_bundle_t** out_bundle
+    hyperdag_bundle_t** out_bundle
 );
-graphite_result_t graphite_bundle_close(graphite_bundle_t* bundle);
-graphite_result_t graphite_bundle_validate(
-    const graphite_bundle_t* bundle,
+hyperdag_result_t hyperdag_bundle_close(hyperdag_bundle_t* bundle);
+hyperdag_result_t hyperdag_bundle_validate(
+    const hyperdag_bundle_t* bundle,
     validation_flags_t flags
 );
 
 // Asset access
-graphite_result_t graphite_get_asset(
-    graphite_bundle_t* bundle,
-    graphite_asset_id_t asset_id,
-    graphite_asset_t** out_asset
+hyperdag_result_t hyperdag_get_asset(
+    hyperdag_bundle_t* bundle,
+    hyperdag_asset_id_t asset_id,
+    hyperdag_asset_t** out_asset
 );
-graphite_result_t graphite_get_asset_async(
-    graphite_bundle_t* bundle,
-    graphite_asset_id_t asset_id,
-    graphite_callback_t callback,
+hyperdag_result_t hyperdag_get_asset_async(
+    hyperdag_bundle_t* bundle,
+    hyperdag_asset_id_t asset_id,
+    hyperdag_callback_t callback,
     void* user_data
 );
-graphite_result_t graphite_release_asset(graphite_asset_t* asset);
+hyperdag_result_t hyperdag_release_asset(hyperdag_asset_t* asset);
 
 // Streaming
-graphite_result_t graphite_streaming_create(
+hyperdag_result_t hyperdag_streaming_create(
     const streaming_config_t* config,
-    graphite_streaming_t** out_streaming
+    hyperdag_streaming_t** out_streaming
 );
-graphite_result_t graphite_streaming_preload(
-    graphite_streaming_t* streaming,
+hyperdag_result_t hyperdag_streaming_preload(
+    hyperdag_streaming_t* streaming,
     const char** asset_patterns,
     size_t pattern_count
 );
-graphite_result_t graphite_streaming_destroy(graphite_streaming_t* streaming);
+hyperdag_result_t hyperdag_streaming_destroy(hyperdag_streaming_t* streaming);
 
 // Hot reload
-graphite_result_t graphite_hot_reload_enable(
-    graphite_bundle_t* bundle,
+hyperdag_result_t hyperdag_hot_reload_enable(
+    hyperdag_bundle_t* bundle,
     hot_reload_callback_t callback
 );
-graphite_result_t graphite_hot_reload_disable(graphite_bundle_t* bundle);
+hyperdag_result_t hyperdag_hot_reload_disable(hyperdag_bundle_t* bundle);
 
 // Memory management
-graphite_result_t graphite_memory_stats(memory_stats_t* out_stats);
-graphite_result_t graphite_memory_gc(void);
-graphite_result_t graphite_memory_set_limits(const memory_limits_t* limits);
+hyperdag_result_t hyperdag_memory_stats(memory_stats_t* out_stats);
+hyperdag_result_t hyperdag_memory_gc(void);
+hyperdag_result_t hyperdag_memory_set_limits(const memory_limits_t* limits);
 
 // Threading
-graphite_result_t graphite_thread_pool_create(
+hyperdag_result_t hyperdag_thread_pool_create(
     size_t thread_count,
-    graphite_thread_pool_t** out_pool
+    hyperdag_thread_pool_t** out_pool
 );
-graphite_result_t graphite_thread_pool_destroy(graphite_thread_pool_t* pool);
+hyperdag_result_t hyperdag_thread_pool_destroy(hyperdag_thread_pool_t* pool);
 
 // Platform abstraction
-graphite_result_t graphite_platform_init(const platform_config_t* config);
-graphite_result_t graphite_platform_cleanup(void);
-graphite_result_t graphite_platform_get_info(platform_info_t* out_info);
+hyperdag_result_t hyperdag_platform_init(const platform_config_t* config);
+hyperdag_result_t hyperdag_platform_cleanup(void);
+hyperdag_result_t hyperdag_platform_get_info(platform_info_t* out_info);
 ```
 
 ##### A.2 Bundle Creation API
 
-Complete API for creating and building GRAPHITE bundles programmatically.
+Complete API for creating and building HyperDAG bundles programmatically.
 
 ```c
 // Complete function signatures for bundle creation
 
 // Bundle builder
-graphite_result_t graphite_builder_create(graphite_builder_t** out_builder);
-graphite_result_t graphite_builder_destroy(graphite_builder_t* builder);
+hyperdag_result_t hyperdag_builder_create(hyperdag_builder_t** out_builder);
+hyperdag_result_t hyperdag_builder_destroy(hyperdag_builder_t* builder);
 
 // Asset addition
-graphite_result_t graphite_builder_add_asset(
-    graphite_builder_t* builder,
+hyperdag_result_t hyperdag_builder_add_asset(
+    hyperdag_builder_t* builder,
     const char* asset_path,
     const asset_metadata_t* metadata
 );
-graphite_result_t graphite_builder_add_asset_from_memory(
-    graphite_builder_t* builder,
+hyperdag_result_t hyperdag_builder_add_asset_from_memory(
+    hyperdag_builder_t* builder,
     const void* data,
     size_t data_size,
     const asset_metadata_t* metadata
 );
 
 // Dependency management
-graphite_result_t graphite_builder_add_dependency(
-    graphite_builder_t* builder,
-    graphite_asset_id_t from_asset,
-    graphite_asset_id_t to_asset,
+hyperdag_result_t hyperdag_builder_add_dependency(
+    hyperdag_builder_t* builder,
+    hyperdag_asset_id_t from_asset,
+    hyperdag_asset_id_t to_asset,
     dependency_type_t type
 );
 
 // Transform addition
-graphite_result_t graphite_builder_add_transform(
-    graphite_builder_t* builder,
+hyperdag_result_t hyperdag_builder_add_transform(
+    hyperdag_builder_t* builder,
     const transform_definition_t* transform
 );
 
 // Bundle generation
-graphite_result_t graphite_builder_build(
-    graphite_builder_t* builder,
+hyperdag_result_t hyperdag_builder_build(
+    hyperdag_builder_t* builder,
     const char* output_path,
     const build_options_t* options
 );
 
 // Validation
-graphite_result_t graphite_builder_validate(
-    const graphite_builder_t* builder,
+hyperdag_result_t hyperdag_builder_validate(
+    const hyperdag_builder_t* builder,
     validation_report_t* out_report
 );
 ```
@@ -746,7 +746,7 @@ graphite_result_t graphite_builder_validate(
 
 ##### B.1 Loading Performance
 
-Performance benchmarks across various platforms demonstrate GRAPHITE's efficiency.
+Performance benchmarks across various platforms demonstrate TurtlGraph's efficiency.
 
 **Bundle Loading Benchmarks (1GB Bundle, NVMe SSD):**
 
@@ -770,7 +770,7 @@ Performance benchmarks across various platforms demonstrate GRAPHITE's efficienc
 
 ##### B.2 Memory Performance
 
-GRAPHITE's memory management demonstrates excellent efficiency across various bundle sizes.
+HyperDAG's memory management demonstrates excellent efficiency across various bundle sizes.
 
 **Memory Fragmentation Analysis:**
 
@@ -800,77 +800,77 @@ Comprehensive error codes enable precise error handling and debugging.
 ```c
 typedef enum {
     // Success
-    GRAPHITE_SUCCESS = 0,
+    HYPERDAG_SUCCESS = 0,
     
     // General errors (1000-1999)
-    GRAPHITE_ERROR_INVALID_PARAMETER = 1000,
-    GRAPHITE_ERROR_OUT_OF_MEMORY = 1001,
-    GRAPHITE_ERROR_NOT_INITIALIZED = 1002,
-    GRAPHITE_ERROR_ALREADY_INITIALIZED = 1003,
-    GRAPHITE_ERROR_INVALID_STATE = 1004,
-    GRAPHITE_ERROR_OPERATION_FAILED = 1005,
+    HYPERDAG_ERROR_INVALID_PARAMETER = 1000,
+    HYPERDAG_ERROR_OUT_OF_MEMORY = 1001,
+    HYPERDAG_ERROR_NOT_INITIALIZED = 1002,
+    HYPERDAG_ERROR_ALREADY_INITIALIZED = 1003,
+    HYPERDAG_ERROR_INVALID_STATE = 1004,
+    HYPERDAG_ERROR_OPERATION_FAILED = 1005,
     
     // File system errors (2000-2999)
-    GRAPHITE_ERROR_FILE_NOT_FOUND = 2000,
-    GRAPHITE_ERROR_FILE_ACCESS_DENIED = 2001,
-    GRAPHITE_ERROR_FILE_CORRUPTED = 2002,
-    GRAPHITE_ERROR_FILE_TOO_LARGE = 2003,
-    GRAPHITE_ERROR_INVALID_PATH = 2004,
-    GRAPHITE_ERROR_DISK_FULL = 2005,
+    HYPERDAG_ERROR_FILE_NOT_FOUND = 2000,
+    HYPERDAG_ERROR_FILE_ACCESS_DENIED = 2001,
+    HYPERDAG_ERROR_FILE_CORRUPTED = 2002,
+    HYPERDAG_ERROR_FILE_TOO_LARGE = 2003,
+    HYPERDAG_ERROR_INVALID_PATH = 2004,
+    HYPERDAG_ERROR_DISK_FULL = 2005,
     
     // Bundle errors (3000-3999)
-    GRAPHITE_ERROR_INVALID_BUNDLE = 3000,
-    GRAPHITE_ERROR_BUNDLE_VERSION_MISMATCH = 3001,
-    GRAPHITE_ERROR_BUNDLE_CORRUPTED = 3002,
-    GRAPHITE_ERROR_BUNDLE_ENCRYPTED = 3003,
-    GRAPHITE_ERROR_BUNDLE_SIGNATURE_INVALID = 3004,
-    GRAPHITE_ERROR_BUNDLE_TOO_OLD = 3005,
-    GRAPHITE_ERROR_BUNDLE_TOO_NEW = 3006,
+    HYPERDAG_ERROR_INVALID_BUNDLE = 3000,
+    HYPERDAG_ERROR_BUNDLE_VERSION_MISMATCH = 3001,
+    HYPERDAG_ERROR_BUNDLE_CORRUPTED = 3002,
+    HYPERDAG_ERROR_BUNDLE_ENCRYPTED = 3003,
+    HYPERDAG_ERROR_BUNDLE_SIGNATURE_INVALID = 3004,
+    HYPERDAG_ERROR_BUNDLE_TOO_OLD = 3005,
+    HYPERDAG_ERROR_BUNDLE_TOO_NEW = 3006,
     
     // Asset errors (4000-4999)
-    GRAPHITE_ERROR_ASSET_NOT_FOUND = 4000,
-    GRAPHITE_ERROR_ASSET_CORRUPTED = 4001,
-    GRAPHITE_ERROR_ASSET_TYPE_MISMATCH = 4002,
-    GRAPHITE_ERROR_ASSET_DEPENDENCY_MISSING = 4003,
-    GRAPHITE_ERROR_ASSET_CIRCULAR_DEPENDENCY = 4004,
-    GRAPHITE_ERROR_ASSET_DECOMPRESSION_FAILED = 4005,
+    HYPERDAG_ERROR_ASSET_NOT_FOUND = 4000,
+    HYPERDAG_ERROR_ASSET_CORRUPTED = 4001,
+    HYPERDAG_ERROR_ASSET_TYPE_MISMATCH = 4002,
+    HYPERDAG_ERROR_ASSET_DEPENDENCY_MISSING = 4003,
+    HYPERDAG_ERROR_ASSET_CIRCULAR_DEPENDENCY = 4004,
+    HYPERDAG_ERROR_ASSET_DECOMPRESSION_FAILED = 4005,
     
     // Streaming errors (5000-5999)
-    GRAPHITE_ERROR_NETWORK_UNAVAILABLE = 5000,
-    GRAPHITE_ERROR_NETWORK_TIMEOUT = 5001,
-    GRAPHITE_ERROR_BANDWIDTH_INSUFFICIENT = 5002,
-    GRAPHITE_ERROR_STREAM_INTERRUPTED = 5003,
-    GRAPHITE_ERROR_CACHE_FULL = 5004,
+    HYPERDAG_ERROR_NETWORK_UNAVAILABLE = 5000,
+    HYPERDAG_ERROR_NETWORK_TIMEOUT = 5001,
+    HYPERDAG_ERROR_BANDWIDTH_INSUFFICIENT = 5002,
+    HYPERDAG_ERROR_STREAM_INTERRUPTED = 5003,
+    HYPERDAG_ERROR_CACHE_FULL = 5004,
     
     // Security errors (6000-6999)
-    GRAPHITE_ERROR_SIGNATURE_VERIFICATION_FAILED = 6000,
-    GRAPHITE_ERROR_ENCRYPTION_FAILED = 6001,
-    GRAPHITE_ERROR_DECRYPTION_FAILED = 6002,
-    GRAPHITE_ERROR_KEY_NOT_FOUND = 6003,
-    GRAPHITE_ERROR_CERTIFICATE_INVALID = 6004,
+    HYPERDAG_ERROR_SIGNATURE_VERIFICATION_FAILED = 6000,
+    HYPERDAG_ERROR_ENCRYPTION_FAILED = 6001,
+    HYPERDAG_ERROR_DECRYPTION_FAILED = 6002,
+    HYPERDAG_ERROR_KEY_NOT_FOUND = 6003,
+    HYPERDAG_ERROR_CERTIFICATE_INVALID = 6004,
     
     // Platform errors (7000-7999)
-    GRAPHITE_ERROR_PLATFORM_UNSUPPORTED = 7000,
-    GRAPHITE_ERROR_GPU_INSUFFICIENT = 7001,
-    GRAPHITE_ERROR_CPU_INSUFFICIENT = 7002,
-    GRAPHITE_ERROR_MEMORY_INSUFFICIENT = 7003,
-    GRAPHITE_ERROR_STORAGE_INSUFFICIENT = 7004
-} graphite_result_t;
+    HYPERDAG_ERROR_PLATFORM_UNSUPPORTED = 7000,
+    HYPERDAG_ERROR_GPU_INSUFFICIENT = 7001,
+    HYPERDAG_ERROR_CPU_INSUFFICIENT = 7002,
+    HYPERDAG_ERROR_MEMORY_INSUFFICIENT = 7003,
+    HYPERDAG_ERROR_STORAGE_INSUFFICIENT = 7004
+} hyperdag_result_t;
 
 // Error information structure
 typedef struct {
-    graphite_result_t code;
+    hyperdag_result_t code;
     const char* message;
     const char* function;
     const char* file;
     int line;
     uint64_t timestamp;
     void* context;
-} graphite_error_info_t;
+} hyperdag_error_info_t;
 
 // Get detailed error information
-const graphite_error_info_t* graphite_get_last_error(void);
-const char* graphite_error_string(graphite_result_t result);
+const hyperdag_error_info_t* hyperdag_get_last_error(void);
+const char* hyperdag_error_string(hyperdag_result_t result);
 ```
 
 ##### C.2 Diagnostic Tools
@@ -890,7 +890,7 @@ typedef struct {
     double fragmentation_ratio;
 } memory_diagnostics_t;
 
-graphite_result_t graphite_memory_diagnostics(memory_diagnostics_t* out_diag);
+hyperdag_result_t hyperdag_memory_diagnostics(memory_diagnostics_t* out_diag);
 ```
 
 **Performance Diagnostics:**
@@ -906,7 +906,7 @@ typedef struct {
     size_t network_bytes_cached;
 } performance_diagnostics_t;
 
-graphite_result_t graphite_performance_diagnostics(performance_diagnostics_t* out_diag);
+hyperdag_result_t hyperdag_performance_diagnostics(performance_diagnostics_t* out_diag);
 ```
 
 #### Appendix D: Platform-Specific Implementation Notes
@@ -918,7 +918,7 @@ Windows-specific optimizations leverage DirectStorage and other platform feature
 **DirectStorage Integration:**
 ```c
 // Windows-specific DirectStorage optimization
-#ifdef GRAPHITE_PLATFORM_WINDOWS
+#ifdef HYPERDAG_PLATFORM_WINDOWS
 typedef struct {
     bool enable_directstorage;
     ID3D12Device* d3d12_device;
@@ -926,7 +926,7 @@ typedef struct {
     DSTORAGE_FACTORY* factory;
 } windows_config_t;
 
-graphite_result_t graphite_windows_init(const windows_config_t* config);
+hyperdag_result_t hyperdag_windows_init(const windows_config_t* config);
 #endif
 ```
 
@@ -942,7 +942,7 @@ PS5-specific features maximize the console's advanced I/O architecture.
 
 **Hardware Accelerated Decompression:**
 ```c
-#ifdef GRAPHITE_PLATFORM_PS5
+#ifdef HYPERDAG_PLATFORM_PS5
 typedef struct {
     bool enable_hw_decompression;
     size_t decompression_units;
@@ -950,7 +950,7 @@ typedef struct {
     size_t scratch_memory_size;
 } ps5_config_t;
 
-graphite_result_t graphite_ps5_init(const ps5_config_t* config);
+hyperdag_result_t hyperdag_ps5_init(const ps5_config_t* config);
 #endif
 ```
 
@@ -966,7 +966,7 @@ Mobile optimizations balance performance with battery life and thermal constrain
 
 **iOS/Android Optimization:**
 ```c
-#ifdef GRAPHITE_PLATFORM_MOBILE
+#ifdef HYPERDAG_PLATFORM_MOBILE
 typedef struct {
     bool enable_background_loading;
     thermal_management_mode_t thermal_mode;
@@ -974,7 +974,7 @@ typedef struct {
     size_t memory_pressure_threshold;
 } mobile_config_t;
 
-graphite_result_t graphite_mobile_init(const mobile_config_t* config);
+hyperdag_result_t hyperdag_mobile_init(const mobile_config_t* config);
 #endif
 ```
 
@@ -988,21 +988,21 @@ graphite_result_t graphite_mobile_init(const mobile_config_t* config);
 
 ##### E.1 License Types
 
-GRAPHITE offers flexible licensing options to suit different use cases.
+TurtlGraph offers flexible licensing options to suit different use cases.
 
-**GRAPHITE Runtime License (Open Source):**
+**TurtlGraph Runtime License (Open Source):**
 - **License**: Apache 2.0
 - **Usage**: Free for all commercial and non-commercial use
 - **Requirements**: Attribution in documentation
 - **Warranty**: Provided as-is, no warranty
 
-**GRAPHITE Pro License (Commercial):**
+**TurtlGraph Pro License (Commercial):**
 - **License**: Commercial license with support
 - **Usage**: Enterprise support and additional features
 - **Requirements**: Paid subscription
 - **Warranty**: Commercial support and warranty
 
-**GRAPHITE Educational License:**
+**TurtlGraph Educational License:**
 - **License**: Free for educational institutions
 - **Usage**: Teaching and research only
 - **Requirements**: Educational verification
@@ -1011,7 +1011,7 @@ GRAPHITE offers flexible licensing options to suit different use cases.
 ##### E.2 Patent Information
 
 **Defensive Patent Strategy:**
-GRAPHITE incorporates several innovative techniques that may be covered by patents. The project maintains a defensive patent strategy to protect the open source community while encouraging innovation.
+TurtlGraph incorporates several innovative techniques that may be covered by patents. The project maintains a defensive patent strategy to protect the open source community while encouraging innovation.
 
 **Known Patent Areas:**
 - Asset graph compression algorithms
@@ -1021,7 +1021,7 @@ GRAPHITE incorporates several innovative techniques that may be covered by paten
 
 ##### E.3 Trademark Information
 
-**GRAPHITE Trademark:**
+**TurtlGraph Trademark:**
 - **Owner**: [Open Source Foundation/Company]
 - **Registration**: Registered in major jurisdictions
 - **Usage Guidelines**: Available for compliant implementations
@@ -1029,11 +1029,11 @@ GRAPHITE incorporates several innovative techniques that may be covered by paten
 
 ### Conclusion
 
-The GRAPHITE specification represents a comprehensive, production-ready solution for next-generation asset management in interactive applications. With its graph-centric architecture, advanced streaming capabilities, and cross-platform optimization, GRAPHITE provides developers with the tools needed to create high-performance applications while maintaining flexibility and ease of use.
+The TurtlGraph specification represents a comprehensive, production-ready solution for next-generation asset management in interactive applications. With its graph-centric architecture, advanced streaming capabilities, and cross-platform optimization, TurtlGraph provides developers with the tools needed to create high-performance applications while maintaining flexibility and ease of use.
 
 This specification serves as both a technical reference and implementation guide, enabling the creation of a unified ecosystem for asset management across the game development industry and beyond.
 
-**GRAPHITE: Where every asset is a graph, and every graph tells a story.**
+**TurtlGraph: Where every asset is a graph, and every graph tells a story.**
 
 ### Cross-References
 - [Part 5: Development Tools](../volume-2-development-integration/part-5-development-tools.md) - Build system basics

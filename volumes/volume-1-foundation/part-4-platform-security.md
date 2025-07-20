@@ -20,17 +20,17 @@
 
 ### Overview
 
-This part covers GRAPHITE's security architecture and platform abstraction layer, providing the foundation for safe, cross-platform operation. Chapter 10 details the comprehensive security model protecting against malicious inputs and ensuring data integrity. Chapter 11 presents the platform abstraction layer enabling efficient operation across Windows, Linux, macOS, and other systems.
+This part covers TurtlGraph's security architecture and platform abstraction layer, providing the foundation for safe, cross-platform operation. Chapter 10 details the comprehensive security model protecting against malicious inputs and ensuring data integrity. Chapter 11 presents the platform abstraction layer enabling efficient operation across Windows, Linux, macOS, and other systems.
 
 ---
 
 ## Chapter 10: Security & Encryption
 
-GRAPHITE implements defense-in-depth security through cryptographic integrity verification, input validation, and comprehensive threat modeling. The security architecture protects against both malicious attacks and accidental corruption while maintaining high performance.
+TurtlGraph implements defense-in-depth security through cryptographic integrity verification, input validation, and comprehensive threat modeling. The security architecture protects against both malicious attacks and accidental corruption while maintaining high performance.
 
 ### Threat Model
 
-GRAPHITE's security design addresses multiple attack vectors:
+TurtlGraph's security design addresses multiple attack vectors:
 
 ```mermaid
 graph TB
@@ -65,32 +65,32 @@ graph TB
 ```c
 // Threat assessment matrix
 typedef enum {
-    GRAPHITE_THREAT_MALFORMED_BUNDLE,     // Crafted to crash parser
-    GRAPHITE_THREAT_OVERSIZED_ALLOCATION, // Memory exhaustion attack
-    GRAPHITE_THREAT_INFINITE_RECURSION,   // Stack overflow via deep graphs
-    GRAPHITE_THREAT_INTEGER_OVERFLOW,     // Arithmetic overflow exploitation
-    GRAPHITE_THREAT_PATH_TRAVERSAL,       // Directory traversal in paths
-    GRAPHITE_THREAT_DECOMPRESSION_BOMB,   // ZIP bomb style attack
-    GRAPHITE_THREAT_TIMING_ATTACK,        // Side-channel timing analysis
-    GRAPHITE_THREAT_CACHE_COLLISION,      // Algorithmic complexity attack
-    GRAPHITE_THREAT_SUPPLY_CHAIN,         // Compromised build pipeline
-    GRAPHITE_THREAT_PRIVILEGE_ESCALATION, // Local privilege escalation
-    GRAPHITE_THREAT_COUNT
-} graphite_threat_type;
+    HYPERDAG_THREAT_MALFORMED_BUNDLE,     // Crafted to crash parser
+    HYPERDAG_THREAT_OVERSIZED_ALLOCATION, // Memory exhaustion attack
+    HYPERDAG_THREAT_INFINITE_RECURSION,   // Stack overflow via deep graphs
+    HYPERDAG_THREAT_INTEGER_OVERFLOW,     // Arithmetic overflow exploitation
+    HYPERDAG_THREAT_PATH_TRAVERSAL,       // Directory traversal in paths
+    HYPERDAG_THREAT_DECOMPRESSION_BOMB,   // ZIP bomb style attack
+    HYPERDAG_THREAT_TIMING_ATTACK,        // Side-channel timing analysis
+    HYPERDAG_THREAT_CACHE_COLLISION,      // Algorithmic complexity attack
+    HYPERDAG_THREAT_SUPPLY_CHAIN,         // Compromised build pipeline
+    HYPERDAG_THREAT_PRIVILEGE_ESCALATION, // Local privilege escalation
+    HYPERDAG_THREAT_COUNT
+} hyperdag_threat_type;
 
 // Risk assessment for each threat
 typedef struct {
-    graphite_threat_type type;
+    hyperdag_threat_type type;
     const char* description;
     uint8_t likelihood;     // 1-5 scale
     uint8_t impact;         // 1-5 scale
     uint8_t risk_score;     // likelihood * impact
     const char* mitigation;
-} graphite_threat_assessment;
+} hyperdag_threat_assessment;
 
-static const graphite_threat_assessment threat_matrix[] = {
+static const hyperdag_threat_assessment threat_matrix[] = {
     {
-        .type = GRAPHITE_THREAT_MALFORMED_BUNDLE,
+        .type = HYPERDAG_THREAT_MALFORMED_BUNDLE,
         .description = "Maliciously crafted bundle designed to crash parser",
         .likelihood = 4,
         .impact = 3,
@@ -98,7 +98,7 @@ static const graphite_threat_assessment threat_matrix[] = {
         .mitigation = "Comprehensive input validation, fuzzing, bounds checking"
     },
     {
-        .type = GRAPHITE_THREAT_OVERSIZED_ALLOCATION,
+        .type = HYPERDAG_THREAT_OVERSIZED_ALLOCATION,
         .description = "Bundle with huge size fields causing memory exhaustion",
         .likelihood = 3,
         .impact = 4,
@@ -106,7 +106,7 @@ static const graphite_threat_assessment threat_matrix[] = {
         .mitigation = "Memory limits, allocation guards, progressive loading"
     },
     {
-        .type = GRAPHITE_THREAT_DECOMPRESSION_BOMB,
+        .type = HYPERDAG_THREAT_DECOMPRESSION_BOMB,
         .description = "Highly compressed data expanding to huge size",
         .likelihood = 2,
         .impact = 4,
@@ -141,10 +141,10 @@ typedef struct {
     bool require_signature;          // Require cryptographic signature
     bool require_integrity_check;    // Require full integrity verification
     bool strict_parsing;             // Reject any ambiguous content
-} graphite_security_context;
+} hyperdag_security_context;
 
 // Predefined security contexts
-static const graphite_security_context graphite_security_strict = {
+static const hyperdag_security_context hyperdag_security_strict = {
     .max_memory_allocation = 64 * 1024 * 1024,  // 64 MB
     .max_total_memory = 512 * 1024 * 1024,      // 512 MB
     .max_decompressed_size = 1024 * 1024 * 1024, // 1 GB
@@ -171,11 +171,11 @@ typedef struct {
     const uint8_t* data;
     size_t size;
     size_t position;
-    const graphite_security_context* security;
+    const hyperdag_security_context* security;
     uint32_t recursion_depth;
     uint64_t start_time_ms;
     size_t allocated_memory;
-} graphite_secure_parser;
+} hyperdag_secure_parser;
 
 // Safe integer operations with overflow checking
 static inline bool safe_add_size_t(size_t a, size_t b, size_t* result) {
@@ -220,8 +220,8 @@ bool validate_chunk_entry(const chunk_entry* entry, uint64_t file_size) {
 }
 
 // Secure varint decoding with overflow protection
-static graphite_result secure_read_varint(
-    graphite_secure_parser* parser,
+static hyperdag_result secure_read_varint(
+    hyperdag_secure_parser* parser,
     uint64_t* value
 ) {
     *value = 0;
@@ -229,31 +229,31 @@ static graphite_result secure_read_varint(
     
     for (int i = 0; i < 10; i++) { // Max 10 bytes for 64-bit varint
         uint8_t byte;
-        graphite_result result = secure_read_bytes(parser, &byte, 1);
-        if (result != GRAPHITE_SUCCESS) {
+        hyperdag_result result = secure_read_bytes(parser, &byte, 1);
+        if (result != HYPERDAG_SUCCESS) {
             return result;
         }
         
         // Check for overflow
         if (shift >= 64) {
-            return GRAPHITE_ERROR_VARINT_OVERFLOW;
+            return HYPERDAG_ERROR_VARINT_OVERFLOW;
         }
         
         uint64_t value_part = (byte & 0x7F);
         if (shift < 64 && value_part > (UINT64_MAX >> shift)) {
-            return GRAPHITE_ERROR_VARINT_OVERFLOW;
+            return HYPERDAG_ERROR_VARINT_OVERFLOW;
         }
         
         *value |= value_part << shift;
         
         if ((byte & 0x80) == 0) {
-            return GRAPHITE_SUCCESS;
+            return HYPERDAG_SUCCESS;
         }
         
         shift += 7;
     }
     
-    return GRAPHITE_ERROR_VARINT_TOO_LONG;
+    return HYPERDAG_ERROR_VARINT_TOO_LONG;
 }
 ```
 
@@ -261,8 +261,8 @@ static graphite_result secure_read_varint(
 
 ```c
 // Secure string validation with UTF-8 verification
-static graphite_result secure_validate_string(const char* str, size_t length) {
-    if (!str) return GRAPHITE_ERROR_NULL_POINTER;
+static hyperdag_result secure_validate_string(const char* str, size_t length) {
+    if (!str) return HYPERDAG_ERROR_NULL_POINTER;
     
     // Check for null termination
     bool found_null = false;
@@ -279,7 +279,7 @@ static graphite_result secure_validate_string(const char* str, size_t length) {
             if ((byte & 0xE0) == 0xC0) {
                 // 2-byte sequence
                 if (i + 1 >= length || (str[i + 1] & 0xC0) != 0x80) {
-                    return GRAPHITE_ERROR_INVALID_UTF8;
+                    return HYPERDAG_ERROR_INVALID_UTF8;
                 }
                 i++; // Skip next byte
             } else if ((byte & 0xF0) == 0xE0) {
@@ -287,7 +287,7 @@ static graphite_result secure_validate_string(const char* str, size_t length) {
                 if (i + 2 >= length || 
                     (str[i + 1] & 0xC0) != 0x80 || 
                     (str[i + 2] & 0xC0) != 0x80) {
-                    return GRAPHITE_ERROR_INVALID_UTF8;
+                    return HYPERDAG_ERROR_INVALID_UTF8;
                 }
                 i += 2; // Skip next 2 bytes
             } else if ((byte & 0xF8) == 0xF0) {
@@ -296,32 +296,32 @@ static graphite_result secure_validate_string(const char* str, size_t length) {
                     (str[i + 1] & 0xC0) != 0x80 ||
                     (str[i + 2] & 0xC0) != 0x80 ||
                     (str[i + 3] & 0xC0) != 0x80) {
-                    return GRAPHITE_ERROR_INVALID_UTF8;
+                    return HYPERDAG_ERROR_INVALID_UTF8;
                 }
                 i += 3; // Skip next 3 bytes
             } else {
-                return GRAPHITE_ERROR_INVALID_UTF8;
+                return HYPERDAG_ERROR_INVALID_UTF8;
             }
         }
         
         // Check for path traversal attempts
         if (i + 2 < length && str[i] == '.' && str[i+1] == '.' && 
             (str[i+2] == '/' || str[i+2] == '\\')) {
-            return GRAPHITE_ERROR_PATH_TRAVERSAL;
+            return HYPERDAG_ERROR_PATH_TRAVERSAL;
         }
     }
     
     if (!found_null) {
-        return GRAPHITE_ERROR_STRING_NOT_TERMINATED;
+        return HYPERDAG_ERROR_STRING_NOT_TERMINATED;
     }
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
 ```
 
 ### Cryptographic Integrity
 
-GRAPHITE uses BLAKE3 Merkle trees for cryptographic verification:
+HyperDAG uses BLAKE3 Merkle trees for cryptographic verification:
 
 ```mermaid
 graph TB
@@ -384,60 +384,60 @@ typedef struct {
 } hash_branch;
 
 // Verify integrity of entire bundle
-graphite_result verify_bundle_integrity(
-    const graphite_bundle* bundle,
+hyperdag_result verify_bundle_integrity(
+    const hyperdag_bundle* bundle,
     const uint8_t* expected_root_hash
 ) {
     // Load hash root from integrity_idx
-    const graphite_graph* hash_root = graphite_get_chunk_graph(
+    const hyperdag_graph* hash_root = hyperdag_get_chunk_graph(
         bundle, bundle->header.integrity_idx);
     
     if (!hash_root) {
-        return GRAPHITE_ERROR_NO_INTEGRITY_DATA;
+        return HYPERDAG_ERROR_NO_INTEGRITY_DATA;
     }
     
     // Recursively verify tree
     uint8_t computed_root_hash[32];
-    graphite_result result = verify_hash_tree(
+    hyperdag_result result = verify_hash_tree(
         bundle, hash_root, computed_root_hash);
     
-    if (result != GRAPHITE_SUCCESS) {
+    if (result != HYPERDAG_SUCCESS) {
         return result;
     }
     
     // Compare with expected hash
     if (memcmp(computed_root_hash, expected_root_hash, 32) != 0) {
-        return GRAPHITE_ERROR_INTEGRITY_MISMATCH;
+        return HYPERDAG_ERROR_INTEGRITY_MISMATCH;
     }
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
 
 // Recursive hash tree verification
-static graphite_result verify_hash_tree(
-    const graphite_bundle* bundle,
-    const graphite_graph* node,
+static hyperdag_result verify_hash_tree(
+    const hyperdag_bundle* bundle,
+    const hyperdag_graph* node,
     uint8_t* output_hash
 ) {
     // Check node type
-    uint32_t kind = graphite_get_property_u32(node, "kind", 0);
+    uint32_t kind = hyperdag_get_property_u32(node, "kind", 0);
     
     if (kind == HASH_NODE_LEAF) {
         // Verify leaf node
-        uint32_t target_idx = graphite_get_property_u32(
+        uint32_t target_idx = hyperdag_get_property_u32(
             node, "target_chunk_idx", INVALID_CHUNK);
         
         if (target_idx >= bundle->header.chunk_count) {
-            return GRAPHITE_ERROR_INVALID_CHUNK_INDEX;
+            return HYPERDAG_ERROR_INVALID_CHUNK_INDEX;
         }
         
         // Get target chunk data
         const void* chunk_data;
         size_t chunk_size;
-        graphite_result result = graphite_get_chunk_data(
+        hyperdag_result result = hyperdag_get_chunk_data(
             bundle, target_idx, &chunk_data, &chunk_size);
         
-        if (result != GRAPHITE_SUCCESS) {
+        if (result != HYPERDAG_SUCCESS) {
             return result;
         }
         
@@ -449,16 +449,16 @@ static graphite_result verify_hash_tree(
         blake3_hasher_finalize(&hasher, computed_hash, 32);
         
         // Get stored hash
-        const void* stored_hash = graphite_get_property_blob(
+        const void* stored_hash = hyperdag_get_property_blob(
             node, "digest", NULL);
         
         if (!stored_hash) {
-            return GRAPHITE_ERROR_NO_HASH_DATA;
+            return HYPERDAG_ERROR_NO_HASH_DATA;
         }
         
         // Compare hashes
         if (memcmp(computed_hash, stored_hash, 32) != 0) {
-            return GRAPHITE_ERROR_HASH_MISMATCH;
+            return HYPERDAG_ERROR_HASH_MISMATCH;
         }
         
         // Return hash for parent computation
@@ -470,18 +470,18 @@ static graphite_result verify_hash_tree(
         blake3_hasher_init(&hasher);
         
         // Process all child nodes
-        uint32_t child_count = graphite_node_count(node);
+        uint32_t child_count = hyperdag_node_count(node);
         for (uint32_t i = 0; i < child_count; i++) {
-            const graphite_graph* child = graphite_get_node(node, i);
+            const hyperdag_graph* child = hyperdag_get_node(node, i);
             if (!child) {
-                return GRAPHITE_ERROR_INVALID_NODE;
+                return HYPERDAG_ERROR_INVALID_NODE;
             }
             
             uint8_t child_hash[32];
-            graphite_result result = verify_hash_tree(
+            hyperdag_result result = verify_hash_tree(
                 bundle, child, child_hash);
             
-            if (result != GRAPHITE_SUCCESS) {
+            if (result != HYPERDAG_SUCCESS) {
                 return result;
             }
             
@@ -493,18 +493,18 @@ static graphite_result verify_hash_tree(
         blake3_hasher_finalize(&hasher, output_hash, 32);
         
         // Verify against stored hash if present
-        const void* stored_hash = graphite_get_property_blob(
+        const void* stored_hash = hyperdag_get_property_blob(
             node, "digest", NULL);
         
         if (stored_hash && memcmp(output_hash, stored_hash, 32) != 0) {
-            return GRAPHITE_ERROR_HASH_MISMATCH;
+            return HYPERDAG_ERROR_HASH_MISMATCH;
         }
         
     } else {
-        return GRAPHITE_ERROR_INVALID_HASH_NODE;
+        return HYPERDAG_ERROR_INVALID_HASH_NODE;
     }
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
 ```
 
@@ -521,15 +521,15 @@ typedef struct {
     uint8_t signature[crypto_sign_BYTES];
     uint64_t timestamp;
     char signer_id[64];
-} graphite_signature;
+} hyperdag_signature;
 
 typedef struct {
     uint32_t signature_count;
-    graphite_signature signatures[];
-} graphite_signature_block;
+    hyperdag_signature signatures[];
+} hyperdag_signature_block;
 
 // Sign a bundle
-graphite_result graphite_sign_bundle(
+hyperdag_result hyperdag_sign_bundle(
     const char* bundle_path,
     const uint8_t* private_key,
     const char* signer_id
@@ -537,7 +537,7 @@ graphite_result graphite_sign_bundle(
     // Read bundle data
     FILE* file = fopen(bundle_path, "rb");
     if (!file) {
-        return GRAPHITE_ERROR_FILE_OPEN;
+        return HYPERDAG_ERROR_FILE_OPEN;
     }
     
     fseek(file, 0, SEEK_END);
@@ -547,13 +547,13 @@ graphite_result graphite_sign_bundle(
     uint8_t* bundle_data = malloc(file_size);
     if (!bundle_data) {
         fclose(file);
-        return GRAPHITE_ERROR_ALLOCATION;
+        return HYPERDAG_ERROR_ALLOCATION;
     }
     
     if (fread(bundle_data, 1, file_size, file) != file_size) {
         free(bundle_data);
         fclose(file);
-        return GRAPHITE_ERROR_IO;
+        return HYPERDAG_ERROR_IO;
     }
     fclose(file);
     
@@ -565,7 +565,7 @@ graphite_result graphite_sign_bundle(
     blake3_hasher_finalize(&hasher, bundle_hash, 32);
     
     // Create signature
-    graphite_signature sig = {0};
+    hyperdag_signature sig = {0};
     
     // Extract public key from private key
     memcpy(sig.public_key, private_key + 32, crypto_sign_PUBLICKEYBYTES);
@@ -574,33 +574,33 @@ graphite_result graphite_sign_bundle(
     crypto_sign_detached(sig.signature, NULL, bundle_hash, 32, private_key);
     
     // Set metadata
-    sig.timestamp = graphite_get_time_ms();
+    sig.timestamp = hyperdag_get_time_ms();
     strncpy(sig.signer_id, signer_id, sizeof(sig.signer_id) - 1);
     
     // Append signature to bundle
     // (Implementation depends on bundle format details)
     
     free(bundle_data);
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
 
 // Verify bundle signatures
-graphite_result graphite_verify_signatures(
-    const graphite_bundle* bundle,
-    const graphite_trust_store* trust_store
+hyperdag_result hyperdag_verify_signatures(
+    const hyperdag_bundle* bundle,
+    const hyperdag_trust_store* trust_store
 ) {
     // Get signature block
-    const graphite_signature_block* sig_block = 
-        graphite_get_signature_block(bundle);
+    const hyperdag_signature_block* sig_block = 
+        hyperdag_get_signature_block(bundle);
     
     if (!sig_block || sig_block->signature_count == 0) {
-        return GRAPHITE_ERROR_NO_SIGNATURES;
+        return HYPERDAG_ERROR_NO_SIGNATURES;
     }
     
     // Calculate bundle hash
     uint8_t bundle_hash[32];
-    graphite_result result = calculate_bundle_hash(bundle, bundle_hash);
-    if (result != GRAPHITE_SUCCESS) {
+    hyperdag_result result = calculate_bundle_hash(bundle, bundle_hash);
+    if (result != HYPERDAG_SUCCESS) {
         return result;
     }
     
@@ -608,7 +608,7 @@ graphite_result graphite_verify_signatures(
     bool valid_signature_found = false;
     
     for (uint32_t i = 0; i < sig_block->signature_count; i++) {
-        const graphite_signature* sig = &sig_block->signatures[i];
+        const hyperdag_signature* sig = &sig_block->signatures[i];
         
         // Check if public key is trusted
         if (!is_key_trusted(trust_store, sig->public_key)) {
@@ -626,7 +626,7 @@ graphite_result graphite_verify_signatures(
     }
     
     return valid_signature_found ? 
-           GRAPHITE_SUCCESS : GRAPHITE_ERROR_SIGNATURE_INVALID;
+           HYPERDAG_SUCCESS : HYPERDAG_ERROR_SIGNATURE_INVALID;
 }
 ```
 
@@ -644,19 +644,19 @@ typedef struct {
     uint32_t max_time_ms;
     void* (*progress_callback)(size_t decompressed, void* user_data);
     void* user_data;
-} graphite_secure_decompress_config;
+} hyperdag_secure_decompress_config;
 
-graphite_result graphite_secure_decompress(
+hyperdag_result hyperdag_secure_decompress(
     const void* compressed_data,
     size_t compressed_size,
     void** decompressed_data,
     size_t* decompressed_size,
-    const graphite_secure_decompress_config* config
+    const hyperdag_secure_decompress_config* config
 ) {
     // Initialize zstd decompression
     ZSTD_DCtx* dctx = ZSTD_createDCtx();
     if (!dctx) {
-        return GRAPHITE_ERROR_DECOMPRESS_INIT;
+        return HYPERDAG_ERROR_DECOMPRESS_INIT;
     }
     
     // Get decompressed size hint
@@ -665,7 +665,7 @@ graphite_result graphite_secure_decompress(
     
     if (estimated_size == ZSTD_CONTENTSIZE_ERROR) {
         ZSTD_freeDCtx(dctx);
-        return GRAPHITE_ERROR_INVALID_COMPRESSED_DATA;
+        return HYPERDAG_ERROR_INVALID_COMPRESSED_DATA;
     }
     
     if (estimated_size == ZSTD_CONTENTSIZE_UNKNOWN) {
@@ -676,7 +676,7 @@ graphite_result graphite_secure_decompress(
     // Validate against limits
     if (estimated_size > config->max_output_size) {
         ZSTD_freeDCtx(dctx);
-        return GRAPHITE_ERROR_SIZE_LIMIT;
+        return HYPERDAG_ERROR_SIZE_LIMIT;
     }
     
     // Check compression ratio
@@ -684,7 +684,7 @@ graphite_result graphite_secure_decompress(
         size_t ratio = estimated_size / compressed_size;
         if (ratio > config->max_ratio) {
             ZSTD_freeDCtx(dctx);
-            return GRAPHITE_ERROR_DECOMPRESS_RATIO;
+            return HYPERDAG_ERROR_DECOMPRESS_RATIO;
         }
     }
     
@@ -692,11 +692,11 @@ graphite_result graphite_secure_decompress(
     void* output = malloc(estimated_size);
     if (!output) {
         ZSTD_freeDCtx(dctx);
-        return GRAPHITE_ERROR_ALLOCATION;
+        return HYPERDAG_ERROR_ALLOCATION;
     }
     
     // Decompress with timeout checking
-    uint64_t start_time = graphite_get_time_ms();
+    uint64_t start_time = hyperdag_get_time_ms();
     
     size_t decompressed = ZSTD_decompressDCtx(
         dctx, output, estimated_size,
@@ -707,20 +707,20 @@ graphite_result graphite_secure_decompress(
     // Check for errors
     if (ZSTD_isError(decompressed)) {
         free(output);
-        return GRAPHITE_ERROR_DECOMPRESS_FAILED;
+        return HYPERDAG_ERROR_DECOMPRESS_FAILED;
     }
     
     // Check time limit
-    uint64_t elapsed = graphite_get_time_ms() - start_time;
+    uint64_t elapsed = hyperdag_get_time_ms() - start_time;
     if (elapsed > config->max_time_ms) {
         free(output);
-        return GRAPHITE_ERROR_TIMEOUT;
+        return HYPERDAG_ERROR_TIMEOUT;
     }
     
     *decompressed_data = output;
     *decompressed_size = decompressed;
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
 ```
 
@@ -731,7 +731,7 @@ Comprehensive fuzzing integration for security testing:
 ```c
 // libFuzzer entry point
 int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
-    if (size < sizeof(graphite_hdr)) {
+    if (size < sizeof(hyperdag_hdr)) {
         return 0;
     }
     
@@ -742,15 +742,15 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     close(fd);
     
     // Set strict security context
-    graphite_security_context security = graphite_security_strict;
+    hyperdag_security_context security = hyperdag_security_strict;
     
     // Try to load - should never crash
-    graphite_bundle* bundle = graphite_open_secure(temp_path, &security);
+    hyperdag_bundle* bundle = hyperdag_open_secure(temp_path, &security);
     if (bundle) {
         // Exercise API surface
-        const graphite_graph* root = graphite_root(bundle);
+        const hyperdag_graph* root = hyperdag_root(bundle);
         if (root) {
-            uint32_t node_count = graphite_node_count(root);
+            uint32_t node_count = hyperdag_node_count(root);
             
             // Traverse graph with depth limit
             traverse_graph_secure(root, 0, security.max_recursion_depth);
@@ -764,7 +764,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             verify_bundle_integrity(bundle, bundle->header.file_digest);
         }
         
-        graphite_close(bundle);
+        hyperdag_close(bundle);
     }
     
     unlink(temp_path);
@@ -782,8 +782,8 @@ int main(int argc, char** argv) {
         size_t size = __AFL_FUZZ_TESTCASE_LEN;
         
         // Fuzz with different security contexts
-        fuzz_with_context(data, size, &graphite_security_strict);
-        fuzz_with_context(data, size, &graphite_security_development);
+        fuzz_with_context(data, size, &hyperdag_security_strict);
+        fuzz_with_context(data, size, &hyperdag_security_development);
     }
     
     return 0;
@@ -794,7 +794,7 @@ int main(int argc, char** argv) {
 
 ## Chapter 11: Platform Abstraction Layer
 
-GRAPHITE's platform abstraction layer enables efficient cross-platform operation while leveraging platform-specific optimizations. The design balances portability with performance, providing a clean interface that adapts to each platform's strengths.
+TurtlGraph's platform abstraction layer enables efficient cross-platform operation while leveraging platform-specific optimizations. The design balances portability with performance, providing a clean interface that adapts to each platform's strengths.
 
 ### Platform Detection
 
@@ -803,81 +803,81 @@ Comprehensive compile-time platform and architecture detection:
 ```c
 // Platform detection macros
 #if defined(_WIN32) || defined(_WIN64)
-    #define GRAPHITE_PLATFORM_WINDOWS
+    #define HYPERDAG_PLATFORM_WINDOWS
     #ifdef _WIN64
-        #define GRAPHITE_PLATFORM_WIN64
+        #define HYPERDAG_PLATFORM_WIN64
     #else
-        #define GRAPHITE_PLATFORM_WIN32
+        #define HYPERDAG_PLATFORM_WIN32
     #endif
 #elif defined(__linux__)
-    #define GRAPHITE_PLATFORM_LINUX
+    #define HYPERDAG_PLATFORM_LINUX
     #ifdef __ANDROID__
-        #define GRAPHITE_PLATFORM_ANDROID
+        #define HYPERDAG_PLATFORM_ANDROID
     #endif
 #elif defined(__APPLE__)
     #include <TargetConditionals.h>
     #if TARGET_OS_MAC
-        #define GRAPHITE_PLATFORM_MACOS
+        #define HYPERDAG_PLATFORM_MACOS
     #elif TARGET_OS_IPHONE
-        #define GRAPHITE_PLATFORM_IOS
+        #define HYPERDAG_PLATFORM_IOS
     #endif
 #elif defined(__FreeBSD__)
-    #define GRAPHITE_PLATFORM_FREEBSD
+    #define HYPERDAG_PLATFORM_FREEBSD
 #elif defined(__EMSCRIPTEN__)
-    #define GRAPHITE_PLATFORM_WEB
+    #define HYPERDAG_PLATFORM_WEB
 #endif
 
 // Architecture detection
 #if defined(_M_X64) || defined(__x86_64__)
-    #define GRAPHITE_ARCH_X64
-    #define GRAPHITE_ARCH_64BIT
+    #define HYPERDAG_ARCH_X64
+    #define HYPERDAG_ARCH_64BIT
 #elif defined(_M_IX86) || defined(__i386__)
-    #define GRAPHITE_ARCH_X86
-    #define GRAPHITE_ARCH_32BIT
+    #define HYPERDAG_ARCH_X86
+    #define HYPERDAG_ARCH_32BIT
 #elif defined(_M_ARM64) || defined(__aarch64__)
-    #define GRAPHITE_ARCH_ARM64
-    #define GRAPHITE_ARCH_64BIT
+    #define HYPERDAG_ARCH_ARM64
+    #define HYPERDAG_ARCH_64BIT
 #elif defined(_M_ARM) || defined(__arm__)
-    #define GRAPHITE_ARCH_ARM32
-    #define GRAPHITE_ARCH_32BIT
+    #define HYPERDAG_ARCH_ARM32
+    #define HYPERDAG_ARCH_32BIT
 #elif defined(__riscv) && __riscv_xlen == 64
-    #define GRAPHITE_ARCH_RISCV64
-    #define GRAPHITE_ARCH_64BIT
+    #define HYPERDAG_ARCH_RISCV64
+    #define HYPERDAG_ARCH_64BIT
 #endif
 
 // Endianness detection
 #include <stdint.h>
-static inline bool graphite_is_little_endian(void) {
+static inline bool hyperdag_is_little_endian(void) {
     const uint16_t test = 0x0001;
     return *(const uint8_t*)&test == 1;
 }
 
-#define GRAPHITE_LITTLE_ENDIAN (graphite_is_little_endian())
-#define GRAPHITE_BIG_ENDIAN (!graphite_is_little_endian())
+#define TURTLGRAPH_LITTLE_ENDIAN (turtlgraph_is_little_endian())
+#define TURTLGRAPH_BIG_ENDIAN (!turtlgraph_is_little_endian())
 
 // Compiler detection
 #if defined(__clang__)
-    #define GRAPHITE_COMPILER_CLANG
-    #define GRAPHITE_COMPILER_VERSION __clang_major__
+    #define HYPERDAG_COMPILER_CLANG
+    #define HYPERDAG_COMPILER_VERSION __clang_major__
 #elif defined(__GNUC__)
-    #define GRAPHITE_COMPILER_GCC
-    #define GRAPHITE_COMPILER_VERSION __GNUC__
+    #define HYPERDAG_COMPILER_GCC
+    #define HYPERDAG_COMPILER_VERSION __GNUC__
 #elif defined(_MSC_VER)
-    #define GRAPHITE_COMPILER_MSVC
-    #define GRAPHITE_COMPILER_VERSION _MSC_VER
+    #define HYPERDAG_COMPILER_MSVC
+    #define HYPERDAG_COMPILER_VERSION _MSC_VER
 #endif
 
 // Feature detection
 #ifdef __has_builtin
-    #define GRAPHITE_HAS_BUILTIN(x) __has_builtin(x)
+    #define HYPERDAG_HAS_BUILTIN(x) __has_builtin(x)
 #else
-    #define GRAPHITE_HAS_BUILTIN(x) 0
+    #define HYPERDAG_HAS_BUILTIN(x) 0
 #endif
 
 #ifdef __has_feature
-    #define GRAPHITE_HAS_FEATURE(x) __has_feature(x)
+    #define HYPERDAG_HAS_FEATURE(x) __has_feature(x)
 #else
-    #define GRAPHITE_HAS_FEATURE(x) 0
+    #define HYPERDAG_HAS_FEATURE(x) 0
 #endif
 ```
 
@@ -889,10 +889,10 @@ Cross-platform file operations with platform-specific optimizations:
 graph TB
     subgraph "File System Interface"
         API["Unified File API"]
-        OPEN["graphite_file_open()"]
-        READ["graphite_file_read()"]
-        MMAP["graphite_file_mmap()"]
-        ASYNC["graphite_file_async_read()"]
+        OPEN["hyperdag_file_open()"]
+        READ["hyperdag_file_read()"]
+        MMAP["hyperdag_file_mmap()"]
+        ASYNC["hyperdag_file_async_read()"]
     end
     
     subgraph "Platform Implementations"
@@ -919,50 +919,50 @@ typedef struct {
     size_t mapped_size;         // Size of mapped region
     
     // Platform-specific data
-    #ifdef GRAPHITE_PLATFORM_WINDOWS
+    #ifdef HYPERDAG_PLATFORM_WINDOWS
     HANDLE mapping_handle;      // File mapping object
-    #elif defined(GRAPHITE_PLATFORM_LINUX)
+    #elif defined(HYPERDAG_PLATFORM_LINUX)
     int fd;                     // File descriptor
     #endif
-} graphite_file;
+} hyperdag_file;
 
 // File operation flags
 typedef enum {
-    GRAPHITE_FILE_READ = 1 << 0,
-    GRAPHITE_FILE_WRITE = 1 << 1,
-    GRAPHITE_FILE_CREATE = 1 << 2,
-    GRAPHITE_FILE_TRUNCATE = 1 << 3,
-    GRAPHITE_FILE_SEQUENTIAL = 1 << 4,  // Optimize for sequential access
-    GRAPHITE_FILE_RANDOM = 1 << 5,       // Optimize for random access
-    GRAPHITE_FILE_DIRECT = 1 << 6,       // Bypass OS cache
-} graphite_file_flags;
+    HYPERDAG_FILE_READ = 1 << 0,
+    HYPERDAG_FILE_WRITE = 1 << 1,
+    HYPERDAG_FILE_CREATE = 1 << 2,
+    HYPERDAG_FILE_TRUNCATE = 1 << 3,
+    HYPERDAG_FILE_SEQUENTIAL = 1 << 4,  // Optimize for sequential access
+    HYPERDAG_FILE_RANDOM = 1 << 5,       // Optimize for random access
+    HYPERDAG_FILE_DIRECT = 1 << 6,       // Bypass OS cache
+} hyperdag_file_flags;
 
 // Cross-platform file operations
-graphite_result graphite_file_open(
-    graphite_file* file,
+hyperdag_result hyperdag_file_open(
+    hyperdag_file* file,
     const char* path,
     uint32_t flags
 );
 
-graphite_result graphite_file_close(graphite_file* file);
+hyperdag_result hyperdag_file_close(hyperdag_file* file);
 
-graphite_result graphite_file_read(
-    graphite_file* file,
+hyperdag_result hyperdag_file_read(
+    hyperdag_file* file,
     void* buffer,
     size_t size,
     size_t offset,
     size_t* bytes_read
 );
 
-graphite_result graphite_file_mmap(
-    graphite_file* file,
+hyperdag_result hyperdag_file_mmap(
+    hyperdag_file* file,
     size_t offset,
     size_t size,
     void** mapped_ptr
 );
 
-graphite_result graphite_file_munmap(
-    graphite_file* file,
+hyperdag_result hyperdag_file_munmap(
+    hyperdag_file* file,
     void* mapped_ptr,
     size_t size
 );
@@ -971,10 +971,10 @@ graphite_result graphite_file_munmap(
 #### Windows Implementation
 
 ```c
-#ifdef GRAPHITE_PLATFORM_WINDOWS
+#ifdef HYPERDAG_PLATFORM_WINDOWS
 
-graphite_result graphite_file_open_win32(
-    graphite_file* file,
+hyperdag_result hyperdag_file_open_win32(
+    hyperdag_file* file,
     const char* path,
     uint32_t flags
 ) {
@@ -984,27 +984,27 @@ graphite_result graphite_file_open_win32(
     DWORD attributes = FILE_ATTRIBUTE_NORMAL;
     
     // Map flags to Windows API
-    if (flags & GRAPHITE_FILE_READ) access |= GENERIC_READ;
-    if (flags & GRAPHITE_FILE_WRITE) {
+    if (flags & HYPERDAG_FILE_READ) access |= GENERIC_READ;
+    if (flags & HYPERDAG_FILE_WRITE) {
         access |= GENERIC_WRITE;
         share = 0; // Exclusive access for writing
     }
     
-    if (flags & GRAPHITE_FILE_CREATE) {
-        creation = (flags & GRAPHITE_FILE_TRUNCATE) ? 
+    if (flags & HYPERDAG_FILE_CREATE) {
+        creation = (flags & HYPERDAG_FILE_TRUNCATE) ? 
                    CREATE_ALWAYS : CREATE_NEW;
     } else {
         creation = OPEN_EXISTING;
     }
     
     // Optimization hints
-    if (flags & GRAPHITE_FILE_SEQUENTIAL) {
+    if (flags & HYPERDAG_FILE_SEQUENTIAL) {
         attributes |= FILE_FLAG_SEQUENTIAL_SCAN;
     }
-    if (flags & GRAPHITE_FILE_RANDOM) {
+    if (flags & HYPERDAG_FILE_RANDOM) {
         attributes |= FILE_FLAG_RANDOM_ACCESS;
     }
-    if (flags & GRAPHITE_FILE_DIRECT) {
+    if (flags & HYPERDAG_FILE_DIRECT) {
         attributes |= FILE_FLAG_NO_BUFFERING;
     }
     
@@ -1012,7 +1012,7 @@ graphite_result graphite_file_open_win32(
     wchar_t wide_path[MAX_PATH];
     if (MultiByteToWideChar(CP_UTF8, 0, path, -1, 
                             wide_path, MAX_PATH) == 0) {
-        return GRAPHITE_ERROR_INVALID_PATH;
+        return HYPERDAG_ERROR_INVALID_PATH;
     }
     
     HANDLE handle = CreateFileW(
@@ -1033,7 +1033,7 @@ graphite_result graphite_file_open_win32(
     LARGE_INTEGER file_size;
     if (!GetFileSizeEx(handle, &file_size)) {
         CloseHandle(handle);
-        return GRAPHITE_ERROR_FILE_SIZE;
+        return HYPERDAG_ERROR_FILE_SIZE;
     }
     
     file->handle = handle;
@@ -1044,11 +1044,11 @@ graphite_result graphite_file_open_win32(
     file->mapped_size = 0;
     file->mapping_handle = NULL;
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
 
-graphite_result graphite_file_mmap_win32(
-    graphite_file* file,
+hyperdag_result hyperdag_file_mmap_win32(
+    hyperdag_file* file,
     size_t offset,
     size_t size,
     void** mapped_ptr
@@ -1064,7 +1064,7 @@ graphite_result graphite_file_mmap_win32(
     );
     
     if (!mapping) {
-        return GRAPHITE_ERROR_MMAP_CREATE;
+        return HYPERDAG_ERROR_MMAP_CREATE;
     }
     
     // Map view of file
@@ -1078,7 +1078,7 @@ graphite_result graphite_file_mmap_win32(
     
     if (!mapped) {
         CloseHandle(mapping);
-        return GRAPHITE_ERROR_MMAP_VIEW;
+        return HYPERDAG_ERROR_MMAP_VIEW;
     }
     
     // Prefetch pages for better performance
@@ -1094,7 +1094,7 @@ graphite_result graphite_file_mmap_win32(
     file->mapping_handle = mapping;
     file->is_memory_mapped = true;
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
 
 // Asynchronous I/O using IOCP
@@ -1102,21 +1102,21 @@ typedef struct {
     OVERLAPPED overlapped;
     void* buffer;
     size_t size;
-    graphite_io_callback callback;
+    hyperdag_io_callback callback;
     void* user_data;
-} graphite_async_io_win32;
+} hyperdag_async_io_win32;
 
-graphite_result graphite_file_async_read_win32(
-    graphite_file* file,
+hyperdag_result hyperdag_file_async_read_win32(
+    hyperdag_file* file,
     void* buffer,
     size_t size,
     size_t offset,
-    graphite_io_callback callback,
+    hyperdag_io_callback callback,
     void* user_data
 ) {
-    graphite_async_io_win32* async_io = malloc(sizeof(graphite_async_io_win32));
+    hyperdag_async_io_win32* async_io = malloc(sizeof(hyperdag_async_io_win32));
     if (!async_io) {
-        return GRAPHITE_ERROR_ALLOCATION;
+        return HYPERDAG_ERROR_ALLOCATION;
     }
     
     memset(&async_io->overlapped, 0, sizeof(OVERLAPPED));
@@ -1133,42 +1133,42 @@ graphite_result graphite_file_async_read_win32(
         return translate_windows_error(GetLastError());
     }
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
 
-#endif // GRAPHITE_PLATFORM_WINDOWS
+#endif // HYPERDAG_PLATFORM_WINDOWS
 ```
 
 #### Linux Implementation
 
 ```c
-#ifdef GRAPHITE_PLATFORM_LINUX
+#ifdef HYPERDAG_PLATFORM_LINUX
 
-graphite_result graphite_file_open_linux(
-    graphite_file* file,
+hyperdag_result hyperdag_file_open_linux(
+    hyperdag_file* file,
     const char* path,
     uint32_t flags
 ) {
     int open_flags = 0;
     
     // Map flags to POSIX
-    if ((flags & GRAPHITE_FILE_READ) && (flags & GRAPHITE_FILE_WRITE)) {
+    if ((flags & HYPERDAG_FILE_READ) && (flags & HYPERDAG_FILE_WRITE)) {
         open_flags = O_RDWR;
-    } else if (flags & GRAPHITE_FILE_WRITE) {
+    } else if (flags & HYPERDAG_FILE_WRITE) {
         open_flags = O_WRONLY;
     } else {
         open_flags = O_RDONLY;
     }
     
-    if (flags & GRAPHITE_FILE_CREATE) {
+    if (flags & HYPERDAG_FILE_CREATE) {
         open_flags |= O_CREAT;
-        if (flags & GRAPHITE_FILE_TRUNCATE) {
+        if (flags & HYPERDAG_FILE_TRUNCATE) {
             open_flags |= O_TRUNC;
         }
     }
     
     // Direct I/O for bypassing cache
-    if (flags & GRAPHITE_FILE_DIRECT) {
+    if (flags & HYPERDAG_FILE_DIRECT) {
         open_flags |= O_DIRECT;
     }
     
@@ -1181,13 +1181,13 @@ graphite_result graphite_file_open_linux(
     struct stat st;
     if (fstat(fd, &st) < 0) {
         close(fd);
-        return GRAPHITE_ERROR_FILE_SIZE;
+        return HYPERDAG_ERROR_FILE_SIZE;
     }
     
     // Set up hints for kernel
-    if (flags & GRAPHITE_FILE_SEQUENTIAL) {
+    if (flags & HYPERDAG_FILE_SEQUENTIAL) {
         posix_fadvise(fd, 0, st.st_size, POSIX_FADV_SEQUENTIAL);
-    } else if (flags & GRAPHITE_FILE_RANDOM) {
+    } else if (flags & HYPERDAG_FILE_RANDOM) {
         posix_fadvise(fd, 0, st.st_size, POSIX_FADV_RANDOM);
     }
     
@@ -1199,11 +1199,11 @@ graphite_result graphite_file_open_linux(
     file->mapped_size = 0;
     file->fd = fd;
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
 
-graphite_result graphite_file_mmap_linux(
-    graphite_file* file,
+hyperdag_result hyperdag_file_mmap_linux(
+    hyperdag_file* file,
     size_t offset,
     size_t size,
     void** mapped_ptr
@@ -1244,35 +1244,35 @@ graphite_result graphite_file_mmap_linux(
     file->mapped_size = map_size;
     file->is_memory_mapped = true;
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
 
 // Asynchronous I/O using io_uring
-#ifdef GRAPHITE_HAS_IO_URING
+#ifdef HYPERDAG_HAS_IO_URING
 #include <liburing.h>
 
 typedef struct {
     struct io_uring ring;
     pthread_t completion_thread;
     atomic_bool running;
-} graphite_io_uring_context;
+} hyperdag_io_uring_context;
 
-graphite_result graphite_file_async_read_uring(
-    graphite_file* file,
+hyperdag_result hyperdag_file_async_read_uring(
+    hyperdag_file* file,
     void* buffer,
     size_t size,
     size_t offset,
-    graphite_io_callback callback,
+    hyperdag_io_callback callback,
     void* user_data
 ) {
-    static graphite_io_uring_context* uring_ctx = NULL;
+    static hyperdag_io_uring_context* uring_ctx = NULL;
     
     // Initialize io_uring on first use
     if (!uring_ctx) {
-        uring_ctx = malloc(sizeof(graphite_io_uring_context));
+        uring_ctx = malloc(sizeof(hyperdag_io_uring_context));
         if (io_uring_queue_init(256, &uring_ctx->ring, 0) < 0) {
             free(uring_ctx);
-            return GRAPHITE_ERROR_IO_URING_INIT;
+            return HYPERDAG_ERROR_IO_URING_INIT;
         }
         
         atomic_init(&uring_ctx->running, true);
@@ -1283,11 +1283,11 @@ graphite_result graphite_file_async_read_uring(
     // Get submission queue entry
     struct io_uring_sqe* sqe = io_uring_get_sqe(&uring_ctx->ring);
     if (!sqe) {
-        return GRAPHITE_ERROR_IO_URING_FULL;
+        return HYPERDAG_ERROR_IO_URING_FULL;
     }
     
     // Set up async read
-    graphite_async_io_data* async_data = malloc(sizeof(graphite_async_io_data));
+    hyperdag_async_io_data* async_data = malloc(sizeof(hyperdag_async_io_data));
     async_data->callback = callback;
     async_data->user_data = user_data;
     async_data->buffer = buffer;
@@ -1299,14 +1299,14 @@ graphite_result graphite_file_async_read_uring(
     // Submit request
     if (io_uring_submit(&uring_ctx->ring) < 0) {
         free(async_data);
-        return GRAPHITE_ERROR_IO_SUBMIT;
+        return HYPERDAG_ERROR_IO_SUBMIT;
     }
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
-#endif // GRAPHITE_HAS_IO_URING
+#endif // HYPERDAG_HAS_IO_URING
 
-#endif // GRAPHITE_PLATFORM_LINUX
+#endif // HYPERDAG_PLATFORM_LINUX
 ```
 
 ### Memory Management
@@ -1321,14 +1321,14 @@ typedef struct {
     bool large_pages;
     bool numa_aware;
     int numa_node;
-} graphite_alloc_flags;
+} hyperdag_alloc_flags;
 
 // Aligned allocation with platform optimization
-void* graphite_aligned_alloc(size_t size, size_t alignment) {
-    #ifdef GRAPHITE_PLATFORM_WINDOWS
+void* hyperdag_aligned_alloc(size_t size, size_t alignment) {
+    #ifdef HYPERDAG_PLATFORM_WINDOWS
     return _aligned_malloc(size, alignment);
     
-    #elif defined(GRAPHITE_PLATFORM_LINUX) || defined(GRAPHITE_PLATFORM_MACOS)
+    #elif defined(HYPERDAG_PLATFORM_LINUX) || defined(HYPERDAG_PLATFORM_MACOS)
     void* ptr = NULL;
     if (posix_memalign(&ptr, alignment, size) != 0) {
         return NULL;
@@ -1348,8 +1348,8 @@ void* graphite_aligned_alloc(size_t size, size_t alignment) {
 }
 
 // Large page allocation
-void* graphite_large_page_alloc(size_t size) {
-    #ifdef GRAPHITE_PLATFORM_WINDOWS
+void* hyperdag_large_page_alloc(size_t size) {
+    #ifdef HYPERDAG_PLATFORM_WINDOWS
     // Enable large page privilege if needed
     static bool large_pages_enabled = false;
     if (!large_pages_enabled) {
@@ -1369,7 +1369,7 @@ void* graphite_large_page_alloc(size_t size) {
                        MEM_COMMIT | MEM_RESERVE | MEM_LARGE_PAGES,
                        PAGE_READWRITE);
     
-    #elif defined(GRAPHITE_PLATFORM_LINUX)
+    #elif defined(HYPERDAG_PLATFORM_LINUX)
     // Use hugetlbfs on Linux
     size_t huge_page_size = 2 * 1024 * 1024; // 2MB huge pages
     size = (size + huge_page_size - 1) & ~(huge_page_size - 1);
@@ -1391,15 +1391,15 @@ void* graphite_large_page_alloc(size_t size) {
     
     #else
     // Fallback to regular allocation
-    return graphite_aligned_alloc(size, 4096);
+    return hyperdag_aligned_alloc(size, 4096);
     #endif
 }
 
 // NUMA-aware allocation
-#ifdef GRAPHITE_PLATFORM_LINUX
+#ifdef HYPERDAG_PLATFORM_LINUX
 #include <numa.h>
 
-void* graphite_numa_alloc(size_t size, int node) {
+void* hyperdag_numa_alloc(size_t size, int node) {
     if (!numa_available()) {
         return malloc(size);
     }
@@ -1411,7 +1411,7 @@ void* graphite_numa_alloc(size_t size, int node) {
     return numa_alloc_onnode(size, node);
 }
 
-void graphite_numa_free(void* ptr, size_t size) {
+void hyperdag_numa_free(void* ptr, size_t size) {
     numa_free(ptr, size);
 }
 #endif
@@ -1424,30 +1424,30 @@ Cross-platform threading with platform-specific optimizations:
 ```c
 // Platform-agnostic thread abstraction
 typedef struct {
-    #ifdef GRAPHITE_PLATFORM_WINDOWS
+    #ifdef HYPERDAG_PLATFORM_WINDOWS
     HANDLE handle;
     DWORD id;
     #else
     pthread_t thread;
     #endif
     
-    graphite_thread_func func;
+    hyperdag_thread_func func;
     void* arg;
     char name[32];
     int priority;
     size_t stack_size;
     
-    #ifdef GRAPHITE_PLATFORM_LINUX
+    #ifdef HYPERDAG_PLATFORM_LINUX
     cpu_set_t cpu_affinity;
     #endif
-} graphite_thread;
+} hyperdag_thread;
 
 // Thread creation with platform optimization
-graphite_result graphite_thread_create(
-    graphite_thread* thread,
-    graphite_thread_func func,
+hyperdag_result hyperdag_thread_create(
+    hyperdag_thread* thread,
+    hyperdag_thread_func func,
     void* arg,
-    const graphite_thread_attrs* attrs
+    const hyperdag_thread_attrs* attrs
 ) {
     thread->func = func;
     thread->arg = arg;
@@ -1458,7 +1458,7 @@ graphite_result graphite_thread_create(
         thread->stack_size = attrs->stack_size;
     }
     
-    #ifdef GRAPHITE_PLATFORM_WINDOWS
+    #ifdef HYPERDAG_PLATFORM_WINDOWS
     thread->handle = CreateThread(
         NULL,
         attrs ? attrs->stack_size : 0,
@@ -1469,7 +1469,7 @@ graphite_result graphite_thread_create(
     );
     
     if (!thread->handle) {
-        return GRAPHITE_ERROR_THREAD_CREATE;
+        return HYPERDAG_ERROR_THREAD_CREATE;
     }
     
     // Set thread name (Windows 10+)
@@ -1515,16 +1515,16 @@ graphite_result graphite_thread_create(
     
     // Set thread name
     if (attrs && attrs->name[0]) {
-        #ifdef GRAPHITE_PLATFORM_LINUX
+        #ifdef HYPERDAG_PLATFORM_LINUX
         pthread_setname_np(thread->thread, attrs->name);
-        #elif defined(GRAPHITE_PLATFORM_MACOS)
+        #elif defined(HYPERDAG_PLATFORM_MACOS)
         // macOS requires setting from within thread
         // Store name to be set in thread function
         #endif
     }
     
     // Set CPU affinity on Linux
-    #ifdef GRAPHITE_PLATFORM_LINUX
+    #ifdef HYPERDAG_PLATFORM_LINUX
     if (attrs && attrs->cpu_affinity_mask != 0) {
         CPU_ZERO(&thread->cpu_affinity);
         for (int i = 0; i < CPU_SETSIZE; i++) {
@@ -1540,12 +1540,12 @@ graphite_result graphite_thread_create(
     
     #endif // Platform selection
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
 
 // High-resolution timing
-uint64_t graphite_get_time_ns(void) {
-    #ifdef GRAPHITE_PLATFORM_WINDOWS
+uint64_t hyperdag_get_time_ns(void) {
+    #ifdef HYPERDAG_PLATFORM_WINDOWS
     static LARGE_INTEGER frequency = {0};
     if (frequency.QuadPart == 0) {
         QueryPerformanceFrequency(&frequency);
@@ -1556,7 +1556,7 @@ uint64_t graphite_get_time_ns(void) {
     
     return (counter.QuadPart * 1000000000) / frequency.QuadPart;
     
-    #elif defined(GRAPHITE_PLATFORM_LINUX) || defined(GRAPHITE_PLATFORM_MACOS)
+    #elif defined(HYPERDAG_PLATFORM_LINUX) || defined(HYPERDAG_PLATFORM_MACOS)
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return (uint64_t)ts.tv_sec * 1000000000 + ts.tv_nsec;
@@ -1592,12 +1592,12 @@ typedef struct {
     int l3_cache;
     int physical_cores;
     int logical_cores;
-} graphite_cpu_info;
+} hyperdag_cpu_info;
 
-void graphite_detect_cpu_features(graphite_cpu_info* info) {
-    memset(info, 0, sizeof(graphite_cpu_info));
+void hyperdag_detect_cpu_features(hyperdag_cpu_info* info) {
+    memset(info, 0, sizeof(hyperdag_cpu_info));
     
-    #if defined(GRAPHITE_ARCH_X64) || defined(GRAPHITE_ARCH_X86)
+    #if defined(HYPERDAG_ARCH_X64) || defined(HYPERDAG_ARCH_X86)
     // CPUID detection
     uint32_t regs[4];
     
@@ -1619,7 +1619,7 @@ void graphite_detect_cpu_features(graphite_cpu_info* info) {
     info->l2_cache = ((regs[2] >> 16) & 0xFFFF) * 1024;
     info->cache_line_size = regs[2] & 0xFF;
     
-    #elif defined(GRAPHITE_ARCH_ARM64) || defined(GRAPHITE_ARCH_ARM32)
+    #elif defined(HYPERDAG_ARCH_ARM64) || defined(HYPERDAG_ARCH_ARM32)
     // ARM feature detection
     #ifdef __linux__
     // Parse /proc/cpuinfo
@@ -1639,7 +1639,7 @@ void graphite_detect_cpu_features(graphite_cpu_info* info) {
     #endif
     
     // Get core count
-    #ifdef GRAPHITE_PLATFORM_WINDOWS
+    #ifdef HYPERDAG_PLATFORM_WINDOWS
     SYSTEM_INFO sysinfo;
     GetSystemInfo(&sysinfo);
     info->logical_cores = sysinfo.dwNumberOfProcessors;
@@ -1653,7 +1653,7 @@ void graphite_detect_cpu_features(graphite_cpu_info* info) {
     }
     free(buffer);
     
-    #elif defined(GRAPHITE_PLATFORM_LINUX)
+    #elif defined(HYPERDAG_PLATFORM_LINUX)
     info->logical_cores = sysconf(_SC_NPROCESSORS_ONLN);
     
     // Parse /proc/cpuinfo for physical cores
@@ -1664,7 +1664,7 @@ void graphite_detect_cpu_features(graphite_cpu_info* info) {
     info->l2_cache = read_sysfs_cache_size(0, "L2");
     info->l3_cache = read_sysfs_cache_size(0, "L3");
     
-    #elif defined(GRAPHITE_PLATFORM_MACOS)
+    #elif defined(HYPERDAG_PLATFORM_MACOS)
     size_t size = sizeof(int);
     sysctlbyname("hw.logicalcpu", &info->logical_cores, &size, NULL, 0);
     sysctlbyname("hw.physicalcpu", &info->physical_cores, &size, NULL, 0);
@@ -1678,27 +1678,27 @@ void graphite_detect_cpu_features(graphite_cpu_info* info) {
 }
 
 // Select optimal implementation based on CPU features
-typedef void (*graphite_memcpy_func)(void* dst, const void* src, size_t n);
+typedef void (*hyperdag_memcpy_func)(void* dst, const void* src, size_t n);
 
-graphite_memcpy_func graphite_select_memcpy(void) {
-    static graphite_memcpy_func selected_func = NULL;
+hyperdag_memcpy_func hyperdag_select_memcpy(void) {
+    static hyperdag_memcpy_func selected_func = NULL;
     
     if (!selected_func) {
-        graphite_cpu_info cpu;
-        graphite_detect_cpu_features(&cpu);
+        hyperdag_cpu_info cpu;
+        hyperdag_detect_cpu_features(&cpu);
         
-        #if defined(GRAPHITE_ARCH_X64)
+        #if defined(HYPERDAG_ARCH_X64)
         if (cpu.avx2) {
-            selected_func = graphite_memcpy_avx2;
+            selected_func = hyperdag_memcpy_avx2;
         } else if (cpu.sse42) {
-            selected_func = graphite_memcpy_sse42;
+            selected_func = hyperdag_memcpy_sse42;
         } else {
             selected_func = memcpy;
         }
         
-        #elif defined(GRAPHITE_ARCH_ARM64)
+        #elif defined(HYPERDAG_ARCH_ARM64)
         if (cpu.neon) {
-            selected_func = graphite_memcpy_neon;
+            selected_func = hyperdag_memcpy_neon;
         } else {
             selected_func = memcpy;
         }

@@ -24,17 +24,17 @@
 
 ### Overview
 
-This part covers GRAPHITE's comprehensive development toolchain, including build system integration, command-line utilities, and testing frameworks. Chapter 12 details seamless integration with modern build systems. Chapter 13 presents the full suite of command-line tools. Chapter 14 covers the comprehensive testing strategy from unit tests to fuzz testing.
+This part covers TurtlGraph's comprehensive development toolchain, including build system integration, command-line utilities, and testing frameworks. Chapter 12 details seamless integration with modern build systems. Chapter 13 presents the full suite of command-line tools. Chapter 14 covers the comprehensive testing strategy from unit tests to fuzz testing.
 
 ---
 
 ## Chapter 12: Build System
 
-GRAPHITE integrates seamlessly with modern build systems, providing first-class support for automated bundle generation, dependency tracking, and incremental builds across all major platforms.
+TurtlGraph integrates seamlessly with modern build systems, providing first-class support for automated bundle generation, dependency tracking, and incremental builds across all major platforms.
 
 ### Build Pipeline Integration
 
-GRAPHITE's build integration follows a declarative approach:
+TurtlGraph's build integration follows a declarative approach:
 
 ```mermaid
 graph LR
@@ -53,7 +53,7 @@ graph LR
     end
     
     subgraph "Output"
-        BUNDLE["GRAPHITE Bundle<br/>.graphite"]
+        BUNDLE["HyperDAG Bundle<br/>.turtlgraph"]
         MANIFEST["Manifest<br/>Dependencies"]
         REPORT["Build Report<br/>Statistics"]
     end
@@ -74,20 +74,20 @@ graph LR
 
 ### CMake Integration
 
-GRAPHITE provides comprehensive CMake modules for seamless integration:
+TurtlGraph provides comprehensive CMake modules for seamless integration:
 
 ```cmake
-# FindGRAPHITE.cmake module
-find_package(GRAPHITE REQUIRED)
+# FindTurtlGraph.cmake module
+find_package(TurtlGraph REQUIRED)
 
 # Create bundle target with full configuration
-graphite_add_bundle(MyGame_Assets
+hyperdag_add_bundle(MyGame_Assets
     SOURCES 
         ${ASSET_FILES}
         assets/textures/*.png
         assets/models/*.gltf
         assets/sounds/*.wav
-    OUTPUT ${CMAKE_BINARY_DIR}/assets/game.graphite
+    OUTPUT ${CMAKE_BINARY_DIR}/assets/game.turtlgraph
     COMPRESSION zstd
     COMPRESSION_LEVEL 19
     INTEGRITY blake3
@@ -96,7 +96,7 @@ graphite_add_bundle(MyGame_Assets
 )
 
 # Advanced dependency tracking
-graphite_add_dependencies(MyGame_Assets
+hyperdag_add_dependencies(MyGame_Assets
     DEPENDS 
         texture_processor 
         mesh_optimizer
@@ -108,7 +108,7 @@ graphite_add_dependencies(MyGame_Assets
 )
 
 # Custom transformation rules
-graphite_add_transform(texture_transform
+hyperdag_add_transform(texture_transform
     INPUT_PATTERN "*.png;*.jpg;*.tga"
     OUTPUT_PATTERN "*.g_tex"
     COMMAND texture_processor 
@@ -118,18 +118,18 @@ graphite_add_transform(texture_transform
         --output $output 
         $input
     CACHE_KEY content_hash
-    CACHE_DIR ${CMAKE_BINARY_DIR}/.graphite_cache
+    CACHE_DIR ${CMAKE_BINARY_DIR}/.hyperdag_cache
 )
 
 # Platform-specific bundle generation
 if(WIN32)
-    graphite_add_platform_bundle(MyGame_Assets_Win
+    hyperdag_add_platform_bundle(MyGame_Assets_Win
         BASE_BUNDLE MyGame_Assets
         PLATFORM_ASSETS assets/platform/windows/*
         COMPRESSION_ALGORITHM lz4  # Faster for runtime
     )
 elseif(APPLE)
-    graphite_add_platform_bundle(MyGame_Assets_Mac
+    hyperdag_add_platform_bundle(MyGame_Assets_Mac
         BASE_BUNDLE MyGame_Assets
         PLATFORM_ASSETS assets/platform/macos/*
         CODE_SIGN_IDENTITY ${APPLE_DEVELOPER_ID}
@@ -144,7 +144,7 @@ install(FILES
 )
 
 # Generate asset manifest for runtime
-graphite_generate_manifest(MyGame_Assets
+hyperdag_generate_manifest(MyGame_Assets
     OUTPUT ${CMAKE_BINARY_DIR}/asset_manifest.h
     NAMESPACE MyGame
     LANGUAGE CXX
@@ -155,7 +155,7 @@ graphite_generate_manifest(MyGame_Assets
 
 ```cmake
 # Multi-bundle dependencies
-graphite_create_bundle_group(AllGameAssets
+hyperdag_create_bundle_group(AllGameAssets
     BUNDLES
         CoreAssets
         LevelAssets
@@ -166,13 +166,13 @@ graphite_create_bundle_group(AllGameAssets
 )
 
 # Conditional asset inclusion
-graphite_add_bundle(DemoAssets
+hyperdag_add_bundle(DemoAssets
     SOURCES assets/demo/*
     CONDITION $<OR:$<CONFIG:Debug>,$<BOOL:${BUILD_DEMO}>>
 )
 
 # Asset validation rules
-graphite_add_validation(MyGame_Assets
+hyperdag_add_validation(MyGame_Assets
     RULES
         MAX_BUNDLE_SIZE 2GB
         MAX_TEXTURE_SIZE 4096
@@ -182,7 +182,7 @@ graphite_add_validation(MyGame_Assets
 )
 
 # Performance profiling integration
-graphite_enable_profiling(MyGame_Assets
+hyperdag_enable_profiling(MyGame_Assets
     REPORT_FILE ${CMAKE_BINARY_DIR}/asset_build_profile.json
     TRACE_LEVEL detailed
     MEASURE_COMPRESSION_TIME ON
@@ -197,32 +197,32 @@ graphite_enable_profiling(MyGame_Assets
 Direct integration with Ninja for blazing-fast builds:
 
 ```ninja
-# GRAPHITE build rules
-rule graphite_pack
-  command = graphite pack --config $config --output $out $in
-  description = Packing GRAPHITE bundle $out
+# TurtlGraph build rules
+rule turtlgraph_pack
+  command = turtlgraph pack --config $config --output $out $in
+  description = Packing HyperDAG bundle $out
   deps = gcc
   depfile = $out.d
   restat = 1
 
-rule graphite_incremental
-  command = graphite update --bundle $bundle --changed $in --output $out
+rule turtlgraph_incremental
+  command = turtlgraph update --bundle $bundle --changed $in --output $out
   description = Incrementally updating $bundle
   deps = gcc
   depfile = $out.d
 
 # Build targets
-build assets/game.graphite: graphite_pack $
+build assets/game.turtlgraph: turtlgraph_pack $
     assets/textures/*.png $
     assets/models/*.gltf $
     assets/config/*.json $
-    | graphite_config.json
+    | hyperdag_config.json
   config = release
 
 # Incremental updates
-build assets/game_updated.graphite: graphite_incremental $
+build assets/game_updated.turtlgraph: turtlgraph_incremental $
     assets/textures/player.png
-  bundle = assets/game.graphite
+  bundle = assets/game.turtlgraph
 
 # Asset processing pipeline
 rule texture_process
@@ -231,7 +231,7 @@ rule texture_process
 build processed/player.g_tex: texture_process assets/textures/player.png
 
 # Bundle with processed assets
-build final/game.graphite: graphite_pack processed/*.g_tex
+build final/game.turtlgraph: turtlgraph_pack processed/*.g_tex
   config = final
 ```
 
@@ -240,15 +240,15 @@ build final/game.graphite: graphite_pack processed/*.g_tex
 Hermetic builds with Bazel:
 
 ```python
-# //tools/graphite:defs.bzl
+# //tools/turtlgraph:defs.bzl
 load("@bazel_skylib//lib:paths.bzl", "paths")
 
-def graphite_bundle(name, srcs, compression="zstd", integrity="blake3", 
+def hyperdag_bundle(name, srcs, compression="zstd", integrity="blake3", 
                    dictionary=None, platform=None, **kwargs):
-    """Create a GRAPHITE bundle from source assets."""
+    """Create a HyperDAG bundle from source assets."""
     
     cmd_parts = [
-        "$(location //tools/graphite:pack)",
+        "$(location //tools/turtlgraph:pack)",
         "--compression=%s" % compression,
         "--integrity=%s" % integrity,
     ]
@@ -267,26 +267,26 @@ def graphite_bundle(name, srcs, compression="zstd", integrity="blake3",
     native.genrule(
         name = name,
         srcs = srcs,
-        outs = [name + ".graphite"],
+        outs = [name + ".turtlgraph"],
         cmd = " ".join(cmd_parts),
-        tools = ["//tools/graphite:pack"],
+        tools = ["//tools/turtlgraph:pack"],
         **kwargs
     )
 
-def graphite_test_bundle(name, bundle, **kwargs):
-    """Test a GRAPHITE bundle for integrity and performance."""
+def hyperdag_test_bundle(name, bundle, **kwargs):
+    """Test a HyperDAG bundle for integrity and performance."""
     native.sh_test(
         name = name + "_test",
-        srcs = ["//tools/graphite:test_runner.sh"],
+        srcs = ["//tools/turtlgraph:test_runner.sh"],
         data = [bundle],
         args = ["$(location %s)" % bundle],
         **kwargs
     )
 
 # BUILD file usage
-load("//tools/graphite:defs.bzl", "graphite_bundle", "graphite_test_bundle")
+load("//tools/turtlgraph:defs.bzl", "hyperdag_bundle", "hyperdag_test_bundle")
 
-graphite_bundle(
+hyperdag_bundle(
     name = "game_assets",
     srcs = glob(["assets/**/*"]),
     compression = "zstd",
@@ -300,7 +300,7 @@ graphite_bundle(
     }),
 )
 
-graphite_test_bundle(
+hyperdag_test_bundle(
     name = "game_assets_test",
     bundle = ":game_assets",
     size = "small",
@@ -312,14 +312,14 @@ graphite_test_bundle(
 Traditional Make with modern features:
 
 ```makefile
-# GRAPHITE Makefile integration
-GRAPHITE := graphite
-GRAPHITE_FLAGS := --compression zstd --integrity blake3
+# TurtlGraph Makefile integration
+TURTLGRAPH := turtlgraph
+TURTLGRAPH_FLAGS := --compression zstd --integrity blake3
 
 # Directories
 ASSET_DIR := assets
 BUILD_DIR := build
-CACHE_DIR := .graphite_cache
+CACHE_DIR := .hyperdag_cache
 
 # Find all assets
 TEXTURES := $(wildcard $(ASSET_DIR)/textures/*.png)
@@ -329,10 +329,10 @@ CONFIGS := $(wildcard $(ASSET_DIR)/config/*.json)
 ALL_ASSETS := $(TEXTURES) $(MODELS) $(CONFIGS)
 
 # Main bundle target
-$(BUILD_DIR)/game.graphite: $(ALL_ASSETS) graphite.config
+$(BUILD_DIR)/game.turtlgraph: $(ALL_ASSETS) turtlgraph.config
 	@mkdir -p $(BUILD_DIR)
-	$(GRAPHITE) pack $(GRAPHITE_FLAGS) \
-		--config graphite.config \
+	$(TURTLGRAPH) pack $(TURTLGRAPH_FLAGS) \
+		--config turtlgraph.config \
 		--output $@ \
 		--depfile $@.d \
 		--cache-dir $(CACHE_DIR) \
@@ -343,16 +343,16 @@ $(BUILD_DIR)/game.graphite: $(ALL_ASSETS) graphite.config
 
 # Incremental updates
 .PHONY: incremental
-incremental: $(BUILD_DIR)/game.graphite
+incremental: $(BUILD_DIR)/game.turtlgraph
 	@echo "Checking for asset updates..."
-	@$(GRAPHITE) update \
+	@$(TURTLGRAPH) update \
 		--bundle $< \
 		--verify \
 		--incremental
 
 # Platform-specific bundles
-$(BUILD_DIR)/game_%.graphite: $(BUILD_DIR)/game.graphite
-	$(GRAPHITE) repack \
+$(BUILD_DIR)/game_%.turtlgraph: $(BUILD_DIR)/game.turtlgraph
+	$(TURTLGRAPH) repack \
 		--input $< \
 		--platform $* \
 		--output $@
@@ -367,8 +367,8 @@ clean-cache:
 
 # Performance analysis
 .PHONY: analyze
-analyze: $(BUILD_DIR)/game.graphite
-	$(GRAPHITE) analyze $< \
+analyze: $(BUILD_DIR)/game.turtlgraph
+	$(TURTLGRAPH) analyze $< \
 		--report $(BUILD_DIR)/analysis.html \
 		--format html
 ```
@@ -388,11 +388,11 @@ on:
   pull_request:
     paths:
       - 'assets/**'
-      - 'graphite.config'
+      - 'turtlgraph.config'
 
 env:
-  GRAPHITE_VERSION: 1.0.0
-  CACHE_KEY_PREFIX: graphite-cache-v1
+  TURTLGRAPH_VERSION: 1.0.0
+  CACHE_KEY_PREFIX: turtlgraph-cache-v1
 
 jobs:
   build-assets:
@@ -407,16 +407,16 @@ jobs:
       with:
         lfs: true  # For large asset files
     
-    - name: Setup GRAPHITE
-      uses: graphite-engine/setup-graphite@v1
+    - name: Setup TurtlGraph
+      uses: turtlgraph-tools/setup-turtlgraph@v1
       with:
-        version: ${{ env.GRAPHITE_VERSION }}
+        version: ${{ env.TURTLGRAPH_VERSION }}
     
     - name: Cache processed assets
       uses: actions/cache@v3
       with:
         path: |
-          .graphite_cache
+          .hyperdag_cache
           build/cache
         key: ${{ env.CACHE_KEY_PREFIX }}-${{ matrix.os }}-${{ matrix.config }}-${{ hashFiles('assets/**') }}
         restore-keys: |
@@ -425,34 +425,34 @@ jobs:
     
     - name: Validate assets
       run: |
-        graphite validate assets/ \
+        turtlgraph validate assets/ \
           --config validation-rules.json \
           --report validation-report.json
     
     - name: Build asset bundles
       run: |
-        graphite pack \
+        turtlgraph pack \
           --config ${{ matrix.config }}.json \
           --platform ${{ runner.os }} \
-          --output dist/${{ matrix.os }}-${{ matrix.config }}.graphite \
+          --output dist/${{ matrix.os }}-${{ matrix.config }}.turtlgraph \
           --stats build-stats.json \
           assets/
     
     - name: Test bundle integrity
       run: |
-        graphite verify dist/${{ matrix.os }}-${{ matrix.config }}.graphite \
+        turtlgraph verify dist/${{ matrix.os }}-${{ matrix.config }}.turtlgraph \
           --full \
           --report integrity-report.json
     
     - name: Measure performance
       run: |
-        graphite benchmark dist/${{ matrix.os }}-${{ matrix.config }}.graphite \
+        turtlgraph benchmark dist/${{ matrix.os }}-${{ matrix.config }}.turtlgraph \
           --iterations 10 \
           --report performance-report.json
     
     - name: Generate size report
       run: |
-        graphite size-report dist/${{ matrix.os }}-${{ matrix.config }}.graphite \
+        turtlgraph size-report dist/${{ matrix.os }}-${{ matrix.config }}.turtlgraph \
           --format markdown \
           --output size-report.md
     
@@ -461,7 +461,7 @@ jobs:
       with:
         name: asset-bundles-${{ matrix.os }}-${{ matrix.config }}
         path: |
-          dist/*.graphite
+          dist/*.turtlgraph
           *-report.*
         retention-days: 30
     
@@ -495,7 +495,7 @@ jobs:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       run: |
-        for bundle in asset-bundles-*/*.graphite; do
+        for bundle in asset-bundles-*/*.turtlgraph; do
           aws s3 cp $bundle s3://$CDN_BUCKET/assets/ \
             --content-type application/octet-stream \
             --cache-control "public, max-age=3600"
@@ -510,7 +510,7 @@ jobs:
 
 ### Incremental Builds
 
-GRAPHITE's incremental build system minimizes rebuild times:
+TurtlGraph's incremental build system minimizes rebuild times:
 
 ```c
 // Incremental build configuration
@@ -521,7 +521,7 @@ typedef struct {
     bool use_timestamps;
     size_t max_cache_size;
     uint32_t cache_ttl_days;
-} graphite_incremental_config;
+} hyperdag_incremental_config;
 
 // Dependency tracking
 typedef struct {
@@ -534,7 +534,7 @@ typedef struct {
 
 // Incremental build context
 typedef struct {
-    graphite_incremental_config config;
+    hyperdag_incremental_config config;
     hash_table* asset_cache;
     hash_table* dependency_graph;
     dynamic_array* changed_assets;
@@ -581,14 +581,14 @@ bool needs_rebuild(incremental_build_context* ctx, const char* asset_path) {
 }
 
 // Incremental bundle update
-graphite_result update_bundle_incremental(
+hyperdag_result update_bundle_incremental(
     const char* bundle_path,
     incremental_build_context* ctx
 ) {
     // Load existing bundle
-    graphite_bundle* bundle = graphite_open(bundle_path, GRAPHITE_OPEN_WRITE);
+    hyperdag_bundle* bundle = hyperdag_open(bundle_path, HYPERDAG_OPEN_WRITE);
     if (!bundle) {
-        return GRAPHITE_ERROR_BUNDLE_OPEN;
+        return HYPERDAG_ERROR_BUNDLE_OPEN;
     }
     
     // Find changed assets
@@ -605,8 +605,8 @@ graphite_result update_bundle_incremental(
     }
     
     if (ctx->changed_assets->size == 0) {
-        graphite_close(bundle);
-        return GRAPHITE_SUCCESS; // Nothing to update
+        hyperdag_close(bundle);
+        return HYPERDAG_SUCCESS; // Nothing to update
     }
     
     // Process changed assets
@@ -617,21 +617,21 @@ graphite_result update_bundle_incremental(
         // Process asset
         processed_asset* processed = process_asset(asset_path);
         if (!processed) {
-            graphite_close(bundle);
-            return GRAPHITE_ERROR_ASSET_PROCESSING;
+            hyperdag_close(bundle);
+            return HYPERDAG_ERROR_ASSET_PROCESSING;
         }
         
         // Update in bundle
-        graphite_result result = graphite_bundle_update_chunk(
+        hyperdag_result result = hyperdag_bundle_update_chunk(
             bundle, 
             processed->chunk_id, 
             processed->data, 
             processed->size
         );
         
-        if (result != GRAPHITE_SUCCESS) {
+        if (result != HYPERDAG_SUCCESS) {
             free_processed_asset(processed);
-            graphite_close(bundle);
+            hyperdag_close(bundle);
             return result;
         }
         
@@ -642,15 +642,15 @@ graphite_result update_bundle_incremental(
     }
     
     // Update bundle metadata
-    graphite_bundle_update_timestamp(bundle);
-    graphite_bundle_recalculate_hashes(bundle);
+    hyperdag_bundle_update_timestamp(bundle);
+    hyperdag_bundle_recalculate_hashes(bundle);
     
-    graphite_close(bundle);
+    hyperdag_close(bundle);
     
     // Save dependency graph
     save_dependency_graph(ctx);
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
 ```
 
@@ -658,33 +658,33 @@ graphite_result update_bundle_incremental(
 
 ## Chapter 13: Command Line Tools
 
-GRAPHITE provides a comprehensive suite of command-line tools for asset management, debugging, and optimization.
+TurtlGraph provides a comprehensive suite of command-line tools for asset management, debugging, and optimization.
 
 ### Core CLI Tools
 
-The main `graphite` command provides all essential operations:
+The main `turtlgraph` command provides all essential operations:
 
 ```bash
 # Basic information and inspection
-graphite info bundle.graphite           # Show bundle statistics
-graphite ls bundle.graphite             # List bundle contents
-graphite ls bundle.graphite /textures   # List specific path
-graphite tree bundle.graphite           # Show hierarchy tree
+turtlgraph info bundle.turtlgraph           # Show bundle statistics
+turtlgraph ls bundle.turtlgraph             # List bundle contents
+turtlgraph ls bundle.turtlgraph /textures   # List specific path
+turtlgraph tree bundle.turtlgraph           # Show hierarchy tree
 
 # Content extraction
-graphite cat bundle.graphite /strings/42      # Extract string by ID
-graphite extract bundle.graphite /meshes/player.mesh -o player.mesh
-graphite extract-all bundle.graphite -o extracted/  # Extract everything
+turtlgraph cat bundle.turtlgraph /strings/42      # Extract string by ID
+turtlgraph extract bundle.turtlgraph /meshes/player.mesh -o player.mesh
+turtlgraph extract-all bundle.turtlgraph -o extracted/  # Extract everything
 
 # Integrity verification  
-graphite verify bundle.graphite         # Full integrity check
-graphite verify --quick bundle.graphite # CRC only
-graphite verify --deep bundle.graphite  # Full hash verification
+turtlgraph verify bundle.turtlgraph         # Full integrity check
+turtlgraph verify --quick bundle.turtlgraph # CRC only
+turtlgraph verify --deep bundle.turtlgraph  # Full hash verification
 
 # Performance testing
-graphite bench bundle.graphite          # Performance measurement
-graphite bench --detailed bundle.graphite    # Per-stage timing
-graphite bench --compare old.graphite new.graphite  # A/B comparison
+turtlgraph bench bundle.turtlgraph          # Performance measurement
+turtlgraph bench --detailed bundle.turtlgraph    # Per-stage timing
+turtlgraph bench --compare old.turtlgraph new.turtlgraph  # A/B comparison
 ```
 
 ### Bundle Operations
@@ -693,14 +693,14 @@ Creating and manipulating bundles:
 
 ```bash
 # Bundle creation
-graphite pack assets/ output.graphite   # Basic packing
-graphite pack --compress assets/ output.graphite # With compression
-graphite pack --compress=zstd:19 assets/ output.graphite # Max compression
-graphite pack --dict=dict.zstd assets/ output.graphite # Dictionary compression
-graphite pack --encrypt --key=secret.key assets/ output.graphite # Encrypted
+turtlgraph pack assets/ output.turtlgraph   # Basic packing
+turtlgraph pack --compress assets/ output.turtlgraph # With compression
+turtlgraph pack --compress=zstd:19 assets/ output.turtlgraph # Max compression
+turtlgraph pack --dict=dict.zstd assets/ output.turtlgraph # Dictionary compression
+turtlgraph pack --encrypt --key=secret.key assets/ output.turtlgraph # Encrypted
 
 # Advanced packing options
-graphite pack \
+turtlgraph pack \
   --config production.json \
   --platform windows \
   --exclude "*.psd" \
@@ -708,18 +708,18 @@ graphite pack \
   --manifest manifest.json \
   --sign cert.pem \
   --timestamp \
-  assets/ game.graphite
+  assets/ game.turtlgraph
 
 # Bundle manipulation
-graphite merge bundle1.graphite bundle2.graphite -o merged.graphite
-graphite split large.graphite --max-size 100MB -o chunks/chunk_
-graphite repack old.graphite --compress=lz4 -o new.graphite
-graphite optimize bloated.graphite -o optimized.graphite
+turtlgraph merge bundle1.turtlgraph bundle2.turtlgraph -o merged.turtlgraph
+turtlgraph split large.turtlgraph --max-size 100MB -o chunks/chunk_
+turtlgraph repack old.turtlgraph --compress=lz4 -o new.turtlgraph
+turtlgraph optimize bloated.turtlgraph -o optimized.turtlgraph
 
 # Differential updates
-graphite diff old.graphite new.graphite # Show differences
-graphite patch old.graphite changes.delta -o updated.graphite
-graphite delta old.graphite new.graphite -o changes.delta
+turtlgraph diff old.turtlgraph new.turtlgraph # Show differences
+turtlgraph patch old.turtlgraph changes.delta -o updated.turtlgraph
+turtlgraph delta old.turtlgraph new.turtlgraph -o changes.delta
 ```
 
 ### Analysis Tools
@@ -728,29 +728,29 @@ Deep inspection and analysis capabilities:
 
 ```bash
 # Size analysis
-graphite size bundle.graphite           # Summary
-graphite size --detailed bundle.graphite # Per-chunk breakdown
-graphite size --format=json bundle.graphite > sizes.json
+turtlgraph size bundle.turtlgraph           # Summary
+turtlgraph size --detailed bundle.turtlgraph # Per-chunk breakdown
+turtlgraph size --format=json bundle.turtlgraph > sizes.json
 
 # Compression analysis
-graphite compress-stats bundle.graphite
-graphite compress-test bundle.graphite --algorithms all
-graphite train-dict samples/*.json -o optimized.zstd
+turtlgraph compress-stats bundle.turtlgraph
+turtlgraph compress-test bundle.turtlgraph --algorithms all
+turtlgraph train-dict samples/*.json -o optimized.zstd
 
 # Dependency analysis
-graphite deps bundle.graphite           # Show dependencies
-graphite deps --graph bundle.graphite   # Graphviz output
-graphite deps --missing bundle.graphite # Find missing deps
+turtlgraph deps bundle.turtlgraph           # Show dependencies
+turtlgraph deps --graph bundle.turtlgraph   # Graphviz output
+turtlgraph deps --missing bundle.turtlgraph # Find missing deps
 
 # Performance analysis
-graphite analyze bundle.graphite        # Optimization suggestions
-graphite analyze --profile=mobile bundle.graphite # Platform-specific
-graphite hotspots bundle.graphite      # Find performance issues
+turtlgraph analyze bundle.turtlgraph        # Optimization suggestions
+turtlgraph analyze --profile=mobile bundle.turtlgraph # Platform-specific
+turtlgraph hotspots bundle.turtlgraph      # Find performance issues
 
 # Content analysis
-graphite stats bundle.graphite         # Statistical analysis
-graphite duplicates bundle.graphite    # Find duplicate data
-graphite unused bundle.graphite        # Find unreferenced chunks
+turtlgraph stats bundle.turtlgraph         # Statistical analysis
+turtlgraph duplicates bundle.turtlgraph    # Find duplicate data
+turtlgraph unused bundle.turtlgraph        # Find unreferenced chunks
 ```
 
 ### Development Utilities
@@ -759,26 +759,26 @@ Tools for development and debugging:
 
 ```bash
 # Test data generation
-graphite generate --size=1GB --nodes=1M test.graphite
-graphite generate --pattern=game-like --assets=10000 realistic.graphite
-graphite generate --fuzzer --seed=42 fuzz.graphite
+turtlgraph generate --size=1GB --nodes=1M test.turtlgraph
+turtlgraph generate --pattern=game-like --assets=10000 realistic.turtlgraph
+turtlgraph generate --fuzzer --seed=42 fuzz.turtlgraph
 
 # Debugging tools
-graphite dump bundle.graphite           # Human-readable dump
-graphite dump --hex bundle.graphite     # Hex dump
-graphite dump --chunk=42 bundle.graphite # Specific chunk
-graphite trace bundle.graphite          # Load operation trace
-graphite validate bundle.graphite       # Validate structure
+turtlgraph dump bundle.turtlgraph           # Human-readable dump
+turtlgraph dump --hex bundle.turtlgraph     # Hex dump
+turtlgraph dump --chunk=42 bundle.turtlgraph # Specific chunk
+turtlgraph trace bundle.turtlgraph          # Load operation trace
+turtlgraph validate bundle.turtlgraph       # Validate structure
 
 # Format conversion
-graphite convert old-format.dat -o new.graphite
-graphite import unity.assets -o unity.graphite
-graphite export bundle.graphite --format=gltf -o exported/
+turtlgraph convert old-format.dat -o new.turtlgraph
+turtlgraph import unity.assets -o unity.turtlgraph
+turtlgraph export bundle.turtlgraph --format=gltf -o exported/
 
 # Development server
-graphite serve bundle.graphite --port=8080  # HTTP server
-graphite watch assets/ --auto-pack          # File watcher
-graphite repl bundle.graphite              # Interactive REPL
+turtlgraph serve bundle.turtlgraph --port=8080  # HTTP server
+turtlgraph watch assets/ --auto-pack          # File watcher
+turtlgraph repl bundle.turtlgraph              # Interactive REPL
 ```
 
 #### Command Implementation Examples
@@ -790,29 +790,29 @@ typedef struct {
     const char* description;
     int (*handler)(int argc, char** argv);
     const char* usage;
-    graphite_cmd_flags flags;
-} graphite_command;
+    hyperdag_cmd_flags flags;
+} hyperdag_command;
 
 // Info command implementation
 int cmd_info(int argc, char** argv) {
     if (argc < 1) {
-        fprintf(stderr, "Usage: graphite info <bundle>\n");
+        fprintf(stderr, "Usage: turtlgraph info <bundle>\n");
         return 1;
     }
     
     const char* bundle_path = argv[0];
-    graphite_bundle* bundle = graphite_open(bundle_path, GRAPHITE_OPEN_READ);
+    hyperdag_bundle* bundle = hyperdag_open(bundle_path, HYPERDAG_OPEN_READ);
     if (!bundle) {
         fprintf(stderr, "Error: Failed to open bundle '%s'\n", bundle_path);
         return 1;
     }
     
     // Get bundle statistics
-    graphite_stats stats;
-    graphite_get_stats(bundle, &stats);
+    hyperdag_stats stats;
+    hyperdag_get_stats(bundle, &stats);
     
     // Print information
-    printf("GRAPHITE Bundle Information\n");
+    printf("HyperDAG Bundle Information\n");
     printf("===========================\n");
     printf("File: %s\n", bundle_path);
     printf("Version: %d.%d\n", 
@@ -843,40 +843,40 @@ int cmd_info(int argc, char** argv) {
         printf("Built: %s\n", timestamp);
     }
     
-    graphite_close(bundle);
+    hyperdag_close(bundle);
     return 0;
 }
 
 // Tree command with visualization
 int cmd_tree(int argc, char** argv) {
     if (argc < 1) {
-        fprintf(stderr, "Usage: graphite tree <bundle> [path]\n");
+        fprintf(stderr, "Usage: turtlgraph tree <bundle> [path]\n");
         return 1;
     }
     
-    graphite_bundle* bundle = graphite_open(argv[0], GRAPHITE_OPEN_READ);
+    hyperdag_bundle* bundle = hyperdag_open(argv[0], HYPERDAG_OPEN_READ);
     if (!bundle) {
         fprintf(stderr, "Error: Failed to open bundle\n");
         return 1;
     }
     
     const char* start_path = argc > 1 ? argv[1] : "/";
-    const graphite_graph* root = graphite_get_graph_by_path(bundle, start_path);
+    const hyperdag_graph* root = hyperdag_get_graph_by_path(bundle, start_path);
     
     if (!root) {
         fprintf(stderr, "Error: Path '%s' not found\n", start_path);
-        graphite_close(bundle);
+        hyperdag_close(bundle);
         return 1;
     }
     
     // Print tree visualization
     print_tree_recursive(root, 0, true, "");
     
-    graphite_close(bundle);
+    hyperdag_close(bundle);
     return 0;
 }
 
-void print_tree_recursive(const graphite_graph* node, int depth, 
+void print_tree_recursive(const hyperdag_graph* node, int depth, 
                          bool is_last, const char* prefix) {
     // Print current node
     printf("%s", prefix);
@@ -884,9 +884,9 @@ void print_tree_recursive(const graphite_graph* node, int depth,
         printf("%s── ", is_last ? "└" : "├");
     }
     
-    const char* name = graphite_get_node_name(node);
-    const char* type = graphite_get_node_type(node);
-    uint32_t size = graphite_get_node_size(node);
+    const char* name = hyperdag_get_node_name(node);
+    const char* type = hyperdag_get_node_type(node);
+    uint32_t size = hyperdag_get_node_size(node);
     
     printf("%s", name ? name : "<unnamed>");
     if (type) {
@@ -905,9 +905,9 @@ void print_tree_recursive(const graphite_graph* node, int depth,
              prefix, depth > 0 ? (is_last ? "    " : "│   ") : "");
     
     // Print children
-    uint32_t child_count = graphite_node_count(node);
+    uint32_t child_count = hyperdag_node_count(node);
     for (uint32_t i = 0; i < child_count; i++) {
-        const graphite_graph* child = graphite_get_node(node, i);
+        const hyperdag_graph* child = hyperdag_get_node(node, i);
         bool child_is_last = (i == child_count - 1);
         print_tree_recursive(child, depth + 1, child_is_last, child_prefix);
     }
@@ -918,7 +918,7 @@ void print_tree_recursive(const graphite_graph* node, int depth,
 
 ## Chapter 14: Testing Framework
 
-GRAPHITE's comprehensive testing framework ensures reliability and performance across all components.
+TurtlGraph's comprehensive testing framework ensures reliability and performance across all components.
 
 ### Unit Testing
 
@@ -927,125 +927,125 @@ Lightweight, fast unit testing framework:
 ```c
 // Test registration and execution
 typedef enum {
-    GRAPHITE_TEST_PASS,
-    GRAPHITE_TEST_FAIL,
-    GRAPHITE_TEST_SKIP,
-    GRAPHITE_TEST_TIMEOUT
-} graphite_test_result;
+    TURTLGRAPH_TEST_PASS,
+    TURTLGRAPH_TEST_FAIL,
+    TURTLGRAPH_TEST_SKIP,
+    TURTLGRAPH_TEST_TIMEOUT
+} hyperdag_test_result;
 
 typedef struct {
     const char* name;
     const char* suite;
-    graphite_test_result (*test_func)(void);
+    hyperdag_test_result (*test_func)(void);
     uint64_t execution_time_ns;
     const char* failure_message;
     size_t memory_allocated;
     size_t memory_freed;
-} graphite_test_case;
+} hyperdag_test_case;
 
 // Test fixtures for setup/teardown
 typedef struct {
     void* (*setup)(void);
     void (*teardown)(void* context);
     const char* name;
-} graphite_test_fixture;
+} hyperdag_test_fixture;
 
 // Assertion macros with detailed output
-#define GRAPHITE_ASSERT_EQ(expected, actual) \
+#define TURTLGRAPH_ASSERT_EQ(expected, actual) \
     do { \
         if ((expected) != (actual)) { \
-            graphite_test_fail(__FILE__, __LINE__, \
+            turtlgraph_test_fail(__FILE__, __LINE__, \
                 "Expected: %lld, Actual: %lld", \
                 (long long)(expected), (long long)(actual)); \
-            return GRAPHITE_TEST_FAIL; \
+            return TURTLGRAPH_TEST_FAIL; \
         } \
     } while(0)
 
-#define GRAPHITE_ASSERT_STR_EQ(expected, actual) \
+#define TURTLGRAPH_ASSERT_STR_EQ(expected, actual) \
     do { \
         if (strcmp((expected), (actual)) != 0) { \
-            graphite_test_fail(__FILE__, __LINE__, \
+            turtlgraph_test_fail(__FILE__, __LINE__, \
                 "Expected: \"%s\", Actual: \"%s\"", \
                 (expected), (actual)); \
-            return GRAPHITE_TEST_FAIL; \
+            return TURTLGRAPH_TEST_FAIL; \
         } \
     } while(0)
 
-#define GRAPHITE_ASSERT_NEAR(expected, actual, epsilon) \
+#define TURTLGRAPH_ASSERT_NEAR(expected, actual, epsilon) \
     do { \
         double diff = fabs((double)(expected) - (double)(actual)); \
         if (diff > (epsilon)) { \
-            graphite_test_fail(__FILE__, __LINE__, \
+            turtlgraph_test_fail(__FILE__, __LINE__, \
                 "Expected: %f ± %f, Actual: %f (diff: %f)", \
                 (double)(expected), (double)(epsilon), \
                 (double)(actual), diff); \
-            return GRAPHITE_TEST_FAIL; \
+            return TURTLGRAPH_TEST_FAIL; \
         } \
     } while(0)
 
 // Example unit tests
-graphite_test_result test_bundle_creation(void) {
+hyperdag_test_result test_bundle_creation(void) {
     // Arrange
-    graphite_builder* builder = graphite_builder_create();
-    GRAPHITE_ASSERT_NOT_NULL(builder);
+    hyperdag_builder* builder = hyperdag_builder_create();
+    TURTLGRAPH_ASSERT_NOT_NULL(builder);
     
     // Act
-    const char* test_string = "Hello, GRAPHITE!";
-    uint32_t string_id = graphite_builder_add_string(builder, test_string);
+    const char* test_string = "Hello, HyperDAG!";
+    uint32_t string_id = hyperdag_builder_add_string(builder, test_string);
     
-    graphite_bundle* bundle = graphite_builder_finalize(builder);
-    GRAPHITE_ASSERT_NOT_NULL(bundle);
+    hyperdag_bundle* bundle = hyperdag_builder_finalize(builder);
+    TURTLGRAPH_ASSERT_NOT_NULL(bundle);
     
     // Assert
-    const char* retrieved = graphite_get_string(bundle, string_id);
-    GRAPHITE_ASSERT_STR_EQ(test_string, retrieved);
+    const char* retrieved = hyperdag_get_string(bundle, string_id);
+    TURTLGRAPH_ASSERT_STR_EQ(test_string, retrieved);
     
     // Verify bundle structure
-    GRAPHITE_ASSERT_EQ(1, bundle->header.string_count);
-    GRAPHITE_ASSERT_GT(bundle->header.file_size, 0);
+    TURTLGRAPH_ASSERT_EQ(1, bundle->header.string_count);
+    TURTLGRAPH_ASSERT_GT(bundle->header.file_size, 0);
     
     // Cleanup
-    graphite_close(bundle);
-    graphite_builder_destroy(builder);
+    hyperdag_close(bundle);
+    hyperdag_builder_destroy(builder);
     
-    return GRAPHITE_TEST_PASS;
+    return TURTLGRAPH_TEST_PASS;
 }
 
-graphite_test_result test_graph_operations(void) {
-    graphite_test_fixture fixture = {
+hyperdag_test_result test_graph_operations(void) {
+    hyperdag_test_fixture fixture = {
         .setup = setup_test_bundle,
         .teardown = teardown_test_bundle,
         .name = "GraphOps"
     };
     
     void* context = fixture.setup();
-    GRAPHITE_ASSERT_NOT_NULL(context);
+    TURTLGRAPH_ASSERT_NOT_NULL(context);
     
     test_bundle_context* ctx = (test_bundle_context*)context;
     
     // Test node creation
-    graphite_node_id root = graphite_create_node(ctx->bundle);
-    GRAPHITE_ASSERT_NE(INVALID_NODE_ID, root);
+    hyperdag_node_id root = hyperdag_create_node(ctx->bundle);
+    TURTLGRAPH_ASSERT_NE(INVALID_NODE_ID, root);
     
     // Test property operations
-    graphite_set_property(ctx->bundle, root, "name", "root_node");
-    const char* name = graphite_get_property_string(ctx->bundle, root, "name");
-    GRAPHITE_ASSERT_STR_EQ("root_node", name);
+    hyperdag_set_property(ctx->bundle, root, "name", "root_node");
+    const char* name = hyperdag_get_property_string(ctx->bundle, root, "name");
+    TURTLGRAPH_ASSERT_STR_EQ("root_node", name);
     
     // Test edge creation
-    graphite_node_id child = graphite_create_node(ctx->bundle);
-    graphite_edge_id edge = graphite_create_edge(ctx->bundle, root, child);
-    GRAPHITE_ASSERT_NE(INVALID_EDGE_ID, edge);
+    hyperdag_node_id child = hyperdag_create_node(ctx->bundle);
+    hyperdag_edge_id edge = hyperdag_create_edge(ctx->bundle, root, child);
+    TURTLGRAPH_ASSERT_NE(INVALID_EDGE_ID, edge);
     
     // Test traversal
-    size_t child_count = graphite_get_child_count(ctx->bundle, root);
-    GRAPHITE_ASSERT_EQ(1, child_count);
+    size_t child_count = hyperdag_get_child_count(ctx->bundle, root);
+    TURTLGRAPH_ASSERT_EQ(1, child_count);
     
-    graphite_node_id retrieved_child = graphite_get_child(ctx->bundle, root, 0);
-    GRAPHITE_ASSERT_EQ(child, retrieved_child);
+    hyperdag_node_id retrieved_child = hyperdag_get_child(ctx->bundle, root, 0);
+    TURTLGRAPH_ASSERT_EQ(child, retrieved_child);
     
     fixture.teardown(context);
-    return GRAPHITE_TEST_PASS;
+    return TURTLGRAPH_TEST_PASS;
 }
 ```
 
@@ -1060,16 +1060,16 @@ typedef struct {
     char** created_files;
     size_t file_count;
     size_t file_capacity;
-    graphite_test_fixture fixture;
-} graphite_integration_context;
+    hyperdag_test_fixture fixture;
+} hyperdag_integration_context;
 
 // Test complete asset pipeline
-graphite_test_result test_asset_pipeline_integration(void) {
-    graphite_integration_context ctx = {0};
+hyperdag_test_result test_asset_pipeline_integration(void) {
+    hyperdag_integration_context ctx = {0};
     
     // Create temporary directory
-    ctx.temp_directory = create_temp_directory("graphite_test");
-    GRAPHITE_ASSERT_NOT_NULL(ctx.temp_directory);
+    ctx.temp_directory = create_temp_directory("hyperdag_test");
+    TURTLGRAPH_ASSERT_NOT_NULL(ctx.temp_directory);
     
     // Create test assets
     create_test_texture(&ctx, "player.png", 1024, 1024);
@@ -1079,58 +1079,58 @@ graphite_test_result test_asset_pipeline_integration(void) {
     // Run asset pipeline
     char command[1024];
     snprintf(command, sizeof(command),
-        "graphite pack --compress --verify %s/assets output.graphite",
+        "turtlgraph pack --compress --verify %s/assets output.turtlgraph",
         ctx.temp_directory);
     
     int result = system(command);
-    GRAPHITE_ASSERT_EQ(0, result);
+    TURTLGRAPH_ASSERT_EQ(0, result);
     
     // Verify output bundle
-    graphite_bundle* bundle = graphite_open("output.graphite", GRAPHITE_OPEN_READ);
-    GRAPHITE_ASSERT_NOT_NULL(bundle);
+    hyperdag_bundle* bundle = hyperdag_open("output.turtlgraph", HYPERDAG_OPEN_READ);
+    TURTLGRAPH_ASSERT_NOT_NULL(bundle);
     
     // Check contents
-    GRAPHITE_ASSERT_TRUE(bundle_contains_asset(bundle, "player.png"));
-    GRAPHITE_ASSERT_TRUE(bundle_contains_asset(bundle, "player.gltf"));
-    GRAPHITE_ASSERT_TRUE(bundle_contains_asset(bundle, "config.json"));
+    TURTLGRAPH_ASSERT_TRUE(bundle_contains_asset(bundle, "player.png"));
+    TURTLGRAPH_ASSERT_TRUE(bundle_contains_asset(bundle, "player.gltf"));
+    TURTLGRAPH_ASSERT_TRUE(bundle_contains_asset(bundle, "config.json"));
     
     // Verify compression
-    graphite_stats stats;
-    graphite_get_stats(bundle, &stats);
-    GRAPHITE_ASSERT_GT(stats.compression_ratio, 0.3); // At least 30% compression
+    hyperdag_stats stats;
+    hyperdag_get_stats(bundle, &stats);
+    TURTLGRAPH_ASSERT_GT(stats.compression_ratio, 0.3); // At least 30% compression
     
     // Test loading performance
-    uint64_t start_time = graphite_get_time_ns();
+    uint64_t start_time = hyperdag_get_time_ns();
     
     for (int i = 0; i < 100; i++) {
         const void* data;
         size_t size;
-        graphite_result res = graphite_get_asset(bundle, "player.png", &data, &size);
-        GRAPHITE_ASSERT_EQ(GRAPHITE_SUCCESS, res);
-        GRAPHITE_ASSERT_NOT_NULL(data);
-        GRAPHITE_ASSERT_GT(size, 0);
+        hyperdag_result res = hyperdag_get_asset(bundle, "player.png", &data, &size);
+        TURTLGRAPH_ASSERT_EQ(HYPERDAG_SUCCESS, res);
+        TURTLGRAPH_ASSERT_NOT_NULL(data);
+        TURTLGRAPH_ASSERT_GT(size, 0);
     }
     
-    uint64_t elapsed = graphite_get_time_ns() - start_time;
+    uint64_t elapsed = hyperdag_get_time_ns() - start_time;
     double ms_per_load = (elapsed / 100.0) / 1e6;
-    GRAPHITE_ASSERT_LT(ms_per_load, 1.0); // Less than 1ms per load
+    TURTLGRAPH_ASSERT_LT(ms_per_load, 1.0); // Less than 1ms per load
     
     // Cleanup
-    graphite_close(bundle);
+    hyperdag_close(bundle);
     cleanup_integration_context(&ctx);
     
-    return GRAPHITE_TEST_PASS;
+    return TURTLGRAPH_TEST_PASS;
 }
 
 // Test hot reload functionality
-graphite_test_result test_hot_reload_integration(void) {
+hyperdag_test_result test_hot_reload_integration(void) {
     // Create initial bundle
-    graphite_bundle* bundle = create_test_bundle_with_assets();
-    GRAPHITE_ASSERT_NOT_NULL(bundle);
+    hyperdag_bundle* bundle = create_test_bundle_with_assets();
+    TURTLGRAPH_ASSERT_NOT_NULL(bundle);
     
     // Set up file watcher
-    hot_reload_context* reload_ctx = graphite_hot_reload_create();
-    graphite_hot_reload_watch(reload_ctx, bundle);
+    hot_reload_context* reload_ctx = hyperdag_hot_reload_create();
+    hyperdag_hot_reload_watch(reload_ctx, bundle);
     
     // Modify an asset
     modify_test_asset("assets/texture.png");
@@ -1139,21 +1139,21 @@ graphite_test_result test_hot_reload_integration(void) {
     sleep_ms(100);
     
     // Verify reload occurred
-    GRAPHITE_ASSERT_TRUE(reload_ctx->reload_count > 0);
+    TURTLGRAPH_ASSERT_TRUE(reload_ctx->reload_count > 0);
     
     // Verify new content is loaded
     const void* texture_data;
     size_t texture_size;
-    graphite_get_asset(bundle, "texture.png", &texture_data, &texture_size);
+    hyperdag_get_asset(bundle, "texture.png", &texture_data, &texture_size);
     
     uint32_t checksum = compute_checksum(texture_data, texture_size);
-    GRAPHITE_ASSERT_NE(original_checksum, checksum);
+    TURTLGRAPH_ASSERT_NE(original_checksum, checksum);
     
     // Cleanup
-    graphite_hot_reload_destroy(reload_ctx);
-    graphite_close(bundle);
+    hyperdag_hot_reload_destroy(reload_ctx);
+    hyperdag_close(bundle);
     
-    return GRAPHITE_TEST_PASS;
+    return TURTLGRAPH_TEST_PASS;
 }
 ```
 
@@ -1164,44 +1164,44 @@ Automated testing with generated inputs:
 ```c
 // Property-based testing framework
 typedef struct {
-    void* (*generate)(graphite_rng* rng, size_t size_hint);
+    void* (*generate)(hyperdag_rng* rng, size_t size_hint);
     void (*shrink)(void* input, void** smaller_inputs, size_t* count);
     void (*free_input)(void* input);
-} graphite_generator;
+} hyperdag_generator;
 
 typedef struct {
     bool (*property)(void* input);
     const char* description;
-    graphite_generator* generator;
+    hyperdag_generator* generator;
     size_t num_tests;
     uint64_t seed;
-} graphite_property_test;
+} hyperdag_property_test;
 
 // Random generators
-void* generate_random_bundle_data(graphite_rng* rng, size_t size_hint) {
+void* generate_random_bundle_data(hyperdag_rng* rng, size_t size_hint) {
     bundle_test_data* data = calloc(1, sizeof(bundle_test_data));
     
     // Generate random number of strings
-    data->string_count = graphite_rng_range(rng, 0, 1000);
+    data->string_count = hyperdag_rng_range(rng, 0, 1000);
     data->strings = calloc(data->string_count, sizeof(char*));
     
     for (size_t i = 0; i < data->string_count; i++) {
-        size_t len = graphite_rng_range(rng, 1, 1024);
+        size_t len = hyperdag_rng_range(rng, 1, 1024);
         data->strings[i] = generate_random_string(rng, len);
     }
     
     // Generate random blobs
-    data->blob_count = graphite_rng_range(rng, 0, 100);
+    data->blob_count = hyperdag_rng_range(rng, 0, 100);
     data->blobs = calloc(data->blob_count, sizeof(blob_data));
     
     for (size_t i = 0; i < data->blob_count; i++) {
-        data->blobs[i].size = graphite_rng_range(rng, 0, size_hint);
+        data->blobs[i].size = hyperdag_rng_range(rng, 0, size_hint);
         data->blobs[i].data = generate_random_bytes(rng, data->blobs[i].size);
     }
     
     // Generate random graph structure
-    data->node_count = graphite_rng_range(rng, 1, 100);
-    data->edge_probability = graphite_rng_float(rng);
+    data->node_count = hyperdag_rng_range(rng, 1, 100);
+    data->edge_probability = hyperdag_rng_float(rng);
     
     return data;
 }
@@ -1211,53 +1211,53 @@ bool property_bundle_roundtrip(void* input) {
     bundle_test_data* data = (bundle_test_data*)input;
     
     // Create bundle
-    graphite_builder* builder = graphite_builder_create();
+    hyperdag_builder* builder = hyperdag_builder_create();
     if (!builder) return false;
     
     // Add all strings
     for (size_t i = 0; i < data->string_count; i++) {
-        uint32_t id = graphite_builder_add_string(builder, data->strings[i]);
+        uint32_t id = hyperdag_builder_add_string(builder, data->strings[i]);
         if (id != i) {
-            graphite_builder_destroy(builder);
+            hyperdag_builder_destroy(builder);
             return false;
         }
     }
     
     // Add all blobs
     for (size_t i = 0; i < data->blob_count; i++) {
-        uint32_t id = graphite_builder_add_blob(builder, 
+        uint32_t id = hyperdag_builder_add_blob(builder, 
             data->blobs[i].data, data->blobs[i].size);
         if (id == INVALID_BLOB_ID) {
-            graphite_builder_destroy(builder);
+            hyperdag_builder_destroy(builder);
             return false;
         }
     }
     
     // Build graph structure
     if (!build_random_graph(builder, data)) {
-        graphite_builder_destroy(builder);
+        hyperdag_builder_destroy(builder);
         return false;
     }
     
     // Finalize bundle
-    graphite_bundle* bundle = graphite_builder_finalize(builder);
+    hyperdag_bundle* bundle = hyperdag_builder_finalize(builder);
     if (!bundle) {
-        graphite_builder_destroy(builder);
+        hyperdag_builder_destroy(builder);
         return false;
     }
     
     // Verify all data preserved
     bool success = verify_bundle_contents(bundle, data);
     
-    graphite_close(bundle);
-    graphite_builder_destroy(builder);
+    hyperdag_close(bundle);
+    hyperdag_builder_destroy(builder);
     
     return success;
 }
 
 // Run property-based tests
 void run_property_tests(void) {
-    graphite_property_test tests[] = {
+    hyperdag_property_test tests[] = {
         {
             .property = property_bundle_roundtrip,
             .description = "Bundle roundtrip preserves all data",
@@ -1312,7 +1312,7 @@ typedef struct {
     double stddev;
     double p95;
     double p99;
-} graphite_benchmark;
+} hyperdag_benchmark;
 
 // Benchmark bundle loading performance
 void benchmark_bundle_loading(void* context) {
@@ -1322,19 +1322,19 @@ void benchmark_bundle_loading(void* context) {
     clear_system_caches();
     
     // Time the operation
-    uint64_t start = graphite_get_time_ns();
+    uint64_t start = hyperdag_get_time_ns();
     
-    graphite_bundle* bundle = graphite_open(ctx->bundle_path, GRAPHITE_OPEN_READ);
+    hyperdag_bundle* bundle = hyperdag_open(ctx->bundle_path, HYPERDAG_OPEN_READ);
     if (bundle) {
         // Force load of root graph
-        const graphite_graph* root = graphite_root(bundle);
+        const hyperdag_graph* root = hyperdag_root(bundle);
         volatile uint32_t dummy = root->header.node_cnt;
         (void)dummy;
         
-        graphite_close(bundle);
+        hyperdag_close(bundle);
     }
     
-    uint64_t elapsed = graphite_get_time_ns() - start;
+    uint64_t elapsed = hyperdag_get_time_ns() - start;
     record_timing(ctx, elapsed);
 }
 
@@ -1342,12 +1342,12 @@ void benchmark_bundle_loading(void* context) {
 void benchmark_graph_traversal(void* context) {
     benchmark_context* ctx = (benchmark_context*)context;
     
-    uint64_t start = graphite_get_time_ns();
+    uint64_t start = hyperdag_get_time_ns();
     
     size_t nodes_visited = 0;
     traverse_graph_dfs(ctx->bundle, ctx->root, &nodes_visited);
     
-    uint64_t elapsed = graphite_get_time_ns() - start;
+    uint64_t elapsed = hyperdag_get_time_ns() - start;
     
     // Record normalized timing (ns per node)
     double ns_per_node = (double)elapsed / nodes_visited;
@@ -1356,7 +1356,7 @@ void benchmark_graph_traversal(void* context) {
 
 // Run benchmarks and generate report
 void run_performance_suite(void) {
-    graphite_benchmark benchmarks[] = {
+    hyperdag_benchmark benchmarks[] = {
         {
             .name = "Bundle Open/Close",
             .setup = setup_bundle_benchmark,
@@ -1391,7 +1391,7 @@ void run_performance_suite(void) {
         }
     };
     
-    printf("GRAPHITE Performance Test Suite\n");
+    printf("TurtlGraph Performance Test Suite\n");
     printf("===============================\n\n");
     
     for (size_t i = 0; i < sizeof(benchmarks) / sizeof(benchmarks[0]); i++) {
@@ -1406,7 +1406,7 @@ void run_performance_suite(void) {
 }
 
 // Statistical analysis of results
-void analyze_benchmark_results(graphite_benchmark* bench) {
+void analyze_benchmark_results(hyperdag_benchmark* bench) {
     if (bench->timing_count == 0) return;
     
     // Sort timings
@@ -1432,7 +1432,7 @@ typedef struct {
     size_t size;
     uint32_t seed;
     size_t iteration;
-} graphite_fuzz_input;
+} hyperdag_fuzz_input;
 
 // Main fuzzing entry point
 int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
@@ -1449,13 +1449,13 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     close(fd);
     
     // Test bundle parsing
-    graphite_bundle* bundle = graphite_open_secure(temp_path, 
-        &graphite_security_strict);
+    hyperdag_bundle* bundle = hyperdag_open_secure(temp_path, 
+        &hyperdag_security_strict);
     
     if (bundle) {
         // Exercise API surface
         fuzz_test_api(bundle);
-        graphite_close(bundle);
+        hyperdag_close(bundle);
     }
     
     unlink(temp_path);
@@ -1463,16 +1463,16 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 }
 
 // Targeted fuzzing for specific components
-void fuzz_test_api(graphite_bundle* bundle) {
+void fuzz_test_api(hyperdag_bundle* bundle) {
     // Test graph traversal
-    const graphite_graph* root = graphite_root(bundle);
+    const hyperdag_graph* root = hyperdag_root(bundle);
     if (root) {
         fuzz_graph_traversal(root, 0, MAX_DEPTH);
     }
     
     // Test string operations
     for (uint32_t i = 0; i < 100 && i < bundle->header.string_count; i++) {
-        const char* str = graphite_get_string(bundle, i);
+        const char* str = hyperdag_get_string(bundle, i);
         if (str) {
             volatile size_t len = strlen(str);
             (void)len;
@@ -1494,39 +1494,39 @@ typedef struct {
     uint8_t data[16];
 } mutation;
 
-void mutate_bundle(uint8_t* data, size_t size, graphite_rng* rng) {
-    size_t num_mutations = graphite_rng_range(rng, 1, 10);
+void mutate_bundle(uint8_t* data, size_t size, hyperdag_rng* rng) {
+    size_t num_mutations = hyperdag_rng_range(rng, 1, 10);
     
     for (size_t i = 0; i < num_mutations; i++) {
         mutation mut;
-        mut.pos = graphite_rng_range(rng, 0, size);
-        mut.type = graphite_rng_range(rng, 0, 4);
+        mut.pos = hyperdag_rng_range(rng, 0, size);
+        mut.type = hyperdag_rng_range(rng, 0, 4);
         
         switch (mut.type) {
             case MUTATE_FLIP:
                 if (mut.pos < size) {
-                    data[mut.pos] ^= 1 << graphite_rng_range(rng, 0, 8);
+                    data[mut.pos] ^= 1 << hyperdag_rng_range(rng, 0, 8);
                 }
                 break;
                 
             case MUTATE_INSERT:
                 // Insert random bytes
-                mut.len = graphite_rng_range(rng, 1, 16);
+                mut.len = hyperdag_rng_range(rng, 1, 16);
                 insert_bytes(data, size, mut.pos, mut.data, mut.len);
                 break;
                 
             case MUTATE_DELETE:
                 // Delete bytes
-                mut.len = graphite_rng_range(rng, 1, min(16, size - mut.pos));
+                mut.len = hyperdag_rng_range(rng, 1, min(16, size - mut.pos));
                 delete_bytes(data, size, mut.pos, mut.len);
                 break;
                 
             case MUTATE_REPLACE:
                 // Replace with random data
-                mut.len = graphite_rng_range(rng, 1, min(16, size - mut.pos));
+                mut.len = hyperdag_rng_range(rng, 1, min(16, size - mut.pos));
                 for (size_t j = 0; j < mut.len; j++) {
                     if (mut.pos + j < size) {
-                        data[mut.pos + j] = graphite_rng_byte(rng);
+                        data[mut.pos + j] = hyperdag_rng_byte(rng);
                     }
                 }
                 break;
@@ -1549,7 +1549,7 @@ void coverage_guided_fuzz(fuzzer_state* state, const uint8_t* data, size_t size)
     // Run with coverage tracking
     __sanitizer_cov_reset_edgeguards();
     
-    graphite_fuzz_input input = {
+    hyperdag_fuzz_input input = {
         .data = (uint8_t*)data,
         .size = size,
         .seed = random(),

@@ -12,20 +12,20 @@
   - [24.7 Lessons Learned](#247-lessons-learned)
 
 ### Overview
-This part presents comprehensive case studies from real-world GRAPHITE deployments across various industries. From AAA game studios to scientific research facilities, these examples demonstrate the practical benefits, challenges, and implementation strategies for adopting GRAPHITE in production environments.
+This part presents comprehensive case studies from real-world TurtlGraph deployments across various industries. From AAA game studios to scientific research facilities, these examples demonstrate the practical benefits, challenges, and implementation strategies for adopting TurtlGraph in production environments.
 
 ### Chapter 24: Real-World Case Studies
 
-The adoption of GRAPHITE across diverse industries has demonstrated its versatility and power as a universal asset management system. This chapter examines real-world implementations, from high-stakes AAA game productions to cutting-edge scientific visualization projects.
+The adoption of TurtlGraph across diverse industries has demonstrated its versatility and power as a universal asset management system. This chapter examines real-world implementations, from high-stakes AAA game productions to cutting-edge scientific visualization projects.
 
 #### 24.1 AAA Game Studio Integration
 
 ##### 24.1.1 Studio Profile: Cosmic Games
-Cosmic Games, a 500-person AAA studio known for their open-world RPGs, migrated their entire asset pipeline to GRAPHITE during the development of "Stellar Odyssey," a game featuring over 100GB of unique assets.
+Cosmic Games, a 500-person AAA studio known for their open-world RPGs, migrated their entire asset pipeline to TurtlGraph during the development of "Stellar Odyssey," a game featuring over 100GB of unique assets.
 
 ```mermaid
 graph TB
-    subgraph "Before GRAPHITE"
+    subgraph "Before TurtlGraph"
         DCC1[Maya] --> FBX1[FBX Export]
         DCC2[Substance] --> TEX1[Texture Export]
         DCC3[Houdini] --> USD1[USD Export]
@@ -35,8 +35,8 @@ graph TB
         CONV1 --> ENGINE1[Proprietary Format]
     end
     
-    subgraph "After GRAPHITE"
-        DCC4[Maya] --> GRAF1[GRAPHITE Export]
+    subgraph "After TurtlGraph"
+        DCC4[Maya] --> GRAF1[TurtlGraph Export]
         DCC5[Substance] --> GRAF1
         DCC6[Houdini] --> GRAF1
         GRAF1 --> ENGINE2[Direct Load]
@@ -72,30 +72,30 @@ static const studio_metrics_t cosmic_results = {
 ```
 
 ##### 24.1.4 Developer Testimonial
-> "GRAPHITE transformed our iteration speed. What used to take 5-10 minutes for a full asset rebuild now happens in seconds. The hot reload system alone saved us months of development time." - Lead Technical Artist
+> "TurtlGraph transformed our iteration speed. What used to take 5-10 minutes for a full asset rebuild now happens in seconds. The hot reload system alone saved us months of development time." - Lead Technical Artist
 
 ##### 24.1.5 Technical Challenges Overcome
 
 **Challenge 1: Legacy Asset Conversion**
 ```c
 // Custom migration tool for legacy formats
-graphite_error migrate_legacy_asset(
+hyperdag_error migrate_legacy_asset(
     const char* legacy_path,
-    graphite_bundle* output
+    hyperdag_bundle* output
 ) {
     legacy_asset* old = load_legacy(legacy_path);
     
     // Convert hierarchical structure to graph
-    graphite_graph* root = graphite_graph_create();
+    hyperdag_graph* root = hyperdag_graph_create();
     convert_hierarchy_to_graph(old->root, root);
     
     // Preserve metadata as properties
     migrate_metadata(old, root);
     
     // Optimize graph structure
-    graphite_graph_optimize(root);
+    hyperdag_graph_optimize(root);
     
-    return graphite_bundle_add_graph(output, "main", root);
+    return hyperdag_bundle_add_graph(output, "main", root);
 }
 ```
 
@@ -103,15 +103,15 @@ graphite_error migrate_legacy_asset(
 ```c
 // Platform-specific bundle variants
 typedef struct {
-    graphite_bundle* base;
-    graphite_bundle* pc_ultra;
-    graphite_bundle* pc_medium;
-    graphite_bundle* console_optimized;
-    graphite_bundle* mobile_compressed;
+    hyperdag_bundle* base;
+    hyperdag_bundle* pc_ultra;
+    hyperdag_bundle* pc_medium;
+    hyperdag_bundle* console_optimized;
+    hyperdag_bundle* mobile_compressed;
 } platform_bundle_set;
 
 // Automatic platform detection and loading
-graphite_bundle* load_platform_optimized(
+hyperdag_bundle* load_platform_optimized(
     const char* asset_path,
     platform_type platform
 ) {
@@ -131,7 +131,7 @@ graphite_bundle* load_platform_optimized(
 #### 24.2 Indie Game Development
 
 ##### 24.2.1 Solo Developer Success Story
-Alex Chen, an indie developer, adopted GRAPHITE for their procedural puzzle game "Quantum Loops," leveraging the format's graph-native design for complex puzzle mechanics.
+Alex Chen, an indie developer, adopted TurtlGraph for their procedural puzzle game "Quantum Loops," leveraging the format's graph-native design for complex puzzle mechanics.
 
 ```mermaid
 graph LR
@@ -151,10 +151,10 @@ graph LR
 
 ```python
 # Python bindings for quick iteration
-import graphite
+import turtlgraph
 
 def create_puzzle_level(difficulty):
-    bundle = graphite.Bundle()
+    bundle = turtlgraph.Bundle()
     level = bundle.create_graph("level")
     
     # Generate puzzle nodes
@@ -184,7 +184,7 @@ def create_puzzle_level(difficulty):
 #### 24.3 Film/VFX Pipeline
 
 ##### 24.3.1 VFX Studio Case Study: Nebula Effects
-Nebula Effects integrated GRAPHITE into their pipeline for the blockbuster film "Cosmic Dawn," managing over 10,000 VFX shots with complex dependencies.
+Nebula Effects integrated TurtlGraph into their pipeline for the blockbuster film "Cosmic Dawn," managing over 10,000 VFX shots with complex dependencies.
 
 ```mermaid
 graph TB
@@ -206,7 +206,7 @@ graph TB
 ```c
 // Distributed render node structure
 typedef struct {
-    graphite_node_id shot_id;
+    hyperdag_node_id shot_id;
     uint32_t frame_start;
     uint32_t frame_end;
     uint32_t render_flags;
@@ -215,12 +215,12 @@ typedef struct {
 } render_job_t;
 
 // Farm submission system
-graphite_error submit_to_farm(
-    graphite_bundle* shot_bundle,
+hyperdag_error submit_to_farm(
+    hyperdag_bundle* shot_bundle,
     render_farm* farm
 ) {
     // Extract render dependencies
-    graphite_graph* deps = get_graph(shot_bundle, "dependencies");
+    hyperdag_graph* deps = get_graph(shot_bundle, "dependencies");
     
     // Build job graph
     job_graph* jobs = create_job_graph(deps);
@@ -240,7 +240,7 @@ graphite_error submit_to_farm(
         farm_submit_job(node, job, jobs->dependencies[i]);
     }
     
-    return GRAPHITE_OK;
+    return TurtlGraph_OK;
 }
 ```
 
@@ -273,27 +273,27 @@ class ShotTracker:
 #### 24.4 Scientific Visualization
 
 ##### 24.4.1 Research Institution: Quantum Research Labs
-The Quantum Research Labs adopted GRAPHITE for visualizing complex quantum simulation data, leveraging the recursive graph structure to represent quantum state superpositions.
+The Quantum Research Labs adopted TurtlGraph for visualizing complex quantum simulation data, leveraging the recursive graph structure to represent quantum state superpositions.
 
 ```c
 // Quantum state representation
 typedef struct {
     complex_float amplitude;
     uint64_t basis_state;
-    graphite_node_id entangled_with[];
+    hyperdag_node_id entangled_with[];
 } quantum_state_t;
 
 // Visualization pipeline
-graphite_error visualize_quantum_system(
+hyperdag_error visualize_quantum_system(
     quantum_simulation* sim,
-    graphite_bundle* output
+    hyperdag_bundle* output
 ) {
-    graphite_graph* state_graph = graphite_graph_create();
+    hyperdag_graph* state_graph = hyperdag_graph_create();
     
     // Create nodes for each basis state
     for (size_t i = 0; i < sim->hilbert_space_dim; i++) {
         if (cabs(sim->amplitudes[i]) > EPSILON) {
-            graphite_node_id node = add_state_node(
+            hyperdag_node_id node = add_state_node(
                 state_graph,
                 sim->amplitudes[i],
                 i
@@ -313,7 +313,7 @@ graphite_error visualize_quantum_system(
         capture_state(state_graph, sim, t);
     }
     
-    return graphite_bundle_add_graph(output, "quantum_evolution", state_graph);
+    return hyperdag_bundle_add_graph(output, "quantum_evolution", state_graph);
 }
 ```
 
@@ -322,7 +322,7 @@ graphite_error visualize_quantum_system(
 ```mermaid
 graph TD
     subgraph "Data Pipeline"
-        SIM[Simulation] --> GRAF[GRAPHITE Bundle]
+        SIM[Simulation] --> GRAF[TurtlGraph Bundle]
         GRAF --> VIZ[Visualization]
         GRAF --> ANALYSIS[Analysis]
         GRAF --> ARCHIVE[Long-term Archive]
@@ -354,7 +354,7 @@ typedef struct {
 // Industry comparison
 static const benchmark_comparison_t industry_benchmarks[] = {
     // Format         Load    Traverse  Memory  Cache  Nodes/sec
-    {"GRAPHITE",      12.3,   0.8,      145.2,  0.94,  1250000},
+    {"TurtlGraph",      12.3,   0.8,      145.2,  0.94,  1250000},
     {"Custom Binary", 45.7,   2.1,      287.4,  0.71,  480000},
     {"JSON",          234.5,  15.3,     512.8,  0.0,   95000},
     {"XML",           567.8,  28.9,     724.1,  0.0,   42000},
@@ -391,9 +391,9 @@ graph LR
 ```python
 # Migration orchestrator
 class MigrationManager:
-    def __init__(self, legacy_pipeline, graphite_pipeline):
+    def __init__(self, legacy_pipeline, hyperdag_pipeline):
         self.legacy = legacy_pipeline
-        self.graphite = graphite_pipeline
+        self.turtlgraph = hyperdag_pipeline
         self.migration_state = load_migration_state()
     
     def migrate_phase_1(self):
@@ -445,13 +445,13 @@ class MigrationManager:
 // Anti-pattern: Over-engineering graphs
 typedef struct {
     // DON'T: Create graphs for simple data
-    graphite_graph* single_float_value;  // Wasteful!
+    hyperdag_graph* single_float_value;  // Wasteful!
     
     // DO: Use properties for simple data
     float simple_value;
     
     // DO: Use graphs for complex relationships
-    graphite_graph* material_network;
+    hyperdag_graph* material_network;
 } asset_data_t;
 ```
 

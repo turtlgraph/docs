@@ -24,22 +24,22 @@
 
 ### Overview
 
-This part covers GRAPHITE's integration with popular game engines, development tools, and programming languages. Chapter 22 details editor plugins and IDE integration. Chapter 23 presents comprehensive language bindings. Chapter 25 provides migration strategies and compatibility layers for transitioning existing projects to GRAPHITE.
+This part covers TurtlGraph's integration with popular game engines, development tools, and programming languages. Chapter 22 details editor plugins and IDE integration. Chapter 23 presents comprehensive language bindings. Chapter 25 provides migration strategies and compatibility layers for transitioning existing projects to TurtlGraph.
 
 ---
 
 ## Chapter 22: Editor Integration
 
-GRAPHITE provides deep integration with popular game engines and development environments, enabling seamless asset management within existing workflows.
+TurtlGraph provides deep integration with popular game engines and development environments, enabling seamless asset management within existing workflows.
 
 ### Plugin Architecture
 
-The GRAPHITE plugin system follows a modular architecture that adapts to each host environment:
+The TurtlGraph plugin system follows a modular architecture that adapts to each host environment:
 
 ```mermaid
 graph TB
-    subgraph "GRAPHITE Plugin Architecture"
-        CORE["GRAPHITE Core<br/>Native Library"]
+    subgraph "TurtlGraph Plugin Architecture"
+        CORE["HyperDAG Core<br/>Native Library"]
         API["Plugin API Layer"]
         HOST["Host Adapter"]
     end
@@ -81,26 +81,26 @@ typedef struct {
     const char* vendor;
     
     // Lifecycle callbacks
-    graphite_result (*initialize)(void** context, const graphite_plugin_config* config);
-    graphite_result (*shutdown)(void* context);
+    hyperdag_result (*initialize)(void** context, const hyperdag_plugin_config* config);
+    hyperdag_result (*shutdown)(void* context);
     
     // Asset operations
-    graphite_result (*import_asset)(void* context, const char* path, graphite_import_options* options);
-    graphite_result (*export_asset)(void* context, const graphite_graph* asset, const char* path);
+    hyperdag_result (*import_asset)(void* context, const char* path, hyperdag_import_options* options);
+    hyperdag_result (*export_asset)(void* context, const hyperdag_graph* asset, const char* path);
     
     // Live operations
-    graphite_result (*on_asset_changed)(void* context, const char* bundle_path, uint64_t asset_id);
-    graphite_result (*on_hot_reload)(void* context, const graphite_bundle* old_bundle, const graphite_bundle* new_bundle);
+    hyperdag_result (*on_asset_changed)(void* context, const char* bundle_path, uint64_t asset_id);
+    hyperdag_result (*on_hot_reload)(void* context, const hyperdag_bundle* old_bundle, const hyperdag_bundle* new_bundle);
     
     // Editor integration
-    void* (*get_preview_data)(void* context, const graphite_graph* asset);
+    void* (*get_preview_data)(void* context, const hyperdag_graph* asset);
     bool (*can_handle_asset)(void* context, const char* asset_type);
-} graphite_plugin_interface;
+} hyperdag_plugin_interface;
 
 // Plugin registration
-graphite_result graphite_register_plugin(
-    const graphite_plugin_interface* interface,
-    graphite_plugin_handle* handle
+hyperdag_result hyperdag_register_plugin(
+    const hyperdag_plugin_interface* interface,
+    hyperdag_plugin_handle* handle
 );
 ```
 
@@ -110,16 +110,16 @@ Comprehensive Unity integration with native performance:
 
 ```csharp
 // Unity plugin implementation
-namespace Graphite.Unity
+namespace TurtlGraph.Unity
 {
-    [System.Runtime.InteropServices.DllImport("graphite_unity")]
-    private static extern IntPtr graphite_unity_open(string path);
+    [System.Runtime.InteropServices.DllImport("hyperdag_unity")]
+    private static extern IntPtr hyperdag_unity_open(string path);
     
-    [System.Runtime.InteropServices.DllImport("graphite_unity")]
-    private static extern void graphite_unity_close(IntPtr bundle);
+    [System.Runtime.InteropServices.DllImport("hyperdag_unity")]
+    private static extern void hyperdag_unity_close(IntPtr bundle);
     
-    [System.Runtime.InteropServices.DllImport("graphite_unity")]
-    private static extern IntPtr graphite_unity_get_texture(
+    [System.Runtime.InteropServices.DllImport("hyperdag_unity")]
+    private static extern IntPtr hyperdag_unity_get_texture(
         IntPtr bundle, 
         uint assetId,
         out int width,
@@ -128,17 +128,17 @@ namespace Graphite.Unity
     );
     
     // High-level wrapper
-    public class GraphiteBundle : IDisposable
+    public class TurtlGraphBundle : IDisposable
     {
         private IntPtr handle;
         private Dictionary<uint, UnityEngine.Object> assetCache;
         
-        public GraphiteBundle(string path)
+        public TurtlGraphBundle(string path)
         {
-            handle = graphite_unity_open(path);
+            handle = hyperdag_unity_open(path);
             if (handle == IntPtr.Zero)
             {
-                throw new GraphiteException($"Failed to open bundle: {path}");
+                throw new TurtlGraphException($"Failed to open bundle: {path}");
             }
             
             assetCache = new Dictionary<uint, UnityEngine.Object>();
@@ -168,7 +168,7 @@ namespace Graphite.Unity
                 return LoadAudioClip(assetId) as T;
             }
             
-            throw new GraphiteException($"Unsupported asset type: {typeof(T)}");
+            throw new TurtlGraphException($"Unsupported asset type: {typeof(T)}");
         }
         
         private Texture2D LoadTexture(uint assetId)
@@ -176,7 +176,7 @@ namespace Graphite.Unity
             int width, height;
             TextureFormat format;
             
-            IntPtr pixelData = graphite_unity_get_texture(
+            IntPtr pixelData = hyperdag_unity_get_texture(
                 handle, assetId, out width, out height, out format);
             
             if (pixelData == IntPtr.Zero)
@@ -208,19 +208,19 @@ namespace Graphite.Unity
                     }
                 }
                 
-                graphite_unity_close(handle);
+                hyperdag_unity_close(handle);
                 handle = IntPtr.Zero;
             }
         }
     }
     
     // Async loading with coroutines
-    public class GraphiteAsyncLoader : MonoBehaviour
+    public class TurtlGraphAsyncLoader : MonoBehaviour
     {
         private Queue<LoadRequest> loadQueue = new Queue<LoadRequest>();
         private bool isLoading = false;
         
-        public void LoadBundleAsync(string path, System.Action<GraphiteBundle> callback)
+        public void LoadBundleAsync(string path, System.Action<TurtlGraphBundle> callback)
         {
             loadQueue.Enqueue(new LoadRequest { Path = path, Callback = callback });
             
@@ -239,14 +239,14 @@ namespace Graphite.Unity
                 var request = loadQueue.Dequeue();
                 
                 // Load on background thread
-                GraphiteBundle bundle = null;
+                TurtlGraphBundle bundle = null;
                 Exception error = null;
                 
                 var thread = new System.Threading.Thread(() =>
                 {
                     try
                     {
-                        bundle = new GraphiteBundle(request.Path);
+                        bundle = new TurtlGraphBundle(request.Path);
                     }
                     catch (Exception e)
                     {
@@ -280,12 +280,12 @@ namespace Graphite.Unity
     
     // Editor integration
     #if UNITY_EDITOR
-    [UnityEditor.AssetImporter(version: 1, exts: new[] { "graphite" })]
-    public class GraphiteImporter : UnityEditor.AssetImporters.ScriptedImporter
+    [UnityEditor.AssetImporter(version: 1, exts: new[] { "turtlgraph" })]
+    public class TurtlGraphImporter : UnityEditor.AssetImporters.ScriptedImporter
     {
         public override void OnImportAsset(UnityEditor.AssetImporters.AssetImportContext ctx)
         {
-            var bundle = new GraphiteBundle(ctx.assetPath);
+            var bundle = new TurtlGraphBundle(ctx.assetPath);
             
             // Import all assets from bundle
             foreach (var assetInfo in bundle.GetAssetList())
@@ -294,13 +294,13 @@ namespace Graphite.Unity
                 
                 switch (assetInfo.Type)
                 {
-                    case GraphiteAssetType.Texture:
+                    case TurtlGraphAssetType.Texture:
                         asset = bundle.LoadAsset<Texture2D>(assetInfo.Path);
                         break;
-                    case GraphiteAssetType.Mesh:
+                    case TurtlGraphAssetType.Mesh:
                         asset = bundle.LoadAsset<Mesh>(assetInfo.Path);
                         break;
-                    case GraphiteAssetType.Audio:
+                    case TurtlGraphAssetType.Audio:
                         asset = bundle.LoadAsset<AudioClip>(assetInfo.Path);
                         break;
                 }
@@ -312,27 +312,27 @@ namespace Graphite.Unity
             }
             
             // Set main object
-            var mainAsset = new GraphiteBundleAsset { Bundle = bundle };
+            var mainAsset = new TurtlGraphBundleAsset { Bundle = bundle };
             ctx.AddObjectToAsset("main", mainAsset);
             ctx.SetMainObject(mainAsset);
         }
     }
     
     // Custom inspector
-    [UnityEditor.CustomEditor(typeof(GraphiteBundleAsset))]
-    public class GraphiteBundleInspector : UnityEditor.Editor
+    [UnityEditor.CustomEditor(typeof(TurtlGraphBundleAsset))]
+    public class TurtlGraphBundleInspector : UnityEditor.Editor
     {
-        private GraphiteBundleAsset bundle;
+        private TurtlGraphBundleAsset bundle;
         private Vector2 scrollPosition;
         
         void OnEnable()
         {
-            bundle = target as GraphiteBundleAsset;
+            bundle = target as TurtlGraphBundleAsset;
         }
         
         public override void OnInspectorGUI()
         {
-            EditorGUILayout.LabelField("GRAPHITE Bundle", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("TurtlGraph Bundle", EditorStyles.boldLabel);
             
             // Bundle info
             EditorGUILayout.LabelField($"Version: {bundle.Version}");
@@ -385,28 +385,28 @@ Native Unreal Engine module with full Blueprint support:
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 #include "Engine/StreamableManager.h"
-#include "graphite.h"
+#include "turtlgraph.h"
 
-class FGraphiteModule : public IModuleInterface
+class FTurtlGraphModule : public IModuleInterface
 {
 public:
     virtual void StartupModule() override;
     virtual void ShutdownModule() override;
     
-    static FGraphiteModule& Get()
+    static FTurtlGraphModule& Get()
     {
-        return FModuleManager::LoadModuleChecked<FGraphiteModule>("Graphite");
+        return FModuleManager::LoadModuleChecked<FTurtlGraphModule>("TurtlGraph");
     }
 };
 
 // Asset factory
 UCLASS()
-class GRAPHITE_API UGraphiteFactory : public UFactory
+class TURTLGRAPH_API UTurtlGraphFactory : public UFactory
 {
     GENERATED_BODY()
     
 public:
-    UGraphiteFactory();
+    UTurtlGraphFactory();
     
     virtual UObject* FactoryCreateFile(
         UClass* InClass,
@@ -423,68 +423,68 @@ public:
     
 private:
     void ImportBundle(const FString& Path, UObject* Parent);
-    UTexture2D* CreateTextureFromGraphite(const graphite_graph* Graph);
-    UStaticMesh* CreateMeshFromGraphite(const graphite_graph* Graph);
+    UTexture2D* CreateTextureFromTurtlGraph(const hyperdag_graph* Graph);
+    UStaticMesh* CreateMeshFromTurtlGraph(const hyperdag_graph* Graph);
 };
 
 // Runtime asset loader
 UCLASS(BlueprintType)
-class GRAPHITE_API UGraphiteBundle : public UObject
+class TURTLGRAPH_API UTurtlGraphBundle : public UObject
 {
     GENERATED_BODY()
     
 private:
-    graphite_bundle* Bundle;
+    hyperdag_bundle* Bundle;
     TMap<FString, TWeakObjectPtr<UObject>> AssetCache;
     
 public:
-    UFUNCTION(BlueprintCallable, Category = "Graphite")
-    static UGraphiteBundle* LoadBundle(const FString& Path);
+    UFUNCTION(BlueprintCallable, Category = "TurtlGraph")
+    static UTurtlGraphBundle* LoadBundle(const FString& Path);
     
-    UFUNCTION(BlueprintCallable, Category = "Graphite")
+    UFUNCTION(BlueprintCallable, Category = "TurtlGraph")
     UObject* LoadAsset(const FString& AssetPath);
     
-    UFUNCTION(BlueprintCallable, Category = "Graphite", 
+    UFUNCTION(BlueprintCallable, Category = "TurtlGraph", 
               meta = (DisplayName = "Load Texture"))
     UTexture2D* LoadTexture(const FString& AssetPath);
     
-    UFUNCTION(BlueprintCallable, Category = "Graphite",
+    UFUNCTION(BlueprintCallable, Category = "TurtlGraph",
               meta = (DisplayName = "Load Static Mesh"))
     UStaticMesh* LoadStaticMesh(const FString& AssetPath);
     
-    UFUNCTION(BlueprintCallable, Category = "Graphite",
+    UFUNCTION(BlueprintCallable, Category = "TurtlGraph",
               meta = (DisplayName = "Load Sound"))
     USoundWave* LoadSound(const FString& AssetPath);
     
-    UFUNCTION(BlueprintCallable, Category = "Graphite")
+    UFUNCTION(BlueprintCallable, Category = "TurtlGraph")
     void UnloadAsset(const FString& AssetPath);
     
-    UFUNCTION(BlueprintPure, Category = "Graphite")
+    UFUNCTION(BlueprintPure, Category = "TurtlGraph")
     TArray<FString> GetAssetList() const;
     
     virtual void BeginDestroy() override;
 };
 
 // Implementation
-UGraphiteBundle* UGraphiteBundle::LoadBundle(const FString& Path)
+UTurtlGraphBundle* UTurtlGraphBundle::LoadBundle(const FString& Path)
 {
     FString FullPath = FPaths::ConvertRelativePathToFull(Path);
     
-    graphite_bundle* NativeBundle = graphite_open(TCHAR_TO_UTF8(*FullPath));
+    hyperdag_bundle* NativeBundle = hyperdag_open(TCHAR_TO_UTF8(*FullPath));
     if (!NativeBundle)
     {
-        UE_LOG(LogGraphite, Error, TEXT("Failed to open bundle: %s"), *Path);
+        UE_LOG(LogTurtlGraph, Error, TEXT("Failed to open bundle: %s"), *Path);
         return nullptr;
     }
     
-    UGraphiteBundle* Bundle = NewObject<UGraphiteBundle>();
+    UTurtlGraphBundle* Bundle = NewObject<UTurtlGraphBundle>();
     Bundle->Bundle = NativeBundle;
     Bundle->AddToRoot(); // Prevent garbage collection
     
     return Bundle;
 }
 
-UTexture2D* UGraphiteBundle::LoadTexture(const FString& AssetPath)
+UTexture2D* UTurtlGraphBundle::LoadTexture(const FString& AssetPath)
 {
     // Check cache
     if (TWeakObjectPtr<UObject>* Cached = AssetCache.Find(AssetPath))
@@ -496,20 +496,20 @@ UTexture2D* UGraphiteBundle::LoadTexture(const FString& AssetPath)
     }
     
     // Load from bundle
-    uint64_t AssetId = graphite_get_asset_id(Bundle, TCHAR_TO_UTF8(*AssetPath));
-    if (AssetId == GRAPHITE_INVALID_ID)
+    uint64_t AssetId = hyperdag_get_asset_id(Bundle, TCHAR_TO_UTF8(*AssetPath));
+    if (AssetId == HYPERDAG_INVALID_ID)
     {
         return nullptr;
     }
     
-    const graphite_graph* AssetGraph = graphite_get_asset(Bundle, AssetId);
+    const hyperdag_graph* AssetGraph = hyperdag_get_asset(Bundle, AssetId);
     if (!AssetGraph)
     {
         return nullptr;
     }
     
     // Extract texture data
-    GraphiteTextureInfo Info;
+    TurtlGraphTextureInfo Info;
     if (!ExtractTextureInfo(AssetGraph, Info))
     {
         return nullptr;
@@ -541,22 +541,22 @@ UTexture2D* UGraphiteBundle::LoadTexture(const FString& AssetPath)
 }
 
 // Hot reload support
-class FGraphiteHotReloadManager : public FTickableGameObject
+class FTurtlGraphHotReloadManager : public FTickableGameObject
 {
 private:
     TMap<FString, FDateTime> BundleTimestamps;
-    TArray<TWeakObjectPtr<UGraphiteBundle>> LiveBundles;
+    TArray<TWeakObjectPtr<UTurtlGraphBundle>> LiveBundles;
     
 public:
     virtual void Tick(float DeltaTime) override
     {
         // Check for modified bundles
-        for (TWeakObjectPtr<UGraphiteBundle>& BundlePtr : LiveBundles)
+        for (TWeakObjectPtr<UTurtlGraphBundle>& BundlePtr : LiveBundles)
         {
             if (!BundlePtr.IsValid())
                 continue;
                 
-            UGraphiteBundle* Bundle = BundlePtr.Get();
+            UTurtlGraphBundle* Bundle = BundlePtr.Get();
             FString Path = Bundle->GetPath();
             
             FDateTime CurrentTime = IFileManager::Get().GetTimeStamp(*Path);
@@ -571,9 +571,9 @@ public:
         }
     }
     
-    void ReloadBundle(UGraphiteBundle* Bundle)
+    void ReloadBundle(UTurtlGraphBundle* Bundle)
     {
-        UE_LOG(LogGraphite, Log, TEXT("Hot reloading bundle: %s"), 
+        UE_LOG(LogTurtlGraph, Log, TEXT("Hot reloading bundle: %s"), 
                *Bundle->GetPath());
         
         // Notify all users
@@ -583,32 +583,32 @@ public:
         Bundle->Reload();
     }
     
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnBundleReloaded, UGraphiteBundle*);
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnBundleReloaded, UTurtlGraphBundle*);
     FOnBundleReloaded OnBundleReloaded;
 };
 
 // Blueprint function library
 UCLASS()
-class GRAPHITE_API UGraphiteBlueprintLibrary : public UBlueprintFunctionLibrary
+class TURTLGRAPH_API UTurtlGraphBlueprintLibrary : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
     
 public:
-    UFUNCTION(BlueprintCallable, Category = "Graphite",
+    UFUNCTION(BlueprintCallable, Category = "TurtlGraph",
               meta = (WorldContext = "WorldContextObject"))
     static void PreloadBundleAsync(
         UObject* WorldContextObject,
         const FString& BundlePath,
-        const FGraphitePreloadComplete& OnComplete
+        const FTurtlGraphPreloadComplete& OnComplete
     );
     
-    UFUNCTION(BlueprintPure, Category = "Graphite")
+    UFUNCTION(BlueprintPure, Category = "TurtlGraph")
     static bool IsBundleLoaded(const FString& BundlePath);
     
-    UFUNCTION(BlueprintCallable, Category = "Graphite")
+    UFUNCTION(BlueprintCallable, Category = "TurtlGraph")
     static void UnloadBundle(const FString& BundlePath);
     
-    UFUNCTION(BlueprintCallable, Category = "Graphite",
+    UFUNCTION(BlueprintCallable, Category = "TurtlGraph",
               meta = (CallInEditor = "true"))
     static void ValidateBundle(const FString& BundlePath);
 };
@@ -616,43 +616,43 @@ public:
 
 ### VS Code Extension
 
-TypeScript-based VS Code extension for GRAPHITE development:
+TypeScript-based VS Code extension for TurtlGraph development:
 
 ```typescript
 // VS Code extension implementation
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { GraphiteLanguageClient } from './languageClient';
-import { GraphiteBundleProvider } from './bundleProvider';
-import { GraphiteDebuggingProvider } from './debugProvider';
+import { TurtlGraphLanguageClient } from './languageClient';
+import { TurtlGraphBundleProvider } from './bundleProvider';
+import { TurtlGraphDebuggingProvider } from './debugProvider';
 
 export function activate(context: vscode.ExtensionContext) {
-    console.log('GRAPHITE extension is now active');
+    console.log('TurtlGraph extension is now active');
     
     // Register bundle explorer
-    const bundleProvider = new GraphiteBundleProvider(context);
-    vscode.window.registerTreeDataProvider('graphiteBundles', bundleProvider);
+    const bundleProvider = new TurtlGraphBundleProvider(context);
+    vscode.window.registerTreeDataProvider('turtlgraphBundles', bundleProvider);
     
     // Register commands
     context.subscriptions.push(
-        vscode.commands.registerCommand('graphite.openBundle', openBundle),
-        vscode.commands.registerCommand('graphite.packAssets', packAssets),
-        vscode.commands.registerCommand('graphite.validateBundle', validateBundle),
-        vscode.commands.registerCommand('graphite.showBundleInfo', showBundleInfo)
+        vscode.commands.registerCommand('turtlgraph.openBundle', openBundle),
+        vscode.commands.registerCommand('turtlgraph.packAssets', packAssets),
+        vscode.commands.registerCommand('turtlgraph.validateBundle', validateBundle),
+        vscode.commands.registerCommand('turtlgraph.showBundleInfo', showBundleInfo)
     );
     
     // Language server
-    const client = new GraphiteLanguageClient(context);
+    const client = new TurtlGraphLanguageClient(context);
     client.start();
     
     // Debugging support
-    const debugProvider = new GraphiteDebuggingProvider();
+    const debugProvider = new TurtlGraphDebuggingProvider();
     context.subscriptions.push(
-        vscode.debug.registerDebugConfigurationProvider('graphite', debugProvider)
+        vscode.debug.registerDebugConfigurationProvider('turtlgraph', debugProvider)
     );
     
     // File watchers
-    const watcher = vscode.workspace.createFileSystemWatcher('**/*.graphite');
+    const watcher = vscode.workspace.createFileSystemWatcher('**/*.turtlgraph');
     watcher.onDidChange(uri => bundleProvider.refresh());
     watcher.onDidCreate(uri => bundleProvider.refresh());
     watcher.onDidDelete(uri => bundleProvider.refresh());
@@ -661,11 +661,11 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // Bundle tree provider
-class GraphiteBundleProvider implements vscode.TreeDataProvider<BundleItem> {
+class TurtlGraphBundleProvider implements vscode.TreeDataProvider<BundleItem> {
     private _onDidChangeTreeData = new vscode.EventEmitter<BundleItem | undefined | null | void>();
     readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
     
-    private bundles: Map<string, GraphiteBundle> = new Map();
+    private bundles: Map<string, TurtlGraphBundle> = new Map();
     
     constructor(private context: vscode.ExtensionContext) {
         this.loadBundles();
@@ -700,7 +700,7 @@ class GraphiteBundleProvider implements vscode.TreeDataProvider<BundleItem> {
         }
     }
     
-    private async getBundleContents(bundle: GraphiteBundle): Promise<BundleItem[]> {
+    private async getBundleContents(bundle: TurtlGraphBundle): Promise<BundleItem[]> {
         const items: BundleItem[] = [];
         
         // Group by asset type
@@ -740,9 +740,9 @@ class GraphiteBundleProvider implements vscode.TreeDataProvider<BundleItem> {
     }
 }
 
-// Custom editor for .graphite files
-class GraphiteBundleEditor implements vscode.CustomReadonlyEditorProvider {
-    public static readonly viewType = 'graphite.bundleEditor';
+// Custom editor for .turtlgraph files
+class TurtlGraphBundleEditor implements vscode.CustomReadonlyEditorProvider {
+    public static readonly viewType = 'turtlgraph.bundleEditor';
     
     constructor(
         private readonly context: vscode.ExtensionContext
@@ -754,7 +754,7 @@ class GraphiteBundleEditor implements vscode.CustomReadonlyEditorProvider {
         token: vscode.CancellationToken
     ): Promise<vscode.CustomDocument> {
         const bundle = await this.loadBundle(uri);
-        return new GraphiteBundleDocument(uri, bundle);
+        return new TurtlGraphBundleDocument(uri, bundle);
     }
     
     async resolveCustomEditor(
@@ -769,7 +769,7 @@ class GraphiteBundleEditor implements vscode.CustomReadonlyEditorProvider {
         
         webviewPanel.webview.html = this.getHtmlForWebview(
             webviewPanel.webview,
-            document as GraphiteBundleDocument
+            document as TurtlGraphBundleDocument
         );
         
         // Handle messages from webview
@@ -787,7 +787,7 @@ class GraphiteBundleEditor implements vscode.CustomReadonlyEditorProvider {
     
     private getHtmlForWebview(
         webview: vscode.Webview,
-        document: GraphiteBundleDocument
+        document: TurtlGraphBundleDocument
     ): string {
         const scriptUri = webview.asWebviewUri(
             vscode.Uri.joinPath(this.context.extensionUri, 'media', 'bundleViewer.js')
@@ -803,7 +803,7 @@ class GraphiteBundleEditor implements vscode.CustomReadonlyEditorProvider {
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <link href="${styleUri}" rel="stylesheet">
-            <title>GRAPHITE Bundle</title>
+            <title>TurtlGraph Bundle</title>
         </head>
         <body>
             <div id="bundle-info">
@@ -827,7 +827,7 @@ class GraphiteBundleEditor implements vscode.CustomReadonlyEditorProvider {
 }
 
 // Language server integration
-class GraphiteLanguageClient {
+class TurtlGraphLanguageClient {
     private client: LanguageClient;
     
     constructor(context: vscode.ExtensionContext) {
@@ -846,17 +846,17 @@ class GraphiteLanguageClient {
         
         const clientOptions: LanguageClientOptions = {
             documentSelector: [
-                { scheme: 'file', language: 'graphite-script' },
-                { scheme: 'file', pattern: '**/*.graphite.json' }
+                { scheme: 'file', language: 'turtlgraph-script' },
+                { scheme: 'file', pattern: '**/*.turtlgraph.json' }
             ],
             synchronize: {
-                fileEvents: vscode.workspace.createFileSystemWatcher('**/.graphite')
+                fileEvents: vscode.workspace.createFileSystemWatcher('**/.turtlgraph')
             }
         };
         
         this.client = new LanguageClient(
-            'graphiteLanguageServer',
-            'GRAPHITE Language Server',
+            'turtlgraphLanguageServer',
+            'TurtlGraph Language Server',
             serverOptions,
             clientOptions
         );
@@ -874,7 +874,7 @@ class GraphiteLanguageClient {
 
 ### Custom Editor Support
 
-Framework for integrating GRAPHITE with any editor:
+Framework for integrating TurtlGraph with any editor:
 
 ```c
 // Generic editor integration framework
@@ -896,55 +896,55 @@ typedef struct {
     // Callbacks
     struct {
         // Asset preview generation
-        void* (*generate_preview)(const graphite_graph* asset, 
+        void* (*generate_preview)(const hyperdag_graph* asset, 
                                  int width, int height,
-                                 graphite_preview_format format);
+                                 hyperdag_preview_format format);
         
         // Asset import/export
         bool (*can_import_format)(const char* extension);
-        graphite_result (*import_asset)(const char* path, 
-                                       graphite_import_options* options,
-                                       graphite_graph** out_asset);
+        hyperdag_result (*import_asset)(const char* path, 
+                                       hyperdag_import_options* options,
+                                       hyperdag_graph** out_asset);
         
         // Editor UI integration
-        void (*show_asset_properties)(const graphite_graph* asset);
-        void (*show_bundle_explorer)(const graphite_bundle* bundle);
+        void (*show_asset_properties)(const hyperdag_graph* asset);
+        void (*show_bundle_explorer)(const hyperdag_bundle* bundle);
         
         // Debugging
-        void (*on_breakpoint_hit)(const graphite_debug_context* context);
+        void (*on_breakpoint_hit)(const hyperdag_debug_context* context);
         void (*show_memory_view)(const void* address, size_t size);
     } callbacks;
-} graphite_editor_integration;
+} hyperdag_editor_integration;
 
 // Preview generation
 typedef enum {
-    GRAPHITE_PREVIEW_THUMBNAIL,
-    GRAPHITE_PREVIEW_FULL,
-    GRAPHITE_PREVIEW_ANIMATED
-} graphite_preview_format;
+    HYPERDAG_PREVIEW_THUMBNAIL,
+    HYPERDAG_PREVIEW_FULL,
+    HYPERDAG_PREVIEW_ANIMATED
+} hyperdag_preview_format;
 
 void* generate_texture_preview(
-    const graphite_graph* asset,
+    const hyperdag_graph* asset,
     int width, int height,
-    graphite_preview_format format
+    hyperdag_preview_format format
 ) {
     // Extract texture data
-    graphite_texture_info info;
-    if (graphite_get_texture_info(asset, &info) != GRAPHITE_SUCCESS) {
+    hyperdag_texture_info info;
+    if (hyperdag_get_texture_info(asset, &info) != HYPERDAG_SUCCESS) {
         return NULL;
     }
     
     // Generate preview based on format
     switch (format) {
-        case GRAPHITE_PREVIEW_THUMBNAIL:
+        case HYPERDAG_PREVIEW_THUMBNAIL:
             return generate_thumbnail(info.pixels, info.width, info.height,
                                     width, height);
                                     
-        case GRAPHITE_PREVIEW_FULL:
+        case HYPERDAG_PREVIEW_FULL:
             return generate_full_preview(info.pixels, info.width, info.height,
                                        width, height);
                                        
-        case GRAPHITE_PREVIEW_ANIMATED:
+        case HYPERDAG_PREVIEW_ANIMATED:
             if (info.frame_count > 1) {
                 return generate_animated_preview(info.pixels, info.width, 
                                                info.height, info.frame_count);
@@ -957,7 +957,7 @@ void* generate_texture_preview(
 
 // Blender integration example
 #ifdef BLENDER_PLUGIN
-static PyObject* graphite_blender_import(PyObject* self, PyObject* args) {
+static PyObject* hyperdag_blender_import(PyObject* self, PyObject* args) {
     const char* bundle_path;
     const char* asset_path;
     
@@ -966,23 +966,23 @@ static PyObject* graphite_blender_import(PyObject* self, PyObject* args) {
     }
     
     // Open bundle
-    graphite_bundle* bundle = graphite_open(bundle_path);
+    hyperdag_bundle* bundle = hyperdag_open(bundle_path);
     if (!bundle) {
-        PyErr_SetString(PyExc_IOError, "Failed to open GRAPHITE bundle");
+        PyErr_SetString(PyExc_IOError, "Failed to open TurtlGraph bundle");
         return NULL;
     }
     
     // Find asset
-    uint64_t asset_id = graphite_get_asset_id(bundle, asset_path);
-    if (asset_id == GRAPHITE_INVALID_ID) {
-        graphite_close(bundle);
+    uint64_t asset_id = hyperdag_get_asset_id(bundle, asset_path);
+    if (asset_id == HYPERDAG_INVALID_ID) {
+        hyperdag_close(bundle);
         PyErr_SetString(PyExc_KeyError, "Asset not found in bundle");
         return NULL;
     }
     
     // Import based on type
-    const graphite_graph* asset = graphite_get_asset(bundle, asset_id);
-    const char* asset_type = graphite_get_asset_type(asset);
+    const hyperdag_graph* asset = hyperdag_get_asset(bundle, asset_id);
+    const char* asset_type = hyperdag_get_asset_type(asset);
     
     PyObject* result = NULL;
     
@@ -994,26 +994,26 @@ static PyObject* graphite_blender_import(PyObject* self, PyObject* args) {
         result = import_material_to_blender(asset);
     }
     
-    graphite_close(bundle);
+    hyperdag_close(bundle);
     return result;
 }
 
-static PyMethodDef graphite_methods[] = {
-    {"import_from_bundle", graphite_blender_import, METH_VARARGS,
-     "Import an asset from a GRAPHITE bundle"},
+static PyMethodDef hyperdag_methods[] = {
+    {"import_from_bundle", hyperdag_blender_import, METH_VARARGS,
+     "Import an asset from a TurtlGraph bundle"},
     {NULL, NULL, 0, NULL}
 };
 
-static struct PyModuleDef graphite_module = {
+static struct PyModuleDef hyperdag_module = {
     PyModuleDef_HEAD_INIT,
-    "graphite_blender",
-    "GRAPHITE integration for Blender",
+    "hyperdag_blender",
+    "TurtlGraph integration for Blender",
     -1,
-    graphite_methods
+    hyperdag_methods
 };
 
-PyMODINIT_FUNC PyInit_graphite_blender(void) {
-    return PyModule_Create(&graphite_module);
+PyMODINIT_FUNC PyInit_hyperdag_blender(void) {
+    return PyModule_Create(&hyperdag_module);
 }
 #endif
 ```
@@ -1022,7 +1022,7 @@ PyMODINIT_FUNC PyInit_graphite_blender(void) {
 
 ## Chapter 23: Language Bindings
 
-GRAPHITE provides idiomatic bindings for major programming languages, ensuring native performance and ease of use.
+TurtlGraph provides idiomatic bindings for major programming languages, ensuring native performance and ease of use.
 
 ### C/C++ Native API
 
@@ -1030,16 +1030,16 @@ The core C API with C++ convenience wrappers:
 
 ```cpp
 // Modern C++ wrapper
-namespace graphite {
+namespace turtlgraph {
     
     // RAII bundle wrapper
     class Bundle {
     private:
-        graphite_bundle* bundle_;
+        hyperdag_bundle* bundle_;
         
     public:
         explicit Bundle(const std::string& path) 
-            : bundle_(graphite_open(path.c_str())) {
+            : bundle_(hyperdag_open(path.c_str())) {
             if (!bundle_) {
                 throw std::runtime_error("Failed to open bundle: " + path);
             }
@@ -1051,7 +1051,7 @@ namespace graphite {
         
         ~Bundle() {
             if (bundle_) {
-                graphite_close(bundle_);
+                hyperdag_close(bundle_);
             }
         }
         
@@ -1062,8 +1062,8 @@ namespace graphite {
         // Asset access
         template<typename T>
         std::optional<T> load(const std::string& path) const {
-            uint64_t id = graphite_get_asset_id(bundle_, path.c_str());
-            if (id == GRAPHITE_INVALID_ID) {
+            uint64_t id = hyperdag_get_asset_id(bundle_, path.c_str());
+            if (id == HYPERDAG_INVALID_ID) {
                 return std::nullopt;
             }
             
@@ -1098,25 +1098,25 @@ namespace graphite {
         Iterator end() const { return Iterator(this, asset_count()); }
         
         uint32_t asset_count() const {
-            return graphite_get_asset_count(bundle_);
+            return hyperdag_get_asset_count(bundle_);
         }
     };
     
     // Type-safe asset loading
     template<typename T>
     struct AssetLoader {
-        static std::optional<T> load(graphite_bundle* bundle, uint64_t id);
+        static std::optional<T> load(hyperdag_bundle* bundle, uint64_t id);
     };
     
     // Specializations
     template<>
     struct AssetLoader<Texture> {
-        static std::optional<Texture> load(graphite_bundle* bundle, uint64_t id) {
-            const graphite_graph* asset = graphite_get_asset(bundle, id);
+        static std::optional<Texture> load(hyperdag_bundle* bundle, uint64_t id) {
+            const hyperdag_graph* asset = hyperdag_get_asset(bundle, id);
             if (!asset) return std::nullopt;
             
-            graphite_texture_info info;
-            if (graphite_get_texture_info(asset, &info) != GRAPHITE_SUCCESS) {
+            hyperdag_texture_info info;
+            if (hyperdag_get_texture_info(asset, &info) != HYPERDAG_SUCCESS) {
                 return std::nullopt;
             }
             
@@ -1169,10 +1169,10 @@ namespace graphite {
     // Builder pattern for bundle creation
     class BundleBuilder {
     private:
-        graphite_builder* builder_;
+        hyperdag_builder* builder_;
         
     public:
-        BundleBuilder() : builder_(graphite_builder_create()) {
+        BundleBuilder() : builder_(hyperdag_builder_create()) {
             if (!builder_) {
                 throw std::runtime_error("Failed to create builder");
             }
@@ -1180,7 +1180,7 @@ namespace graphite {
         
         ~BundleBuilder() {
             if (builder_) {
-                graphite_builder_destroy(builder_);
+                hyperdag_builder_destroy(builder_);
             }
         }
         
@@ -1195,13 +1195,13 @@ namespace graphite {
         }
         
         BundleBuilder& with_compression(CompressionType type, int level = 5) {
-            graphite_builder_set_compression(builder_, 
-                static_cast<graphite_compression>(type), level);
+            hyperdag_builder_set_compression(builder_, 
+                static_cast<hyperdag_compression>(type), level);
             return *this;
         }
         
         Bundle build() {
-            graphite_bundle* bundle = graphite_builder_finalize(builder_);
+            hyperdag_bundle* bundle = hyperdag_builder_finalize(builder_);
             builder_ = nullptr;  // Ownership transferred
             return Bundle(bundle);
         }
@@ -1215,15 +1215,15 @@ Pythonic interface with NumPy integration:
 
 ```python
 # Python bindings using pybind11
-import graphite
+import turtlgraph
 import numpy as np
 from typing import Optional, List, Dict, Any
 
 class Bundle:
-    """GRAPHITE bundle for Python"""
+    """TurtlGraph bundle for Python"""
     
     def __init__(self, path: str):
-        self._handle = graphite._open_bundle(path)
+        self._handle = turtlgraph._open_bundle(path)
         if not self._handle:
             raise IOError(f"Failed to open bundle: {path}")
     
@@ -1235,12 +1235,12 @@ class Bundle:
     
     def close(self):
         if self._handle:
-            graphite._close_bundle(self._handle)
+            turtlgraph._close_bundle(self._handle)
             self._handle = None
     
     def load_texture(self, path: str) -> Optional[np.ndarray]:
         """Load texture as NumPy array"""
-        data = graphite._load_texture(self._handle, path)
+        data = turtlgraph._load_texture(self._handle, path)
         if data is None:
             return None
         
@@ -1251,7 +1251,7 @@ class Bundle:
     
     def load_mesh(self, path: str) -> Optional[Dict[str, np.ndarray]]:
         """Load mesh with vertices, normals, and indices"""
-        data = graphite._load_mesh(self._handle, path)
+        data = turtlgraph._load_mesh(self._handle, path)
         if data is None:
             return None
         
@@ -1265,12 +1265,12 @@ class Bundle:
     def load_json(self, path: str) -> Optional[Dict[str, Any]]:
         """Load JSON data"""
         import json
-        data = graphite._load_text(self._handle, path)
+        data = turtlgraph._load_text(self._handle, path)
         return json.loads(data) if data else None
     
     def list_assets(self, pattern: str = "*") -> List[str]:
         """List all assets matching pattern"""
-        return graphite._list_assets(self._handle, pattern)
+        return turtlgraph._list_assets(self._handle, pattern)
     
     def __getitem__(self, path: str) -> Any:
         """Dictionary-style access"""
@@ -1282,7 +1282,7 @@ class Bundle:
         elif path.endswith('.json'):
             return self.load_json(path)
         else:
-            return graphite._load_raw(self._handle, path)
+            return turtlgraph._load_raw(self._handle, path)
     
     def __iter__(self):
         """Iterate over all assets"""
@@ -1292,13 +1292,13 @@ class Bundle:
     @property
     def info(self) -> Dict[str, Any]:
         """Bundle metadata"""
-        return graphite._get_bundle_info(self._handle)
+        return turtlgraph._get_bundle_info(self._handle)
 
 # Async loading with asyncio
 import asyncio
 
 class AsyncBundle(Bundle):
-    """Async GRAPHITE bundle operations"""
+    """Async TurtlGraph bundle operations"""
     
     async def load_texture_async(self, path: str) -> Optional[np.ndarray]:
         loop = asyncio.get_event_loop()
@@ -1326,10 +1326,10 @@ class AsyncBundle(Bundle):
 
 # Builder interface
 class BundleBuilder:
-    """Build GRAPHITE bundles from Python"""
+    """Build TurtlGraph bundles from Python"""
     
     def __init__(self):
-        self._handle = graphite._create_builder()
+        self._handle = turtlgraph._create_builder()
     
     def add_texture(self, path: str, image: np.ndarray) -> 'BundleBuilder':
         """Add texture from NumPy array"""
@@ -1339,7 +1339,7 @@ class BundleBuilder:
         height, width = image.shape[:2]
         channels = image.shape[2] if len(image.shape) > 2 else 1
         
-        graphite._builder_add_texture(
+        turtlgraph._builder_add_texture(
             self._handle, path, 
             image.tobytes(), width, height, channels
         )
@@ -1361,24 +1361,24 @@ class BundleBuilder:
         if 'uvs' in kwargs:
             mesh_data['uvs'] = kwargs['uvs'].astype(np.float32).tobytes()
         
-        graphite._builder_add_mesh(self._handle, path, mesh_data)
+        turtlgraph._builder_add_mesh(self._handle, path, mesh_data)
         return self
     
     def add_json(self, path: str, data: Dict[str, Any]) -> 'BundleBuilder':
         """Add JSON data"""
         import json
-        graphite._builder_add_text(self._handle, path, json.dumps(data))
+        turtlgraph._builder_add_text(self._handle, path, json.dumps(data))
         return self
     
     def with_compression(self, algorithm: str = 'zstd', 
                         level: int = 5) -> 'BundleBuilder':
         """Configure compression"""
-        graphite._builder_set_compression(self._handle, algorithm, level)
+        turtlgraph._builder_set_compression(self._handle, algorithm, level)
         return self
     
     def build(self, output_path: str) -> None:
         """Build and save bundle"""
-        graphite._builder_finalize(self._handle, output_path)
+        turtlgraph._builder_finalize(self._handle, output_path)
 
 # Integration with popular libraries
 try:
@@ -1426,10 +1426,10 @@ use std::marker::PhantomData;
 
 // FFI declarations
 extern "C" {
-    fn graphite_open(path: *const c_char) -> *mut c_void;
-    fn graphite_close(bundle: *mut c_void);
-    fn graphite_get_asset_id(bundle: *const c_void, path: *const c_char) -> u64;
-    fn graphite_get_asset(bundle: *const c_void, id: u64) -> *const c_void;
+    fn hyperdag_open(path: *const c_char) -> *mut c_void;
+    fn hyperdag_close(bundle: *mut c_void);
+    fn hyperdag_get_asset_id(bundle: *const c_void, path: *const c_char) -> u64;
+    fn hyperdag_get_asset(bundle: *const c_void, id: u64) -> *const c_void;
 }
 
 // Safe wrapper types
@@ -1438,39 +1438,39 @@ pub struct Bundle {
 }
 
 impl Bundle {
-    pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, GraphiteError> {
+    pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, TurtlGraphError> {
         let path_str = path.as_ref()
             .to_str()
-            .ok_or(GraphiteError::InvalidPath)?;
+            .ok_or(TurtlGraphError::InvalidPath)?;
         
         let c_path = CString::new(path_str)
-            .map_err(|_| GraphiteError::InvalidPath)?;
+            .map_err(|_| TurtlGraphError::InvalidPath)?;
         
-        let ptr = unsafe { graphite_open(c_path.as_ptr()) };
+        let ptr = unsafe { hyperdag_open(c_path.as_ptr()) };
         
         if ptr.is_null() {
-            Err(GraphiteError::OpenFailed)
+            Err(TurtlGraphError::OpenFailed)
         } else {
             Ok(Bundle { ptr })
         }
     }
     
-    pub fn load<T: Asset>(&self, path: &str) -> Result<T, GraphiteError> {
+    pub fn load<T: Asset>(&self, path: &str) -> Result<T, TurtlGraphError> {
         let c_path = CString::new(path)
-            .map_err(|_| GraphiteError::InvalidPath)?;
+            .map_err(|_| TurtlGraphError::InvalidPath)?;
         
         let asset_id = unsafe { 
-            graphite_get_asset_id(self.ptr, c_path.as_ptr()) 
+            hyperdag_get_asset_id(self.ptr, c_path.as_ptr()) 
         };
         
         if asset_id == u64::MAX {
-            return Err(GraphiteError::AssetNotFound);
+            return Err(TurtlGraphError::AssetNotFound);
         }
         
-        let asset_ptr = unsafe { graphite_get_asset(self.ptr, asset_id) };
+        let asset_ptr = unsafe { hyperdag_get_asset(self.ptr, asset_id) };
         
         if asset_ptr.is_null() {
-            return Err(GraphiteError::LoadFailed);
+            return Err(TurtlGraphError::LoadFailed);
         }
         
         T::from_raw(asset_ptr)
@@ -1488,7 +1488,7 @@ impl Bundle {
 
 impl Drop for Bundle {
     fn drop(&mut self) {
-        unsafe { graphite_close(self.ptr) }
+        unsafe { hyperdag_close(self.ptr) }
     }
 }
 
@@ -1498,7 +1498,7 @@ unsafe impl Sync for Bundle {}
 
 // Asset trait for type-safe loading
 pub trait Asset: Sized {
-    fn from_raw(ptr: *const c_void) -> Result<Self, GraphiteError>;
+    fn from_raw(ptr: *const c_void) -> Result<Self, TurtlGraphError>;
 }
 
 // Texture type
@@ -1511,7 +1511,7 @@ pub struct Texture {
 }
 
 impl Asset for Texture {
-    fn from_raw(ptr: *const c_void) -> Result<Self, GraphiteError> {
+    fn from_raw(ptr: *const c_void) -> Result<Self, TurtlGraphError> {
         // Extract texture data from raw pointer
         // Implementation details...
         Ok(Texture {
@@ -1533,7 +1533,7 @@ pub struct Mesh {
 }
 
 impl Asset for Mesh {
-    fn from_raw(ptr: *const c_void) -> Result<Self, GraphiteError> {
+    fn from_raw(ptr: *const c_void) -> Result<Self, TurtlGraphError> {
         // Extract mesh data
         Ok(Mesh {
             vertices: vec![],
@@ -1586,7 +1586,7 @@ impl Bundle {
     pub async fn load_async<T: Asset + Send + 'static>(
         &self, 
         path: String
-    ) -> Result<T, GraphiteError> {
+    ) -> Result<T, TurtlGraphError> {
         let bundle_ptr = self.ptr;
         
         task::spawn_blocking(move || {
@@ -1595,7 +1595,7 @@ impl Bundle {
             bundle.load::<T>(&path)
         })
         .await
-        .map_err(|_| GraphiteError::TaskFailed)?
+        .map_err(|_| TurtlGraphError::TaskFailed)?
     }
 }
 
@@ -1605,7 +1605,7 @@ pub struct BundleBuilder {
 }
 
 impl BundleBuilder {
-    pub fn new() -> Result<Self, GraphiteError> {
+    pub fn new() -> Result<Self, TurtlGraphError> {
         // Create builder
         Ok(BundleBuilder { handle: std::ptr::null_mut() })
     }
@@ -1625,7 +1625,7 @@ impl BundleBuilder {
         self
     }
     
-    pub fn build<P: AsRef<Path>>(self, path: P) -> Result<(), GraphiteError> {
+    pub fn build<P: AsRef<Path>>(self, path: P) -> Result<(), TurtlGraphError> {
         // Finalize and save
         Ok(())
     }
@@ -1633,7 +1633,7 @@ impl BundleBuilder {
 
 // Error handling
 #[derive(Debug, thiserror::Error)]
-pub enum GraphiteError {
+pub enum TurtlGraphError {
     #[error("Invalid path")]
     InvalidPath,
     #[error("Failed to open bundle")]
@@ -1655,10 +1655,10 @@ impl Bundle {
     pub fn load_json<T: for<'de> Deserialize<'de>>(
         &self, 
         path: &str
-    ) -> Result<T, GraphiteError> {
+    ) -> Result<T, TurtlGraphError> {
         let json_str = self.load::<String>(path)?;
         serde_json::from_str(&json_str)
-            .map_err(|_| GraphiteError::LoadFailed)
+            .map_err(|_| TurtlGraphError::LoadFailed)
     }
 }
 ```
@@ -1669,7 +1669,7 @@ Modern JavaScript bindings with TypeScript support:
 
 ```typescript
 // TypeScript definitions
-declare module 'graphite' {
+declare module 'turtlgraph' {
     export interface BundleOptions {
         readonly?: boolean;
         validateOnOpen?: boolean;
@@ -1735,7 +1735,7 @@ declare module 'graphite' {
 }
 
 // JavaScript implementation
-const graphite = require('bindings')('graphite_node');
+const turtlgraph = require('bindings')('hyperdag_node');
 const { promisify } = require('util');
 const fs = require('fs');
 const path = require('path');
@@ -1743,7 +1743,7 @@ const path = require('path');
 class Bundle {
     constructor(filePath, options = {}) {
         this.path = filePath;
-        this.handle = graphite.open(filePath, options);
+        this.handle = turtlgraph.open(filePath, options);
         
         if (!this.handle) {
             throw new Error(`Failed to open bundle: ${filePath}`);
@@ -1760,7 +1760,7 @@ class Bundle {
             return this._cache.get(assetPath);
         }
         
-        const asset = graphite.loadAsset(this.handle, assetPath);
+        const asset = turtlgraph.loadAsset(this.handle, assetPath);
         
         if (asset && this._cache.size < this._cacheSize) {
             this._cache.set(assetPath, asset);
@@ -1770,7 +1770,7 @@ class Bundle {
     }
     
     loadTexture(assetPath) {
-        const data = graphite.loadTexture(this.handle, assetPath);
+        const data = turtlgraph.loadTexture(this.handle, assetPath);
         if (!data) return null;
         
         return {
@@ -1782,7 +1782,7 @@ class Bundle {
     }
     
     loadMesh(assetPath) {
-        const data = graphite.loadMesh(this.handle, assetPath);
+        const data = turtlgraph.loadMesh(this.handle, assetPath);
         if (!data) return null;
         
         return {
@@ -1794,7 +1794,7 @@ class Bundle {
     }
     
     loadJSON(assetPath) {
-        const text = graphite.loadText(this.handle, assetPath);
+        const text = turtlgraph.loadText(this.handle, assetPath);
         if (!text) return null;
         
         try {
@@ -1808,7 +1808,7 @@ class Bundle {
     async loadAsync(assetPath) {
         return new Promise((resolve, reject) => {
             // Use thread pool for async loading
-            graphite.loadAssetAsync(this.handle, assetPath, (err, data) => {
+            turtlgraph.loadAssetAsync(this.handle, assetPath, (err, data) => {
                 if (err) reject(err);
                 else resolve(data);
             });
@@ -1816,11 +1816,11 @@ class Bundle {
     }
     
     listAssets(pattern = '*') {
-        return graphite.listAssets(this.handle, pattern);
+        return turtlgraph.listAssets(this.handle, pattern);
     }
     
     hasAsset(assetPath) {
-        return graphite.hasAsset(this.handle, assetPath);
+        return turtlgraph.hasAsset(this.handle, assetPath);
     }
     
     [Symbol.iterator]() {
@@ -1839,29 +1839,29 @@ class Bundle {
     
     close() {
         if (this.handle) {
-            graphite.close(this.handle);
+            turtlgraph.close(this.handle);
             this.handle = null;
             this._cache.clear();
         }
     }
     
     get version() {
-        return graphite.getVersion(this.handle);
+        return turtlgraph.getVersion(this.handle);
     }
     
     get assetCount() {
-        return graphite.getAssetCount(this.handle);
+        return turtlgraph.getAssetCount(this.handle);
     }
     
     get size() {
-        return graphite.getBundleSize(this.handle);
+        return turtlgraph.getBundleSize(this.handle);
     }
 }
 
 // Builder implementation
 class BundleBuilder {
     constructor() {
-        this.handle = graphite.createBuilder();
+        this.handle = turtlgraph.createBuilder();
         if (!this.handle) {
             throw new Error('Failed to create bundle builder');
         }
@@ -1873,12 +1873,12 @@ class BundleBuilder {
             image = Buffer.from(image.data);
         }
         
-        graphite.addTexture(this.handle, assetPath, image);
+        turtlgraph.addTexture(this.handle, assetPath, image);
         return this;
     }
     
     addMesh(assetPath, mesh) {
-        graphite.addMesh(this.handle, assetPath, {
+        turtlgraph.addMesh(this.handle, assetPath, {
             vertices: Array.from(mesh.vertices),
             normals: mesh.normals ? Array.from(mesh.normals) : null,
             uvs: mesh.uvs ? Array.from(mesh.uvs) : null,
@@ -1889,23 +1889,23 @@ class BundleBuilder {
     
     addJSON(assetPath, data) {
         const json = JSON.stringify(data);
-        graphite.addText(this.handle, assetPath, json);
+        turtlgraph.addText(this.handle, assetPath, json);
         return this;
     }
     
     addFile(assetPath, data) {
-        graphite.addBlob(this.handle, assetPath, data);
+        turtlgraph.addBlob(this.handle, assetPath, data);
         return this;
     }
     
     withCompression(algorithm, level = 5) {
-        graphite.setCompression(this.handle, algorithm, level);
+        turtlgraph.setCompression(this.handle, algorithm, level);
         return this;
     }
     
     async build(outputPath) {
         return new Promise((resolve, reject) => {
-            graphite.buildBundle(this.handle, outputPath, (err) => {
+            turtlgraph.buildBundle(this.handle, outputPath, (err) => {
                 if (err) reject(err);
                 else resolve();
             });
@@ -1970,22 +1970,22 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Text.Json;
 
-namespace Graphite
+namespace TurtlGraph
 {
     // P/Invoke declarations
     internal static class Native
     {
-        [DllImport("graphite")]
-        public static extern IntPtr graphite_open(string path);
+        [DllImport("turtlgraph")]
+        public static extern IntPtr hyperdag_open(string path);
         
-        [DllImport("graphite")]
-        public static extern void graphite_close(IntPtr bundle);
+        [DllImport("turtlgraph")]
+        public static extern void hyperdag_close(IntPtr bundle);
         
-        [DllImport("graphite")]
-        public static extern ulong graphite_get_asset_id(IntPtr bundle, string path);
+        [DllImport("turtlgraph")]
+        public static extern ulong hyperdag_get_asset_id(IntPtr bundle, string path);
         
-        [DllImport("graphite")]
-        public static extern IntPtr graphite_get_asset(IntPtr bundle, ulong id);
+        [DllImport("turtlgraph")]
+        public static extern IntPtr hyperdag_get_asset(IntPtr bundle, ulong id);
     }
     
     // Main bundle class
@@ -1999,11 +1999,11 @@ namespace Graphite
         public Bundle(string path)
         {
             Path = path;
-            handle = Native.graphite_open(path);
+            handle = Native.hyperdag_open(path);
             
             if (handle == IntPtr.Zero)
             {
-                throw new GraphiteException($"Failed to open bundle: {path}");
+                throw new TurtlGraphException($"Failed to open bundle: {path}");
             }
         }
         
@@ -2016,13 +2016,13 @@ namespace Graphite
                 return cached;
             }
             
-            var assetId = Native.graphite_get_asset_id(handle, assetPath);
+            var assetId = Native.hyperdag_get_asset_id(handle, assetPath);
             if (assetId == ulong.MaxValue)
             {
                 return null;
             }
             
-            var assetPtr = Native.graphite_get_asset(handle, assetId);
+            var assetPtr = Native.hyperdag_get_asset(handle, assetId);
             if (assetPtr == IntPtr.Zero)
             {
                 return null;
@@ -2070,7 +2070,7 @@ namespace Graphite
         {
             if (handle != IntPtr.Zero)
             {
-                Native.graphite_close(handle);
+                Native.hyperdag_close(handle);
                 handle = IntPtr.Zero;
             }
             
@@ -2144,7 +2144,7 @@ namespace Graphite
         
         public BundleBuilder()
         {
-            handle = Native.graphite_create_builder();
+            handle = Native.hyperdag_create_builder();
         }
         
         public BundleBuilder AddTexture(string path, Texture texture)
@@ -2188,7 +2188,7 @@ namespace Graphite
         {
             if (handle != IntPtr.Zero)
             {
-                Native.graphite_destroy_builder(handle);
+                Native.hyperdag_destroy_builder(handle);
                 handle = IntPtr.Zero;
             }
         }
@@ -2200,7 +2200,7 @@ namespace Graphite
 
 ## Chapter 25: Migration & Compatibility
 
-GRAPHITE provides comprehensive tools and strategies for migrating existing asset pipelines and maintaining compatibility across versions.
+TurtlGraph provides comprehensive tools and strategies for migrating existing asset pipelines and maintaining compatibility across versions.
 
 ### Migration Strategies
 
@@ -2238,7 +2238,7 @@ graph TD
 # migration-config.yaml
 migration:
   source_format: "unity_assetbundle"
-  target_version: "graphite_1.0"
+  target_version: "hyperdag_1.0"
   
   phases:
     - name: "evaluation"
@@ -2306,30 +2306,30 @@ typedef struct {
     bool (*can_convert)(const char* file_path);
     
     // Conversion
-    graphite_result (*convert)(
+    hyperdag_result (*convert)(
         const char* source_path,
-        graphite_builder* builder,
-        const graphite_convert_options* options
+        hyperdag_builder* builder,
+        const hyperdag_convert_options* options
     );
     
     // Validation
     bool (*validate_conversion)(
         const void* source_data,
         size_t source_size,
-        const graphite_graph* converted
+        const hyperdag_graph* converted
     );
-} graphite_converter;
+} hyperdag_converter;
 
 // Unity AssetBundle converter
-graphite_result convert_unity_bundle(
+hyperdag_result convert_unity_bundle(
     const char* source_path,
-    graphite_builder* builder,
-    const graphite_convert_options* options
+    hyperdag_builder* builder,
+    const hyperdag_convert_options* options
 ) {
     // Open Unity bundle
     unity_bundle* bundle = unity_open_bundle(source_path);
     if (!bundle) {
-        return GRAPHITE_ERROR_INVALID_FORMAT;
+        return TURTLGRAPH_ERROR_INVALID_FORMAT;
     }
     
     // Get asset list
@@ -2384,19 +2384,19 @@ graphite_result convert_unity_bundle(
     }
     
     unity_close_bundle(bundle);
-    return GRAPHITE_SUCCESS;
+    return TURTLGRAPH_SUCCESS;
 }
 
 // Texture conversion with format optimization
 void convert_unity_texture(
     unity_asset* asset,
-    graphite_builder* builder,
-    const graphite_convert_options* options
+    hyperdag_builder* builder,
+    const hyperdag_convert_options* options
 ) {
     unity_texture2d* texture = (unity_texture2d*)asset->data;
     
     // Determine optimal format
-    graphite_texture_format target_format = GRAPHITE_FORMAT_RGBA8;
+    hyperdag_texture_format target_format = HYPERDAG_FORMAT_RGBA8;
     
     if (options->optimize_formats) {
         target_format = determine_optimal_format(
@@ -2421,7 +2421,7 @@ void convert_unity_texture(
     );
     
     // Add to bundle
-    graphite_texture_info info = {
+    hyperdag_texture_info info = {
         .width = texture->width,
         .height = texture->height,
         .format = target_format,
@@ -2430,7 +2430,7 @@ void convert_unity_texture(
         .data_size = converted_size
     };
     
-    graphite_builder_add_texture(
+    hyperdag_builder_add_texture(
         builder,
         asset->name,
         &info
@@ -2444,7 +2444,7 @@ typedef struct {
     const char* source_directory;
     const char* output_directory;
     const char* source_format;
-    graphite_converter* converter;
+    hyperdag_converter* converter;
     
     // Options
     bool recursive;
@@ -2503,9 +2503,9 @@ Runtime compatibility for gradual migration:
 
 ```cpp
 // Compatibility layer interface
-class GraphiteCompatibilityLayer {
+class TurtlGraphCompatibilityLayer {
 public:
-    virtual ~GraphiteCompatibilityLayer() = default;
+    virtual ~TurtlGraphCompatibilityLayer() = default;
     
     // Asset loading with fallback
     virtual void* LoadAsset(const char* path, AssetType type) = 0;
@@ -2513,32 +2513,32 @@ public:
     // Format translation
     virtual bool TranslateAssetPath(
         const char* legacy_path,
-        char* graphite_path,
+        char* hyperdag_path,
         size_t buffer_size
     ) = 0;
     
     // Runtime conversion
-    virtual graphite_graph* ConvertOnDemand(
+    virtual hyperdag_graph* ConvertOnDemand(
         const void* legacy_asset,
         AssetType type
     ) = 0;
 };
 
 // Unity compatibility layer
-class UnityCompatibilityLayer : public GraphiteCompatibilityLayer {
+class UnityCompatibilityLayer : public TurtlGraphCompatibilityLayer {
 private:
-    graphite_bundle* bundle_;
+    hyperdag_bundle* bundle_;
     UnityEngine::AssetBundle* legacy_bundle_;
     std::unordered_map<std::string, std::string> path_mapping_;
-    LRUCache<std::string, graphite_graph*> conversion_cache_;
+    LRUCache<std::string, hyperdag_graph*> conversion_cache_;
     
 public:
     void* LoadAsset(const char* path, AssetType type) override {
-        // Try GRAPHITE first
+        // Try TurtlGraph first
         if (bundle_) {
-            uint64_t id = graphite_get_asset_id(bundle_, path);
-            if (id != GRAPHITE_INVALID_ID) {
-                return LoadFromGraphite(id, type);
+            uint64_t id = hyperdag_get_asset_id(bundle_, path);
+            if (id != HYPERDAG_INVALID_ID) {
+                return LoadFromTurtlGraph(id, type);
             }
         }
         
@@ -2552,18 +2552,18 @@ public:
     
     bool TranslateAssetPath(
         const char* legacy_path,
-        char* graphite_path,
+        char* hyperdag_path,
         size_t buffer_size
     ) override {
         // Check mapping
         auto it = path_mapping_.find(legacy_path);
         if (it != path_mapping_.end()) {
-            strncpy(graphite_path, it->second.c_str(), buffer_size);
+            strncpy(hyperdag_path, it->second.c_str(), buffer_size);
             return true;
         }
         
         // Apply translation rules
-        return ApplyPathTranslation(legacy_path, graphite_path, buffer_size);
+        return ApplyPathTranslation(legacy_path, hyperdag_path, buffer_size);
     }
     
 private:
@@ -2581,7 +2581,7 @@ private:
         }
         
         // Convert on demand
-        graphite_graph* converted = ConvertOnDemand(unity_asset, type);
+        hyperdag_graph* converted = ConvertOnDemand(unity_asset, type);
         if (converted) {
             conversion_cache_.put(path, converted);
         }
@@ -2593,8 +2593,8 @@ private:
 // Hybrid loading system
 class HybridAssetLoader {
 private:
-    std::vector<std::unique_ptr<GraphiteCompatibilityLayer>> layers_;
-    graphite_bundle* primary_bundle_;
+    std::vector<std::unique_ptr<TurtlGraphCompatibilityLayer>> layers_;
+    hyperdag_bundle* primary_bundle_;
     
 public:
     template<typename T>
@@ -2623,7 +2623,7 @@ public:
     }
     
     void AddCompatibilityLayer(
-        std::unique_ptr<GraphiteCompatibilityLayer> layer) {
+        std::unique_ptr<TurtlGraphCompatibilityLayer> layer) {
         layers_.push_back(std::move(layer));
     }
 };
@@ -2631,7 +2631,7 @@ public:
 
 ### Version Management
 
-Handling multiple GRAPHITE versions:
+Handling multiple TurtlGraph versions:
 
 ```c
 // Version compatibility matrix
@@ -2648,15 +2648,15 @@ typedef struct {
     } features;
     
     // Migration functions
-    graphite_result (*migrate_from_previous)(
+    hyperdag_result (*migrate_from_previous)(
         const void* old_data,
         size_t old_size,
         void** new_data,
         size_t* new_size
     );
-} graphite_version_info;
+} hyperdag_version_info;
 
-static const graphite_version_info version_history[] = {
+static const hyperdag_version_info version_history[] = {
     {
         .format_version = 0x00010000,  // 1.0
         .min_reader_version = 0x00010000,
@@ -2684,19 +2684,19 @@ static const graphite_version_info version_history[] = {
 };
 
 // Version negotiation
-graphite_result graphite_open_versioned(
+hyperdag_result hyperdag_open_versioned(
     const char* path,
-    graphite_bundle** bundle,
-    graphite_version_options* options
+    hyperdag_bundle** bundle,
+    hyperdag_version_options* options
 ) {
     // Read header to determine version
-    graphite_header header;
+    hyperdag_header header;
     if (!read_header(path, &header)) {
-        return GRAPHITE_ERROR_INVALID_HEADER;
+        return TURTLGRAPH_ERROR_INVALID_HEADER;
     }
     
     // Find version info
-    const graphite_version_info* version = NULL;
+    const hyperdag_version_info* version = NULL;
     for (size_t i = 0; i < ARRAY_SIZE(version_history); i++) {
         if (version_history[i].format_version == header.version) {
             version = &version_history[i];
@@ -2705,11 +2705,11 @@ graphite_result graphite_open_versioned(
     }
     
     if (!version) {
-        return GRAPHITE_ERROR_UNSUPPORTED_VERSION;
+        return TURTLGRAPH_ERROR_UNSUPPORTED_VERSION;
     }
     
     // Check if we can read this version
-    uint32_t reader_version = graphite_get_reader_version();
+    uint32_t reader_version = hyperdag_get_reader_version();
     if (reader_version < version->min_reader_version ||
         reader_version > version->max_reader_version) {
         
@@ -2717,7 +2717,7 @@ graphite_result graphite_open_versioned(
             return migrate_bundle(path, header.version, reader_version);
         }
         
-        return GRAPHITE_ERROR_VERSION_MISMATCH;
+        return TURTLGRAPH_ERROR_VERSION_MISMATCH;
     }
     
     // Open with version-specific loader
@@ -2725,7 +2725,7 @@ graphite_result graphite_open_versioned(
 }
 
 // Automatic migration
-graphite_result migrate_bundle(
+hyperdag_result migrate_bundle(
     const char* source_path,
     uint32_t source_version,
     uint32_t target_version
@@ -2736,7 +2736,7 @@ graphite_result migrate_bundle(
     
     if (!find_migration_path(
         source_version, target_version, &steps, &step_count)) {
-        return GRAPHITE_ERROR_NO_MIGRATION_PATH;
+        return TURTLGRAPH_ERROR_NO_MIGRATION_PATH;
     }
     
     // Create temporary files for intermediate versions
@@ -2749,10 +2749,10 @@ graphite_result migrate_bundle(
         const char* output_path = (i == step_count - 1) ? 
             source_path : temp_paths[i];
         
-        graphite_result result = steps[i].migrate(
+        hyperdag_result result = steps[i].migrate(
             current_path, output_path);
         
-        if (result != GRAPHITE_SUCCESS) {
+        if (result != TURTLGRAPH_SUCCESS) {
             // Clean up temporary files
             cleanup_temp_files(temp_paths, i);
             return result;
@@ -2761,7 +2761,7 @@ graphite_result migrate_bundle(
         current_path = output_path;
     }
     
-    return GRAPHITE_SUCCESS;
+    return TURTLGRAPH_SUCCESS;
 }
 ```
 

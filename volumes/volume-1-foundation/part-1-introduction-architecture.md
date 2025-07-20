@@ -4,15 +4,15 @@
 ### Table of Contents
 - [Chapter 1: Introduction & Overview](#chapter-1-introduction--overview)
   - [The Asset Management Crisis](#the-asset-management-crisis)
-  - [The GRAPHITE Vision](#the-graphite-vision)
-  - [What Makes GRAPHITE Revolutionary](#what-makes-graphite-revolutionary)
+  - [The TurtlGraph Vision](#the-turtlgraph-vision)
+  - [What Makes TurtlGraph Revolutionary](#what-makes-turtlgraph-revolutionary)
   - [Who Should Read This Documentation](#who-should-read-this-documentation)
   - [Documentation Roadmap](#documentation-roadmap)
 - [Chapter 2: Core Concepts](#chapter-2-core-concepts)
 - [Chapter 3: Architecture Overview](#chapter-3-architecture-overview)
 
 ### Overview
-This part introduces GRAPHITE (Graphite Recursive Asset Pipeline – Hypergraph Infinite Turtling Engine), a revolutionary asset management system that fundamentally reimagines how digital assets are stored, versioned, and distributed. Building on the insight that "everything is a graph," GRAPHITE brings Git-like distributed version control to game assets while maintaining the performance characteristics required for production deployments.
+This part introduces TurtlGraph (Turtle Recursive Asset Pipeline – Hypergraph Infinite Turtling Engine), a revolutionary asset management system that fundamentally reimagines how digital assets are stored, versioned, and distributed. Building on the insight that "everything is a graph," TurtlGraph brings Git-like distributed version control to game assets while maintaining the performance characteristics required for production deployments.
 
 ---
 
@@ -31,9 +31,9 @@ Consider the current state of affairs:
 
 These aren't just inconveniences—they're existential threats to sustainable game development. Teams spend more time fighting their asset pipeline than creating content. Innovation stalls under the weight of technical debt. Smaller studios can't compete because the infrastructure cost is prohibitive.
 
-### The GRAPHITE Vision
+### The TurtlGraph Vision
 
-GRAPHITE represents a paradigm shift in how we think about game assets. Instead of treating assets as opaque binary blobs to be versioned and distributed, GRAPHITE recognizes a fundamental truth:
+TurtlGraph represents a paradigm shift in how we think about game assets. Instead of treating assets as opaque binary blobs to be versioned and distributed, TurtlGraph recognizes a fundamental truth:
 
 **Everything is a graph.**
 
@@ -43,34 +43,34 @@ This isn't metaphorical—it's the deepest insight into the nature of digital as
 - A game level isn't just object placements; it's a graph of spatial relationships, dependencies, and streaming boundaries
 - Even the relationships between assets form graphs—materials reference textures, prefabs reference models, levels reference everything
 
-By embracing this graph-native reality, GRAPHITE enables something revolutionary: **Git for game assets**.
+By embracing this graph-native reality, TurtlGraph enables something revolutionary: **Git for game assets**.
 
 ```bash
 # Fork an entire game's assets
-graphite fork activision/call-of-duty-assets my-studio/cod-mod
+turtlgraph fork activision/call-of-duty-assets my-studio/cod-mod
 
 # Create experimental branches
-graphite checkout -b next-gen-textures
-graphite compress --algorithm=neural --quality=0.95 textures/
+turtlgraph checkout -b next-gen-textures
+turtlgraph compress --algorithm=neural --quality=0.95 textures/
 
 # Merge successful experiments
-graphite merge next-gen-textures --strategy=size-optimized
+turtlgraph merge next-gen-textures --strategy=size-optimized
 
 # Push improvements back to the community
-graphite push community/optimization-pack
+turtlgraph push community/optimization-pack
 ```
 
-But GRAPHITE goes beyond version control. It's a complete reimagining of the asset pipeline:
+But TurtlGraph goes beyond version control. It's a complete reimagining of the asset pipeline:
 - **Zero-Copy Loading**: Memory-mapped files with one-time pointer hydration mean sub-200ms load times for gigabyte bundles
 - **Cryptographic Integrity**: BLAKE3 Merkle trees ensure every byte is verified, preventing corruption and enabling trustless distribution
 - **Universal Format**: One graph format rules them all—from individual textures to entire game databases
 - **Distributed by Design**: Like Git, every clone is a complete repository. Work offline, fork freely, merge intelligently
 
-### What Makes GRAPHITE Revolutionary
+### What Makes TurtlGraph Revolutionary
 
 #### 1. The Recursive Graph Model
 
-Traditional formats use hierarchies (trees) or flat structures (arrays). GRAPHITE uses recursive hypergraphs where:
+Traditional formats use hierarchies (trees) or flat structures (arrays). HyperDAG uses recursive hypergraphs where:
 - Nodes can be graphs
 - Edges can be graphs  
 - Properties can be graphs
@@ -80,7 +80,7 @@ This isn't complexity for its own sake—it's a recognition that assets are inhe
 
 #### 2. Git-Like Distributed Architecture
 
-GRAPHITE brings true distributed version control to assets:
+TurtlGraph brings true distributed version control to assets:
 - **Every copy is a repository**: No distinction between client and server
 - **Branching is free**: Copy-on-write semantics mean branches cost nothing
 - **Merging is intelligent**: Graph-aware merge algorithms understand asset semantics
@@ -88,7 +88,7 @@ GRAPHITE brings true distributed version control to assets:
 
 #### 3. Performance Without Compromise
 
-Unlike interchange formats that sacrifice runtime performance for flexibility, GRAPHITE delivers both:
+Unlike interchange formats that sacrifice runtime performance for flexibility, TurtlGraph delivers both:
 - **Memory-mapped I/O**: Direct from disk to GPU with zero copies
 - **Pointer hydration**: One-time fixup for native-speed traversal
 - **NUMA awareness**: Optimized for modern multi-socket systems
@@ -96,7 +96,7 @@ Unlike interchange formats that sacrifice runtime performance for flexibility, G
 
 #### 4. Built-in Intelligence
 
-GRAPHITE assets aren't just data—they're smart:
+HyperDAG assets aren't just data—they're smart:
 - **Self-describing**: Every asset knows its own schema
 - **Self-validating**: Cryptographic hashes catch corruption instantly
 - **Self-optimizing**: Graphs reorganize based on access patterns
@@ -107,25 +107,25 @@ GRAPHITE assets aren't just data—they're smart:
 This documentation serves multiple audiences:
 
 **Game Developers** will learn how to:
-- Integrate GRAPHITE into existing pipelines
+- Integrate TurtlGraph into existing pipelines
 - Optimize asset loading and streaming
 - Implement efficient hot-reload systems
 - Build content delivery networks
 
 **Engine Programmers** will discover how to:
-- Implement GRAPHITE loaders from scratch
+- Implement HyperDAG loaders from scratch
 - Optimize for specific platforms
 - Extend the format with custom node types
 - Build graph-aware tools and editors
 
 **Technical Artists** will understand how to:
-- Author GRAPHITE-native content
+- Author TurtlGraph-native content
 - Optimize asset graphs for performance
 - Create procedural asset pipelines
 - Debug complex dependency chains
 
 **Infrastructure Engineers** will master how to:
-- Deploy GRAPHITE at scale
+- Deploy TurtlGraph at scale
 - Build distributed asset networks
 - Implement caching and CDN strategies
 - Monitor and optimize performance
@@ -155,9 +155,9 @@ Each part builds on the previous, but experienced readers can jump directly to t
 
 ### A Note on Philosophy
 
-GRAPHITE embodies a philosophical shift in how we think about digital assets. Just as Git revealed that version control is fundamentally about managing directed acyclic graphs of commits, GRAPHITE reveals that asset management is fundamentally about managing recursive hypergraphs of content.
+TurtlGraph embodies a philosophical shift in how we think about digital assets. Just as Git revealed that version control is fundamentally about managing directed acyclic graphs of commits, TurtlGraph reveals that asset management is fundamentally about managing recursive hypergraphs of content.
 
-This isn't just a technical observation—it's a recognition that the tools we use shape the games we create. By providing a graph-native foundation, GRAPHITE enables new forms of creativity:
+This isn't just a technical observation—it's a recognition that the tools we use shape the games we create. By providing a graph-native foundation, TurtlGraph enables new forms of creativity:
 - Procedural assets that evolve based on player behavior
 - Community-driven content that forks and merges like open source
 - AI-assisted creation that understands asset relationships
@@ -165,37 +165,37 @@ This isn't just a technical observation—it's a recognition that the tools we u
 
 ### Getting Started
 
-The journey into GRAPHITE begins with understanding its core concepts. Chapter 2 explores the fundamental principles that make GRAPHITE possible: the recursive graph model, distributed architecture, and performance philosophy that underlies everything else.
+The journey into TurtlGraph begins with understanding its core concepts. Chapter 2 explores the fundamental principles that make TurtlGraph possible: the recursive graph model, distributed architecture, and performance philosophy that underlies everything else.
 
-But first, let's see GRAPHITE in action with a simple example:
+But first, let's see TurtlGraph in action with a simple example:
 
 ```c
-#include <graphite/graphite.h>
+#include <turtlgraph/turtlgraph.h>
 
 int main() {
-    // Open a GRAPHITE bundle
-    graphite_bundle* bundle = graphite_open("game_assets.grph");
+    // Open a HyperDAG bundle
+    hyperdag_bundle* bundle = hyperdag_open("game_assets.grph");
     if (!bundle) {
         fprintf(stderr, "Failed to open bundle\n");
         return 1;
     }
     
     // Get the root graph
-    const graphite_graph* root = graphite_root(bundle);
+    const hyperdag_graph* root = hyperdag_root(bundle);
     
     // Find a specific asset by traversing the graph
-    const graphite_node* textures = graphite_find_node(root, "textures");
-    const graphite_node* player = graphite_find_node(textures, "characters/player");
-    const graphite_node* diffuse = graphite_find_node(player, "diffuse");
+    const hyperdag_node* textures = hyperdag_find_node(root, "textures");
+    const hyperdag_node* player = hyperdag_find_node(textures, "characters/player");
+    const hyperdag_node* diffuse = hyperdag_find_node(player, "diffuse");
     
     // Load the texture data (zero-copy if memory-mapped)
-    graphite_blob blob = graphite_node_data(diffuse);
+    hyperdag_blob blob = hyperdag_node_data(diffuse);
     printf("Loaded texture: %zu bytes\n", blob.size);
     
     // The blob points directly to memory-mapped data
     // No copies, no allocations, just pure performance
     
-    graphite_close(bundle);
+    hyperdag_close(bundle);
     return 0;
 }
 ```
@@ -204,11 +204,11 @@ This simple example hints at the power within: a unified API for accessing any a
 
 ### The Revolution Begins
 
-GRAPHITE isn't just another asset format—it's a fundamental rethinking of how digital content is created, stored, versioned, and distributed. By recognizing that everything is a graph and building on decades of distributed systems research, GRAPHITE provides the foundation for the next generation of digital experiences.
+TurtlGraph isn't just another asset format—it's a fundamental rethinking of how digital content is created, stored, versioned, and distributed. By recognizing that everything is a graph and building on decades of distributed systems research, TurtlGraph provides the foundation for the next generation of digital experiences.
 
 The following chapters will take you deep into the technical details, but never forget the vision: a world where assets flow as freely as code, where creativity isn't constrained by pipeline limitations, and where the best ideas can spread and evolve without friction.
 
-Welcome to the graph revolution. Welcome to GRAPHITE.
+Welcome to the graph revolution. Welcome to TurtlGraph.
 
 ---
 
@@ -228,18 +228,18 @@ Welcome to the graph revolution. Welcome to GRAPHITE.
 
 ## Chapter 2: Core Concepts
 
-The power of GRAPHITE emerges from four fundamental principles that, when combined, create something far greater than their sum. These aren't arbitrary design decisions—they're recognitions of deep truths about the nature of digital assets and computation itself.
+The power of TurtlGraph emerges from four fundamental principles that, when combined, create something far greater than their sum. These aren't arbitrary design decisions—they're recognitions of deep truths about the nature of digital assets and computation itself.
 
 ### 1. Everything Is A Graph
 
-This principle is both the simplest and most profound insight underlying GRAPHITE. It's not a metaphor or an abstraction—it's a recognition of reality.
+This principle is both the simplest and most profound insight underlying TurtlGraph. It's not a metaphor or an abstraction—it's a recognition of reality.
 
 #### The Graph Awakening
 
 Consider this truth:
 ```
 git mind = everything's a graph
-graphite = everything's a graph  
+turtlgraph = everything's a graph  
 it's all graphs
 all the way
 down
@@ -257,9 +257,9 @@ Every computational system we've ever built is fundamentally a graph:
 
 The revelation: **We've been building graph systems all along without fully realizing it.**
 
-#### How GRAPHITE Applies This Principle
+#### How HyperDAG Applies This Principle
 
-In GRAPHITE, every element is represented as a graph:
+In HyperDAG, every element is represented as a graph:
 
 - **Individual Assets**: Even a simple texture is a graph—albeit a leaf graph with 0 nodes and 0 edges, where the data lives in the graph's properties
 - **Asset Collections**: A texture atlas is a graph where nodes represent individual sprites
@@ -268,7 +268,7 @@ In GRAPHITE, every element is represented as a graph:
 - **Bundles**: Entire asset packages are composite graphs containing multiple asset graphs
 - **String Tables**: Even mundane elements like string pools become graphs where nodes point to string data
 
-This isn't over-engineering—it's acknowledging that assets naturally form complex, interconnected structures. By making graphs the fundamental primitive, GRAPHITE provides a unified way to represent, query, and manipulate any asset type.
+This isn't over-engineering—it's acknowledging that assets naturally form complex, interconnected structures. By making graphs the fundamental primitive, HyperDAG provides a unified way to represent, query, and manipulate any asset type.
 
 #### Practical Implications
 
@@ -276,18 +276,18 @@ The "everything is a graph" principle enables powerful capabilities:
 
 ```c
 // Any asset can be treated uniformly
-const graphite_graph* asset = graphite_load_any(bundle, "some/asset");
+const hyperdag_graph* asset = hyperdag_load_any(bundle, "some/asset");
 
 // Traverse relationships naturally
-graphite_foreach_edge(asset, edge) {
-    const graphite_graph* dependency = graphite_edge_target(edge);
-    const char* relationship = graphite_edge_property(edge, "type");
+hyperdag_foreach_edge(asset, edge) {
+    const hyperdag_graph* dependency = hyperdag_edge_target(edge);
+    const char* relationship = hyperdag_edge_property(edge, "type");
     printf("Depends on %s via %s\n", 
-           graphite_graph_name(dependency), relationship);
+           hyperdag_graph_name(dependency), relationship);
 }
 
 // Query complex relationships
-graphite_query* q = graphite_query_create(
+hyperdag_query* q = hyperdag_query_create(
     "MATCH (texture:Texture)-[:USED_BY]->(material:Material)"
     "-[:APPLIED_TO]->(model:Model) "
     "WHERE texture.format = 'BC7' "
@@ -297,7 +297,7 @@ graphite_query* q = graphite_query_create(
 
 ### 2. Recursive Composition
 
-If everything is a graph, then graphs must be able to contain other graphs. This recursive principle is what transforms GRAPHITE from a simple format into a universal representation.
+If everything is a graph, then graphs must be able to contain other graphs. This recursive principle is what transforms HyperDAG from a simple format into a universal representation.
 
 #### The Power of Recursion
 
@@ -317,30 +317,30 @@ This recursion isn't limited to containment—edges can also be graphs:
 ```c
 // A material is a graph containing other graphs
 typedef struct {
-    graphite_graph base;
-    graphite_graph* diffuse_texture;   // Itself a graph
-    graphite_graph* normal_texture;    // Itself a graph
-    graphite_graph* shader_params;     // Graph of parameters
-    graphite_graph* render_states;     // Graph of GPU states
+    hyperdag_graph base;
+    hyperdag_graph* diffuse_texture;   // Itself a graph
+    hyperdag_graph* normal_texture;    // Itself a graph
+    hyperdag_graph* shader_params;     // Graph of parameters
+    hyperdag_graph* render_states;     // Graph of GPU states
 } material_graph;
 
 // Recursive traversal is natural
-void process_graph_recursive(const graphite_graph* g, int depth) {
+void process_graph_recursive(const hyperdag_graph* g, int depth) {
     // Process current level
-    printf("%*sGraph: %s\n", depth*2, "", graphite_graph_name(g));
+    printf("%*sGraph: %s\n", depth*2, "", hyperdag_graph_name(g));
     
     // Recurse into node graphs
-    graphite_foreach_node(g, node) {
-        if (graphite_node_is_graph(node)) {
-            const graphite_graph* subgraph = graphite_node_as_graph(node);
+    hyperdag_foreach_node(g, node) {
+        if (hyperdag_node_is_graph(node)) {
+            const hyperdag_graph* subgraph = hyperdag_node_as_graph(node);
             process_graph_recursive(subgraph, depth + 1);
         }
     }
     
     // Even edges can be graphs!
-    graphite_foreach_edge(g, edge) {
-        if (graphite_edge_is_graph(edge)) {
-            const graphite_graph* edge_graph = graphite_edge_as_graph(edge);
+    hyperdag_foreach_edge(g, edge) {
+        if (hyperdag_edge_is_graph(edge)) {
+            const hyperdag_graph* edge_graph = hyperdag_edge_as_graph(edge);
             process_graph_recursive(edge_graph, depth + 1);
         }
     }
@@ -358,11 +358,11 @@ This principle enables elegant solutions to complex problems:
 
 ### 3. Binary Efficiency
 
-While graphs provide expressiveness, games demand performance. GRAPHITE achieves both through careful binary design.
+While graphs provide expressiveness, games demand performance. HyperDAG achieves both through careful binary design.
 
 #### Memory-Mapped Architecture
 
-GRAPHITE files are designed for direct memory mapping:
+HyperDAG files are designed for direct memory mapping:
 - **Zero-copy loading**: Files map directly into address space
 - **Pointer hydration**: One-time fixup converts offsets to pointers
 - **Page-fault driven**: OS loads only accessed data
@@ -370,16 +370,16 @@ GRAPHITE files are designed for direct memory mapping:
 
 ```c
 // Opening a bundle is nearly instantaneous
-graphite_bundle* bundle = graphite_open("massive_game.grph");
+hyperdag_bundle* bundle = hyperdag_open("massive_game.grph");
 
 // Even for multi-gigabyte files, this returns immediately
 // The OS will page in data as needed
 
 // First access triggers page fault and load
-const graphite_graph* root = graphite_root(bundle);  // ~1ms
+const hyperdag_graph* root = hyperdag_root(bundle);  // ~1ms
 
 // Subsequent access is pure memory access
-const graphite_graph* textures = graphite_find(root, "textures");  // ~1μs
+const hyperdag_graph* textures = hyperdag_find(root, "textures");  // ~1μs
 ```
 
 #### Compact Representation
@@ -401,7 +401,7 @@ The chunk system enables sophisticated loading strategies:
 
 ### 4. Integrity By Design
 
-In a distributed world, trust must be built in. GRAPHITE provides multiple layers of integrity checking.
+In a distributed world, trust must be built in. HyperDAG provides multiple layers of integrity checking.
 
 #### Corruption Detection
 
@@ -423,7 +423,7 @@ This catches:
 
 #### Cryptographic Verification
 
-For security-critical applications, GRAPHITE provides BLAKE3 Merkle trees:
+For security-critical applications, HyperDAG provides BLAKE3 Merkle trees:
 
 ```
                     Root Hash
@@ -447,20 +447,20 @@ This enables:
 
 ```c
 // Verify entire bundle integrity
-if (!graphite_verify_full(bundle)) {
+if (!hyperdag_verify_full(bundle)) {
     fprintf(stderr, "Bundle corrupted or tampered!\n");
     return ERROR_INTEGRITY;
 }
 
 // Verify just what we're using (faster)
-const graphite_graph* character = graphite_find(root, "player");
-if (!graphite_verify_subtree(character)) {
+const hyperdag_graph* character = hyperdag_find(root, "player");
+if (!hyperdag_verify_subtree(character)) {
     fprintf(stderr, "Character assets compromised!\n");
     return ERROR_INTEGRITY;
 }
 
 // For online games, verify signatures
-if (!graphite_verify_signature(bundle, studio_public_key)) {
+if (!hyperdag_verify_signature(bundle, studio_public_key)) {
     fprintf(stderr, "Unofficial content detected!\n");
     return ERROR_UNAUTHORIZED;
 }
@@ -479,9 +479,9 @@ The result is more than a file format—it's a foundation for the future of digi
 
 ### Beyond Storage: The Git Revelation
 
-The deepest insight is that GRAPHITE isn't just inspired by Git—it recognizes that Git itself is a distributed graph database:
+The deepest insight is that TurtlGraph isn't just inspired by Git—it recognizes that Git itself is a distributed graph database:
 
-| Feature | Git | Traditional Database | GRAPHITE |
+| Feature | Git | Traditional Database | TurtlGraph |
 |---------|-----|---------------------|----------|
 | **Distributed** | ✅ Native | ❌ Replication only | ✅ Native |
 | **Version Control** | ✅ Core feature | ❌ Manual | ✅ Core feature |
@@ -493,17 +493,17 @@ This revelation enables revolutionary workflows:
 
 ```bash
 # Fork entire game asset database
-graphite fork bethesda/skyrim-assets my-mods/total-conversion
+turtlgraph fork bethesda/skyrim-assets my-mods/total-conversion
 
 # Create experimental branches
-graphite checkout -b hd-texture-pack
-graphite transform textures/ --upscale=4x --ai-enhance
+turtlgraph checkout -b hd-texture-pack
+turtlgraph transform textures/ --upscale=4x --ai-enhance
 
 # Merge successful experiments
-graphite merge hd-texture-pack --strategy=quality-first
+turtlgraph merge hd-texture-pack --strategy=quality-first
 
 # Share with the community
-graphite push nexusmods/skyrim-hd-remaster
+turtlgraph push nexusmods/skyrim-hd-remaster
 ```
 
 ### Advanced Implications
@@ -514,27 +514,27 @@ The core principles enable capabilities that emerge naturally:
 Assets can modify themselves at runtime:
 ```c
 // Game state as graph modifications
-graphite_node* player_inventory = graphite_find_node(save_game, "inventory");
-graphite_node* new_item = graphite_create_node("legendary_sword");
-graphite_add_edge(player_inventory, new_item, "contains");
+hyperdag_node* player_inventory = hyperdag_find_node(save_game, "inventory");
+hyperdag_node* new_item = hyperdag_create_node("legendary_sword");
+hyperdag_add_edge(player_inventory, new_item, "contains");
 ```
 
 #### Asset Intelligence
 Graphs can contain computation:
 ```c
 // Procedural texture with embedded generation logic
-const graphite_graph* proc_texture = graphite_find(bundle, "textures/grass");
-const graphite_graph* generator = graphite_property_graph(proc_texture, "generator");
+const hyperdag_graph* proc_texture = hyperdag_find(bundle, "textures/grass");
+const hyperdag_graph* generator = hyperdag_property_graph(proc_texture, "generator");
 
 // Execute the embedded compute graph
-graphite_execute(generator, params, output_buffer);
+hyperdag_execute(generator, params, output_buffer);
 ```
 
 #### Semantic Queries
 Graph structure enables powerful queries:
 ```c
 // Find all assets affected by a shader change
-graphite_query* affected = graphite_query_create(
+hyperdag_query* affected = hyperdag_query_create(
     "MATCH (shader:Shader {name: 'uber_shader'})"
     "<-[:USES]-(material:Material)"
     "<-[:HAS_MATERIAL]-(model:Model)"
@@ -545,9 +545,9 @@ graphite_query* affected = graphite_query_create(
 
 ### The Philosophy Made Real
 
-GRAPHITE's core concepts aren't just technical features—they represent a philosophical shift in how we think about digital assets. By recognizing that everything is connected, that complexity emerges from simple recursive rules, that performance and expressiveness can coexist, and that trust must be built-in rather than bolted-on, GRAPHITE provides a foundation not just for today's games but for forms of digital creativity we haven't yet imagined.
+TurtlGraph's core concepts aren't just technical features—they represent a philosophical shift in how we think about digital assets. By recognizing that everything is connected, that complexity emerges from simple recursive rules, that performance and expressiveness can coexist, and that trust must be built-in rather than bolted-on, TurtlGraph provides a foundation not just for today's games but for forms of digital creativity we haven't yet imagined.
 
-The next chapter explores how these principles manifest in concrete architecture, but remember: at its heart, GRAPHITE is about recognizing the graph-native nature of reality itself. Once you see it, you can't unsee it. Everything really is a graph, all the way down.
+The next chapter explores how these principles manifest in concrete architecture, but remember: at its heart, TurtlGraph is about recognizing the graph-native nature of reality itself. Once you see it, you can't unsee it. Everything really is a graph, all the way down.
 
 ---
 
@@ -564,7 +564,7 @@ The next chapter explores how these principles manifest in concrete architecture
 
 ## Chapter 3: Architecture Overview
 
-GRAPHITE's architecture represents a carefully orchestrated balance between theoretical elegance and production pragmatism. While the core concept—everything is a graph—is simple, its implementation requires sophisticated engineering to deliver on the promise of a universal, high-performance asset format.
+TurtlGraph's architecture represents a carefully orchestrated balance between theoretical elegance and production pragmatism. While the core concept—everything is a graph—is simple, its implementation requires sophisticated engineering to deliver on the promise of a universal, high-performance asset format.
 
 ### System Architecture
 
@@ -576,7 +576,7 @@ graph TB
         Editor[Asset Editor]
     end
     
-    subgraph "GRAPHITE API Layer"
+    subgraph "HyperDAG API Layer"
         CoreAPI[Core API]
         QueryAPI[Query Engine]
         StreamAPI[Streaming API]
@@ -623,7 +623,7 @@ graph TB
 
 ### Binary Format Architecture
 
-The GRAPHITE binary format is designed for direct memory mapping and efficient random access. Every design decision prioritizes runtime performance while maintaining the flexibility needed for a universal format.
+The HyperDAG binary format is designed for direct memory mapping and efficient random access. Every design decision prioritizes runtime performance while maintaining the flexibility needed for a universal format.
 
 #### File Layout
 
@@ -662,7 +662,7 @@ typedef struct {
 
     uint8_t  file_digest[32];// BLAKE3 of entire file except this field
     uint8_t  reserved[32];   // Reserved for future use
-} graphite_hdr;
+} hyperdag_hdr;
 ```
 
 Key design decisions:
@@ -673,7 +673,7 @@ Key design decisions:
 
 #### Chunk System Architecture
 
-The chunk system is the heart of GRAPHITE's flexibility. Each chunk is self-contained and can be:
+The chunk system is the heart of HyperDAG's flexibility. Each chunk is self-contained and can be:
 - Loaded independently
 - Compressed with different algorithms
 - Encrypted for secure distribution
@@ -698,7 +698,7 @@ The use of `_BitInt(40)` is particularly clever:
 
 ### Graph Storage Architecture
 
-Every graph in GRAPHITE follows the same structure, enabling uniform processing:
+Every graph in HyperDAG follows the same structure, enabling uniform processing:
 
 #### Graph Header Structure
 
@@ -713,7 +713,7 @@ typedef struct {
     uint64_t edge_table_ofs; // Offset to edge index table  
     uint64_t prop_table_ofs; // Offset to property table
     uint64_t reserved;       // Reserved for future use
-} graphite_graph_hdr;
+} hyperdag_graph_hdr;
 ```
 
 This fixed header enables:
@@ -724,7 +724,7 @@ This fixed header enables:
 
 #### Special Graph Types
 
-GRAPHITE defines several special graph types that optimize common patterns:
+HyperDAG defines several special graph types that optimize common patterns:
 
 ##### String Pool Graph
 ```c
@@ -753,7 +753,7 @@ edge_count = 0;     // No relationships
 
 ### Edge Architecture
 
-One of GRAPHITE's most innovative features is that edges themselves are graphs. This enables incredibly rich relationships:
+One of HyperDAG's most innovative features is that edges themselves are graphs. This enables incredibly rich relationships:
 
 #### Simple Dependency Edge
 ```c
@@ -781,7 +781,7 @@ edge_count = 1;     // condition -> transform
 
 ### Memory Architecture
 
-GRAPHITE's memory architecture is designed for modern hardware with NUMA nodes, large caches, and parallel execution units.
+HyperDAG's memory architecture is designed for modern hardware with NUMA nodes, large caches, and parallel execution units.
 
 #### Memory Mapping Strategy
 
@@ -820,7 +820,7 @@ Key strategies:
 
 #### Arena Allocation
 
-For runtime graph manipulation, GRAPHITE uses arena allocation:
+For runtime graph manipulation, HyperDAG uses arena allocation:
 
 ```c
 // Calculate arena size based on graph complexity
@@ -856,11 +856,11 @@ pthread_setaffinity_np(worker_thread, sizeof(cpuset), &cpuset);
 
 ### I/O Architecture
 
-GRAPHITE leverages cutting-edge I/O technologies for maximum performance.
+HyperDAG leverages cutting-edge I/O technologies for maximum performance.
 
 #### Asynchronous I/O with io_uring
 
-On Linux, GRAPHITE uses io_uring for zero-copy, asynchronous I/O:
+On Linux, HyperDAG uses io_uring for zero-copy, asynchronous I/O:
 
 ```c
 struct io_uring ring;
@@ -890,7 +890,7 @@ This enables:
 
 ### Streaming Architecture
 
-For large assets and network delivery, GRAPHITE supports sophisticated streaming:
+For large assets and network delivery, HyperDAG supports sophisticated streaming:
 
 ```mermaid
 sequenceDiagram
@@ -924,7 +924,7 @@ Key features:
 
 ### Security Architecture
 
-GRAPHITE's security is built on modern cryptographic primitives:
+HyperDAG's security is built on modern cryptographic primitives:
 
 #### Integrity Verification
 
@@ -961,7 +961,7 @@ Benefits:
 
 ### Component Architecture
 
-GRAPHITE is designed as a set of modular components:
+TurtlGraph is designed as a set of modular components:
 
 #### Core Components
 
@@ -1003,7 +1003,7 @@ GRAPHITE is designed as a set of modular components:
 
 ### Platform Architecture
 
-GRAPHITE abstracts platform differences while leveraging platform-specific optimizations:
+TurtlGraph abstracts platform differences while leveraging platform-specific optimizations:
 
 ```c
 // Platform abstraction layer
@@ -1014,17 +1014,17 @@ typedef struct {
     void  (*free_arena)(void* addr, size_t size);
     int   (*async_read)(int fd, void* buf, size_t size, off_t offset);
     // ... more platform APIs
-} graphite_platform_api;
+} hyperdag_platform_api;
 
 // Platform implementations
 #ifdef _WIN32
-    graphite_platform_api platform = {
+    hyperdag_platform_api platform = {
         .map_file = win32_map_file,
         .unmap_file = win32_unmap_file,
         // ...
     };
 #elif defined(__linux__)
-    graphite_platform_api platform = {
+    hyperdag_platform_api platform = {
         .map_file = linux_map_file,
         .unmap_file = linux_unmap_file,
         // ...
@@ -1034,7 +1034,7 @@ typedef struct {
 
 ### Performance Architecture
 
-Every architectural decision in GRAPHITE is made with performance in mind:
+Every architectural decision in TurtlGraph is made with performance in mind:
 
 #### Design Principles
 
@@ -1061,7 +1061,7 @@ Every architectural decision in GRAPHITE is made with performance in mind:
 
 #### Performance Metrics
 
-GRAPHITE targets aggressive performance goals:
+TurtlGraph targets aggressive performance goals:
 - **< 200ms** to open 1GB bundle
 - **< 3ms** P99 task processing latency
 - **> 1M** graph traversals per second
@@ -1069,14 +1069,14 @@ GRAPHITE targets aggressive performance goals:
 
 ### Extensibility Architecture
 
-GRAPHITE is designed for future evolution:
+TurtlGraph is designed for future evolution:
 
 #### Version Negotiation
 ```c
 // Loader checks version compatibility
-if (header->version > GRAPHITE_MAX_VERSION) {
+if (header->version > HYPERDAG_MAX_VERSION) {
     // Try compatibility mode
-    if (header->version & GRAPHITE_COMPAT_BIT) {
+    if (header->version & HYPERDAG_COMPAT_BIT) {
         use_compatibility_loader();
     } else {
         return ERROR_VERSION_TOO_NEW;
@@ -1097,7 +1097,7 @@ if (chunk->kind >= CHUNK_TYPE_EXTENSION_BASE) {
 #### Property Extensions
 ```c
 // Properties use string keys for flexibility
-const char* custom_prop = graphite_property(graph, "my_app.custom_data");
+const char* custom_prop = hyperdag_property(graph, "my_app.custom_data");
 if (custom_prop) {
     process_custom_property(custom_prop);
 }
@@ -1133,21 +1133,21 @@ Here's how the architecture components work together in a typical asset load:
 
 ```c
 // Application requests a texture
-graphite_bundle* bundle = graphite_open("game_assets.grph");
+hyperdag_bundle* bundle = hyperdag_open("game_assets.grph");
 
 // Header is already mapped, chunk table loaded
-const graphite_graph* root = graphite_root(bundle);
+const hyperdag_graph* root = hyperdag_root(bundle);
 
 // Graph traversal through memory-mapped data
-const graphite_graph* textures = graphite_find_child(root, "textures");
-const graphite_graph* player = graphite_find_child(textures, "player");
-const graphite_graph* diffuse = graphite_find_child(player, "diffuse");
+const hyperdag_graph* textures = hyperdag_find_child(root, "textures");
+const hyperdag_graph* player = hyperdag_find_child(textures, "player");
+const hyperdag_graph* diffuse = hyperdag_find_child(player, "diffuse");
 
 // Property lookup in string pool
-const char* blob_id = graphite_property(diffuse, "data_blob_id");
+const char* blob_id = hyperdag_property(diffuse, "data_blob_id");
 
 // Direct access to memory-mapped chunk
-graphite_blob blob = graphite_chunk_data(bundle, atoi(blob_id));
+hyperdag_blob blob = hyperdag_chunk_data(bundle, atoi(blob_id));
 
 // Zero copies - blob points directly to mapped memory
 upload_to_gpu(blob.data, blob.size);
@@ -1161,7 +1161,7 @@ The entire operation involves:
 
 ### Summary
 
-GRAPHITE's architecture represents a careful balance of theoretical elegance and production pragmatism. By building on a foundation of recursive graphs while leveraging modern hardware capabilities, it achieves what seemed impossible: a universal format that's also faster than specialized formats.
+TurtlGraph's architecture represents a careful balance of theoretical elegance and production pragmatism. By building on a foundation of recursive graphs while leveraging modern hardware capabilities, it achieves what seemed impossible: a universal format that's also faster than specialized formats.
 
 The key insights:
 - **Chunks enable flexibility** without sacrificing performance
@@ -1171,7 +1171,7 @@ The key insights:
 
 This architecture isn't just about storing assets—it's about enabling new forms of creativity by removing technical barriers. When assets can be composed, versioned, and distributed as easily as code, entire new workflows become possible.
 
-The next parts of this documentation explore how these architectural principles translate into concrete implementations, but the foundation is now clear: GRAPHITE isn't just another format, it's a new paradigm for digital asset management.
+The next parts of this documentation explore how these architectural principles translate into concrete implementations, but the foundation is now clear: TurtlGraph isn't just another format, it's a new paradigm for digital asset management.
 
 ---
 

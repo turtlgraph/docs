@@ -14,17 +14,17 @@
 - [Chapter 6: Runtime API](#chapter-6-runtime-api)
 
 ### Overview
-This part delves into the concrete implementation of GRAPHITE's graph-native architecture. We explore the data structures that make recursive graphs possible, the binary format that enables zero-copy performance, and the runtime API that brings it all together. Every byte and bit is carefully designed to balance expressiveness with production performance.
+This part delves into the concrete implementation of HyperDAG's graph-native architecture. We explore the data structures that make recursive graphs possible, the binary format that enables zero-copy performance, and the runtime API that brings it all together. Every byte and bit is carefully designed to balance expressiveness with production performance.
 
 ---
 
 ## Chapter 4: Data Structures
 
-GRAPHITE's power emerges from a deceptively simple set of data structures that, through recursive composition, can represent any conceivable asset relationship. This chapter explores these fundamental building blocks and how they combine to create a universal asset representation.
+HyperDAG's power emerges from a deceptively simple set of data structures that, through recursive composition, can represent any conceivable asset relationship. This chapter explores these fundamental building blocks and how they combine to create a universal asset representation.
 
 ### The Graph Data Model
 
-At its core, GRAPHITE represents everything as a graph. But unlike traditional graph databases that distinguish between nodes, edges, and properties, GRAPHITE makes everything a graph:
+At its core, HyperDAG represents everything as a graph. But unlike traditional graph databases that distinguish between nodes, edges, and properties, HyperDAG makes everything a graph:
 
 ```mermaid
 graph TB
@@ -34,7 +34,7 @@ graph TB
         N1 -->|Edge| N2
     end
     
-    subgraph "GRAPHITE Graph"
+    subgraph "HyperDAG Graph"
         G1["Graph 1<br/>nodes: 2<br/>edges: 1"]
         G2["Graph 2<br/>nodes: 0<br/>edges: 0"]
         G3["Graph 3<br/>nodes: 0<br/>edges: 0"]
@@ -57,7 +57,7 @@ This recursive approach means:
 
 #### The Graph Header
 
-Every graph in GRAPHITE begins with a 64-byte header, carefully aligned for optimal cache performance:
+Every graph in HyperDAG begins with a 64-byte header, carefully aligned for optimal cache performance:
 
 ```c
 typedef struct {
@@ -70,7 +70,7 @@ typedef struct {
     uint64_t edge_table_ofs; // Offset to edge index table  
     uint64_t prop_table_ofs; // Offset to property table
     uint64_t reserved;       // Reserved for future use
-} graphite_graph_hdr;
+} hyperdag_graph_hdr;
 ```
 
 Key design decisions:
@@ -81,7 +81,7 @@ Key design decisions:
 
 #### Node Representation
 
-Nodes in GRAPHITE are simply references to other graphs. The node table is an array of chunk indices:
+Nodes in HyperDAG are simply references to other graphs. The node table is an array of chunk indices:
 
 ```c
 // Node table: Array of ULEB128-encoded chunk indices
@@ -90,10 +90,10 @@ typedef struct {
     uint8_t* data;           // Pointer to ULEB128 stream
     size_t   size;           // Size in bytes
     uint32_t count;          // Number of nodes (from header)
-} graphite_node_table;
+} hyperdag_node_table;
 
 // Decode a node reference
-uint64_t graphite_decode_node(const graphite_node_table* table, uint32_t index) {
+uint64_t hyperdag_decode_node(const hyperdag_node_table* table, uint32_t index) {
     uint8_t* ptr = table->data;
     // Skip to the nth ULEB128 value
     for (uint32_t i = 0; i < index; i++) {
@@ -136,7 +136,7 @@ graph LR
 
 #### Edge Representation
 
-Edges in GRAPHITE are first-class entities with their own structure:
+Edges in HyperDAG are first-class entities with their own structure:
 
 ```c
 typedef struct {
@@ -150,7 +150,7 @@ typedef struct {
 typedef struct {
     edge_descriptor* edges;  // Array of edge descriptors
     uint32_t count;         // Number of edges
-} graphite_edge_table;
+} hyperdag_edge_table;
 ```
 
 The power comes from `edge_data_idx`:
@@ -160,7 +160,7 @@ The power comes from `edge_data_idx`:
 
 ### Memory Layout
 
-GRAPHITE's memory layout is designed for cache efficiency and zero-copy access:
+HyperDAG's memory layout is designed for cache efficiency and zero-copy access:
 
 ```
 ┌─────────────────────────┐ ← 64-byte aligned
@@ -193,7 +193,7 @@ Total size: 64 + 3 + 13 + 0 + 8 = 88 bytes for the entire material graph structu
 
 ### Special Graph Types
 
-GRAPHITE defines several special graph types optimized for common patterns:
+HyperDAG defines several special graph types optimized for common patterns:
 
 #### String Pool Graph
 
@@ -223,20 +223,20 @@ graph TB
 
 ```c
 // String pool graph has special flag set
-#define GRAPHITE_FLAG_STRING_POOL (1 << 2)
+#define HYPERDAG_FLAG_STRING_POOL (1 << 2)
 
 typedef struct {
-    graphite_graph_hdr header;  // flags has string_pool bit
+    hyperdag_graph_hdr header;  // flags has string_pool bit
     // node_count = number of strings
     // edge_count = 0 (no relationships)
     // Each node points to a blob chunk with UTF-8 data
 } string_pool_graph;
 
 // String access is direct
-const char* graphite_get_string(graphite_bundle* bundle, uint32_t string_id) {
-    const graphite_graph* pool = bundle->string_pool;
-    uint64_t blob_idx = graphite_node_chunk_index(pool, string_id);
-    graphite_blob blob = graphite_get_chunk_blob(bundle, blob_idx);
+const char* hyperdag_get_string(hyperdag_bundle* bundle, uint32_t string_id) {
+    const hyperdag_graph* pool = bundle->string_pool;
+    uint64_t blob_idx = hyperdag_node_chunk_index(pool, string_id);
+    hyperdag_blob blob = hyperdag_get_chunk_blob(bundle, blob_idx);
     return (const char*)blob.data;  // Null-terminated UTF-8
 }
 ```
@@ -247,7 +247,7 @@ Asset graphs are leaf nodes containing actual asset data:
 
 ```c
 typedef struct {
-    graphite_graph_hdr header;  // nodes=0, edges=0
+    hyperdag_graph_hdr header;  // nodes=0, edges=0
     // Properties contain asset metadata:
     // - "data_blob_id": chunk index of asset data
     // - "mime_type": string ID for content type
@@ -271,17 +271,17 @@ typedef struct {
 Marks nodes that can be processed concurrently:
 
 ```c
-#define GRAPHITE_FLAG_PARALLEL_GROUP (1 << 1)
+#define HYPERDAG_FLAG_PARALLEL_GROUP (1 << 1)
 
 // All child nodes can be processed in parallel
 typedef struct {
-    graphite_graph_hdr header;  // flags has parallel_group bit
+    hyperdag_graph_hdr header;  // flags has parallel_group bit
     // Nodes represent independent work items
     // Runtime can distribute across threads
 } parallel_group_graph;
 
 // Runtime detection
-if (graph->header.flags & GRAPHITE_FLAG_PARALLEL_GROUP) {
+if (graph->header.flags & HYPERDAG_FLAG_PARALLEL_GROUP) {
     dispatch_parallel_work(graph->nodes);
 }
 ```
@@ -293,7 +293,7 @@ Represents asset transformation pipelines:
 ```c
 // Transform graphs have specific structure
 typedef struct {
-    graphite_graph_hdr header;
+    hyperdag_graph_hdr header;
     // Nodes: [input_graph, output_graph, params_graph, pipeline_graph]
     // Edges: input->pipeline, params->pipeline, pipeline->output
 } transform_graph;
@@ -307,7 +307,7 @@ typedef struct {
 
 ### Edge Architecture
 
-GRAPHITE's most innovative feature is that edges are themselves graphs. This enables incredibly rich relationships:
+HyperDAG's most innovative feature is that edges are themselves graphs. This enables incredibly rich relationships:
 
 ```mermaid
 graph TB
@@ -315,7 +315,7 @@ graph TB
         TN1["Node A"] -->|"simple edge"| TN2["Node B"]
     end
     
-    subgraph "GRAPHITE Edge Graph"
+    subgraph "HyperDAG Edge Graph"
         GN1["Walk Animation<br/>Graph"]
         GN2["Run Animation<br/>Graph"]
         EG["Edge Graph<br/>nodes: 2<br/>props: 3"]
@@ -378,7 +378,7 @@ Edges can encode complex logic:
 ```c
 // LOD selection edge
 typedef struct {
-    graphite_graph_hdr header;
+    hyperdag_graph_hdr header;
     // Properties:
     //   "condition" = "distance < 100.0"
     //   "priority" = "1"
@@ -388,7 +388,7 @@ typedef struct {
 
 ### Property System
 
-Properties in GRAPHITE are key-value pairs stored efficiently:
+Properties in HyperDAG are key-value pairs stored efficiently:
 
 ```c
 // Property table format: alternating key/value string IDs
@@ -400,21 +400,21 @@ typedef struct {
 } property_table;
 
 // Property access
-const char* graphite_property_get(
-    const graphite_graph* graph,
+const char* hyperdag_property_get(
+    const hyperdag_graph* graph,
     const char* key
 ) {
-    graphite_bundle* bundle = graph->bundle;
+    hyperdag_bundle* bundle = graph->bundle;
     property_table* props = &graph->properties;
     
     // Linear search (properties are typically few)
     for (uint32_t i = 0; i < props->count; i++) {
         uint32_t key_id = decode_uleb128(props->data + i*2);
-        const char* prop_key = graphite_get_string(bundle, key_id);
+        const char* prop_key = hyperdag_get_string(bundle, key_id);
         
         if (strcmp(prop_key, key) == 0) {
             uint32_t val_id = decode_uleb128(props->data + i*2 + 1);
-            return graphite_get_string(bundle, val_id);
+            return hyperdag_get_string(bundle, val_id);
         }
     }
     return NULL;  // Not found
@@ -423,7 +423,7 @@ const char* graphite_property_get(
 
 #### Property Namespaces
 
-GRAPHITE uses dot notation for property namespaces:
+HyperDAG uses dot notation for property namespaces:
 
 ```c
 // Core properties (no prefix)
@@ -447,34 +447,34 @@ GRAPHITE uses dot notation for property namespaces:
 
 ### Type System
 
-While GRAPHITE is dynamically typed, it provides type hints through properties:
+While HyperDAG is dynamically typed, it provides type hints through properties:
 
 ```c
 // Type identification
 typedef enum {
-    GRAPHITE_TYPE_GENERIC = 0,
-    GRAPHITE_TYPE_ASSET,
-    GRAPHITE_TYPE_TRANSFORM,
-    GRAPHITE_TYPE_MATERIAL,
-    GRAPHITE_TYPE_TEXTURE,
-    GRAPHITE_TYPE_MESH,
-    GRAPHITE_TYPE_ANIMATION,
-    GRAPHITE_TYPE_AUDIO,
-    GRAPHITE_TYPE_SCRIPT,
+    HYPERDAG_TYPE_GENERIC = 0,
+    HYPERDAG_TYPE_ASSET,
+    HYPERDAG_TYPE_TRANSFORM,
+    HYPERDAG_TYPE_MATERIAL,
+    HYPERDAG_TYPE_TEXTURE,
+    HYPERDAG_TYPE_MESH,
+    HYPERDAG_TYPE_ANIMATION,
+    HYPERDAG_TYPE_AUDIO,
+    HYPERDAG_TYPE_SCRIPT,
     // ... extended types
-} graphite_type_hint;
+} hyperdag_type_hint;
 
 // Type detection
-graphite_type_hint graphite_graph_type(const graphite_graph* graph) {
-    const char* type_str = graphite_property_get(graph, "type");
-    if (!type_str) return GRAPHITE_TYPE_GENERIC;
+hyperdag_type_hint hyperdag_graph_type(const hyperdag_graph* graph) {
+    const char* type_str = hyperdag_property_get(graph, "type");
+    if (!type_str) return HYPERDAG_TYPE_GENERIC;
     
     // Match known types
-    if (strcmp(type_str, "texture") == 0) return GRAPHITE_TYPE_TEXTURE;
-    if (strcmp(type_str, "mesh") == 0) return GRAPHITE_TYPE_MESH;
+    if (strcmp(type_str, "texture") == 0) return HYPERDAG_TYPE_TEXTURE;
+    if (strcmp(type_str, "mesh") == 0) return HYPERDAG_TYPE_MESH;
     // ...
     
-    return GRAPHITE_TYPE_GENERIC;
+    return HYPERDAG_TYPE_GENERIC;
 }
 ```
 
@@ -484,17 +484,17 @@ Runtime type checking ensures graph integrity:
 
 ```c
 // Validate material graph structure
-bool validate_material_graph(const graphite_graph* graph) {
+bool validate_material_graph(const hyperdag_graph* graph) {
     // Must have specific properties
-    if (!graphite_property_get(graph, "shader")) return false;
-    if (!graphite_property_get(graph, "version")) return false;
+    if (!hyperdag_property_get(graph, "shader")) return false;
+    if (!hyperdag_property_get(graph, "version")) return false;
     
     // Check child nodes are textures
     for (uint32_t i = 0; i < graph->header.node_count; i++) {
-        const graphite_graph* child = graphite_get_node(graph, i);
-        graphite_type_hint type = graphite_graph_type(child);
-        if (type != GRAPHITE_TYPE_TEXTURE && 
-            type != GRAPHITE_TYPE_GENERIC) {
+        const hyperdag_graph* child = hyperdag_get_node(graph, i);
+        hyperdag_type_hint type = hyperdag_graph_type(child);
+        if (type != HYPERDAG_TYPE_TEXTURE && 
+            type != HYPERDAG_TYPE_GENERIC) {
             return false;
         }
     }
@@ -505,7 +505,7 @@ bool validate_material_graph(const graphite_graph* graph) {
 
 ### Memory Optimization Techniques
 
-GRAPHITE employs several techniques to minimize memory usage:
+HyperDAG employs several techniques to minimize memory usage:
 
 #### 1. ULEB128 Encoding
 
@@ -589,25 +589,25 @@ Larger structures are built from smaller graphs:
 ```c
 // Character graph composition
 typedef struct {
-    graphite_graph* root;        // Character root graph
-    graphite_graph* mesh;        // Mesh sub-graph
-    graphite_graph* skeleton;    // Skeleton sub-graph
-    graphite_graph* materials;   // Materials collection
-    graphite_graph* animations;  // Animation collection
-    graphite_graph* physics;     // Physics properties
+    hyperdag_graph* root;        // Character root graph
+    hyperdag_graph* mesh;        // Mesh sub-graph
+    hyperdag_graph* skeleton;    // Skeleton sub-graph
+    hyperdag_graph* materials;   // Materials collection
+    hyperdag_graph* animations;  // Animation collection
+    hyperdag_graph* physics;     // Physics properties
 } character_graph_view;
 
 // Build view from root graph
-character_graph_view* build_character_view(graphite_graph* root) {
+character_graph_view* build_character_view(hyperdag_graph* root) {
     character_graph_view* view = malloc(sizeof(character_graph_view));
     view->root = root;
     
     // Find named sub-graphs
-    view->mesh = graphite_find_child_by_property(root, "name", "mesh");
-    view->skeleton = graphite_find_child_by_property(root, "name", "skeleton");
-    view->materials = graphite_find_child_by_property(root, "name", "materials");
-    view->animations = graphite_find_child_by_property(root, "name", "animations");
-    view->physics = graphite_find_child_by_property(root, "name", "physics");
+    view->mesh = hyperdag_find_child_by_property(root, "name", "mesh");
+    view->skeleton = hyperdag_find_child_by_property(root, "name", "skeleton");
+    view->materials = hyperdag_find_child_by_property(root, "name", "materials");
+    view->animations = hyperdag_find_child_by_property(root, "name", "animations");
+    view->physics = hyperdag_find_child_by_property(root, "name", "physics");
     
     return view;
 }
@@ -619,27 +619,27 @@ Graphs can be constructed at runtime:
 
 ```c
 // Build a scene graph dynamically
-graphite_graph_builder* builder = graphite_builder_create();
+turtlgraph_graph_builder* builder = turtlgraph_builder_create();
 
 // Create root scene node
-uint32_t scene = graphite_builder_add_graph(builder);
-graphite_builder_set_property(builder, scene, "type", "scene");
-graphite_builder_set_property(builder, scene, "name", "Main Menu");
+uint32_t scene = turtlgraph_builder_add_graph(builder);
+turtlgraph_builder_set_property(builder, scene, "type", "scene");
+turtlgraph_builder_set_property(builder, scene, "name", "Main Menu");
 
 // Add camera
-uint32_t camera = graphite_builder_add_graph(builder);
-graphite_builder_set_property(builder, camera, "type", "camera");
-graphite_builder_set_property(builder, camera, "fov", "60.0");
-graphite_builder_add_edge(builder, scene, camera, NULL);
+uint32_t camera = turtlgraph_builder_add_graph(builder);
+turtlgraph_builder_set_property(builder, camera, "type", "camera");
+turtlgraph_builder_set_property(builder, camera, "fov", "60.0");
+turtlgraph_builder_add_edge(builder, scene, camera, NULL);
 
 // Add lights
-uint32_t sun = graphite_builder_add_graph(builder);
-graphite_builder_set_property(builder, sun, "type", "light");
-graphite_builder_set_property(builder, sun, "intensity", "1.0");
-graphite_builder_add_edge(builder, scene, sun, NULL);
+uint32_t sun = turtlgraph_builder_add_graph(builder);
+turtlgraph_builder_set_property(builder, sun, "type", "light");
+turtlgraph_builder_set_property(builder, sun, "intensity", "1.0");
+turtlgraph_builder_add_edge(builder, scene, sun, NULL);
 
 // Serialize to bundle
-graphite_bundle* bundle = graphite_builder_build(builder);
+hyperdag_bundle* bundle = turtlgraph_builder_build(builder);
 ```
 
 ### Performance Characteristics
@@ -669,7 +669,7 @@ Understanding the performance of these data structures is crucial:
 
 #### Cache Behavior
 
-GRAPHITE's layout is optimized for modern CPU caches:
+HyperDAG's layout is optimized for modern CPU caches:
 
 ```mermaid
 graph LR
@@ -766,7 +766,7 @@ Here's how a complete PBR material is represented:
 
 ### Summary
 
-GRAPHITE's data structures achieve remarkable efficiency through:
+HyperDAG's data structures achieve remarkable efficiency through:
 
 1. **Recursive uniformity**: Everything is a graph, simplifying code
 2. **Cache-friendly layout**: 64-byte headers, aligned structures
@@ -774,7 +774,7 @@ GRAPHITE's data structures achieve remarkable efficiency through:
 4. **Flexibility**: Properties and edge graphs enable any relationship
 5. **Performance**: Zero-copy access, memory-mapped operation
 
-These simple primitives—graphs, nodes, edges, and properties—combine to represent anything from a simple texture to an entire game world. The next chapter explores how these structures are serialized into GRAPHITE's binary format for efficient storage and transmission.
+These simple primitives—graphs, nodes, edges, and properties—combine to represent anything from a simple texture to an entire game world. The next chapter explores how these structures are serialized into HyperDAG's binary format for efficient storage and transmission.
 
 ---
 
@@ -791,11 +791,11 @@ These simple primitives—graphs, nodes, edges, and properties—combine to repr
 
 ## Chapter 5: File Format Specification
 
-The GRAPHITE binary format is where theory meets practice. Every byte is carefully placed to enable memory-mapped operation, every structure is aligned for cache efficiency, and every design decision prioritizes runtime performance. This chapter provides the complete specification for implementing GRAPHITE readers and writers.
+The HyperDAG binary format is where theory meets practice. Every byte is carefully placed to enable memory-mapped operation, every structure is aligned for cache efficiency, and every design decision prioritizes runtime performance. This chapter provides the complete specification for implementing HyperDAG readers and TurtlGraph writers.
 
 ### Format Philosophy
 
-GRAPHITE's binary format embodies several key principles:
+HyperDAG's binary format embodies several key principles:
 
 1. **Direct Mapping**: The file layout matches in-memory layout
 2. **Self-Describing**: Files contain all necessary metadata
@@ -805,7 +805,7 @@ GRAPHITE's binary format embodies several key principles:
 
 ### File Structure Overview
 
-Every GRAPHITE file follows this structure:
+Every HyperDAG file follows this structure:
 
 ```
 ┌──────────────────────────────┐ 0x0000
@@ -852,26 +852,26 @@ typedef struct {
     
     // Reserved (48 bytes)
     uint8_t  reserved[48];   // Must be zero
-} graphite_header;
+} hyperdag_header;
 
 // Header flags
-#define GRAPHITE_FLAG_HASH_REQUIRED  (1 << 0)  // Must verify hashes
-#define GRAPHITE_FLAG_COMPRESSED     (1 << 1)  // Has compressed chunks
-#define GRAPHITE_FLAG_ENCRYPTED      (1 << 2)  // Has encrypted chunks
-#define GRAPHITE_FLAG_STREAMING      (1 << 3)  // Optimized for streaming
+#define HYPERDAG_FLAG_HASH_REQUIRED  (1 << 0)  // Must verify hashes
+#define HYPERDAG_FLAG_COMPRESSED     (1 << 1)  // Has compressed chunks
+#define HYPERDAG_FLAG_ENCRYPTED      (1 << 2)  // Has encrypted chunks
+#define HYPERDAG_FLAG_STREAMING      (1 << 3)  // Optimized for streaming
 ```
 
 #### Header Validation
 
 ```c
-bool graphite_validate_header(const graphite_header* hdr) {
+bool hyperdag_validate_header(const hyperdag_header* hdr) {
     // Check magic
     if (memcmp(hdr->magic, "GRPH", 4) != 0) {
         return false;
     }
     
     // Check version
-    if (hdr->version < 3 || hdr->version > GRAPHITE_MAX_VERSION) {
+    if (hdr->version < 3 || hdr->version > HYPERDAG_MAX_VERSION) {
         return false;
     }
     
@@ -1012,7 +1012,7 @@ Graph chunks follow the structure defined in Chapter 4:
 ```c
 // Graph chunk layout
 typedef struct {
-    graphite_graph_hdr header;    // 64 bytes
+    hyperdag_graph_hdr header;    // 64 bytes
     uint8_t data[];              // Variable-length data
     // 1. Node table (ULEB128 array)
     // 2. Padding to 16-byte boundary
@@ -1037,7 +1037,7 @@ The integrity system uses two special chunk types:
 ```c
 // Hash leaf - protects a single chunk
 typedef struct {
-    graphite_graph_hdr header;    // Standard graph header
+    hyperdag_graph_hdr header;    // Standard graph header
     // Properties:
     // "algo" -> "blake3"
     // "digest" -> blob chunk containing 32-byte hash
@@ -1046,7 +1046,7 @@ typedef struct {
 
 // Hash branch - protects multiple chunks
 typedef struct {
-    graphite_graph_hdr header;    // Standard graph header
+    hyperdag_graph_hdr header;    // Standard graph header
     // Nodes: child hash chunks (leaves or branches)
     // Properties:
     // "algo" -> "blake3"
@@ -1061,15 +1061,15 @@ The string pool is a critical optimization:
 ```c
 // String pool is a graph where each node points to a string blob
 typedef struct {
-    graphite_graph_hdr header;
-    // flags has GRAPHITE_FLAG_STRING_POOL set
+    hyperdag_graph_hdr header;
+    // flags has HYPERDAG_FLAG_STRING_POOL set
     // node_count = number of strings
     // edge_count = 0
     // Each node index points to a blob chunk with UTF-8 string
 } string_pool;
 
 // String access is O(n) due to ULEB128, but typically cached
-const char* get_string(graphite_bundle* bundle, uint32_t id) {
+const char* get_string(hyperdag_bundle* bundle, uint32_t id) {
     // 1. Get string pool graph
     chunk_entry* pool_chunk = &bundle->chunks[bundle->header.strings_idx];
     graph_chunk* pool = (graph_chunk*)get_chunk_data(bundle, pool_chunk);
@@ -1096,7 +1096,7 @@ typedef struct {
 } compressed_chunk;
 
 // Decompression process
-void* decompress_chunk(graphite_bundle* bundle, chunk_entry* chunk) {
+void* decompress_chunk(hyperdag_bundle* bundle, chunk_entry* chunk) {
     if (!(chunk->flags & CHUNK_FLAG_COMPRESSED)) {
         return get_chunk_data(bundle, chunk);  // Not compressed
     }
@@ -1142,7 +1142,7 @@ void* decompress_chunk(graphite_bundle* bundle, chunk_entry* chunk) {
 
 ### Integrity System
 
-GRAPHITE uses BLAKE3 Merkle trees for cryptographic integrity:
+HyperDAG uses BLAKE3 Merkle trees for cryptographic integrity:
 
 ```mermaid
 graph TB
@@ -1188,9 +1188,9 @@ graph TB
 
 ```c
 // Build hash tree bottom-up
-graphite_graph* build_hash_tree(graphite_bundle* bundle) {
+hyperdag_graph* build_hash_tree(hyperdag_bundle* bundle) {
     // 1. Create leaves for each data chunk
-    graphite_graph** leaves = malloc(sizeof(void*) * bundle->chunk_count);
+    hyperdag_graph** leaves = malloc(sizeof(void*) * bundle->chunk_count);
     for (uint32_t i = 0; i < bundle->chunk_count; i++) {
         if (should_protect_chunk(i)) {
             leaves[i] = create_hash_leaf(bundle, i);
@@ -1200,7 +1200,7 @@ graphite_graph* build_hash_tree(graphite_bundle* bundle) {
     // 2. Build tree bottom-up
     while (leaf_count > 1) {
         uint32_t branch_count = (leaf_count + 1) / 2;
-        graphite_graph** branches = malloc(sizeof(void*) * branch_count);
+        hyperdag_graph** branches = malloc(sizeof(void*) * branch_count);
         
         for (uint32_t i = 0; i < branch_count; i++) {
             uint32_t left = i * 2;
@@ -1217,7 +1217,7 @@ graphite_graph* build_hash_tree(graphite_bundle* bundle) {
 }
 
 // Create hash leaf for a chunk
-graphite_graph* create_hash_leaf(graphite_bundle* bundle, uint32_t chunk_idx) {
+hyperdag_graph* create_hash_leaf(hyperdag_bundle* bundle, uint32_t chunk_idx) {
     // Get chunk data
     chunk_entry* chunk = &bundle->chunks[chunk_idx];
     void* data = get_chunk_data(bundle, chunk);
@@ -1230,7 +1230,7 @@ graphite_graph* create_hash_leaf(graphite_bundle* bundle, uint32_t chunk_idx) {
     blake3_hasher_finalize(&hasher, hash, 32);
     
     // Create leaf graph
-    graphite_graph* leaf = create_graph(0, 0, 3);  // 3 properties
+    hyperdag_graph* leaf = create_graph(0, 0, 3);  // 3 properties
     set_property(leaf, "algo", "blake3");
     set_property(leaf, "target", uint_to_string(chunk_idx));
     
@@ -1245,13 +1245,13 @@ graphite_graph* create_hash_leaf(graphite_bundle* bundle, uint32_t chunk_idx) {
 #### Verification Process
 
 ```c
-bool verify_integrity(graphite_bundle* bundle) {
+bool verify_integrity(hyperdag_bundle* bundle) {
     if (bundle->header.integrity_idx == 0) {
         return true;  // No integrity data
     }
     
     // 1. Get hash root
-    graphite_graph* root = get_graph(bundle, bundle->header.integrity_idx);
+    hyperdag_graph* root = get_graph(bundle, bundle->header.integrity_idx);
     
     // 2. Verify recursively
     if (!verify_hash_node(bundle, root)) {
@@ -1265,7 +1265,7 @@ bool verify_integrity(graphite_bundle* bundle) {
     return memcmp(root_digest, bundle->header.file_digest, 32) == 0;
 }
 
-bool verify_hash_node(graphite_bundle* bundle, graphite_graph* node) {
+bool verify_hash_node(hyperdag_bundle* bundle, hyperdag_graph* node) {
     const char* algo = get_property(node, "algo");
     if (strcmp(algo, "blake3") != 0) {
         return false;  // Unknown algorithm
@@ -1285,7 +1285,7 @@ bool verify_hash_node(graphite_bundle* bundle, graphite_graph* node) {
     } else {
         // Branch node - verify children first
         for (uint32_t i = 0; i < node->header.node_count; i++) {
-            graphite_graph* child = get_node_graph(bundle, node, i);
+            hyperdag_graph* child = get_node_graph(bundle, node, i);
             if (!verify_hash_node(bundle, child)) {
                 return false;
             }
@@ -1305,14 +1305,14 @@ bool verify_hash_node(graphite_bundle* bundle, graphite_graph* node) {
 
 ### Alignment and Padding
 
-GRAPHITE enforces strict alignment rules for performance:
+HyperDAG enforces strict alignment rules for performance:
 
 ```c
 // Alignment requirements
-#define GRAPHITE_ALIGN_HEADER  64   // Headers on cache lines
-#define GRAPHITE_ALIGN_CHUNK   16   // Chunks on 16-byte boundary
-#define GRAPHITE_ALIGN_EDGE    16   // Edge tables aligned
-#define GRAPHITE_ALIGN_PROP    8    // Property tables aligned
+#define HYPERDAG_ALIGN_HEADER  64   // Headers on cache lines
+#define HYPERDAG_ALIGN_CHUNK   16   // Chunks on 16-byte boundary
+#define HYPERDAG_ALIGN_EDGE    16   // Edge tables aligned
+#define HYPERDAG_ALIGN_PROP    8    // Property tables aligned
 
 // Padding calculation
 size_t calc_padding(size_t offset, size_t alignment) {
@@ -1323,7 +1323,7 @@ size_t calc_padding(size_t offset, size_t alignment) {
 // Example: Building a graph chunk
 void* build_graph_chunk(graph_builder* b, size_t* out_size) {
     // Calculate sizes
-    size_t header_size = sizeof(graphite_graph_hdr);
+    size_t header_size = sizeof(hyperdag_graph_hdr);
     size_t nodes_size = b->nodes_buffer.size;
     size_t nodes_padding = calc_padding(header_size + nodes_size, 16);
     size_t edges_size = b->edge_count * sizeof(edge_descriptor);
@@ -1359,11 +1359,11 @@ void* build_graph_chunk(graph_builder* b, size_t* out_size) {
 
 ### File Creation Process
 
-Creating a GRAPHITE file involves several steps:
+Creating a HyperDAG file involves several steps:
 
 ```c
 // High-level file creation
-void create_graphite_file(const char* path, bundle_builder* builder) {
+void create_hyperdag_file(const char* path, turtlgraph_bundle_builder* builder) {
     FILE* f = fopen(path, "wb");
     
     // 1. Build string pool
@@ -1382,7 +1382,7 @@ void create_graphite_file(const char* path, bundle_builder* builder) {
     }
     
     // 5. Write header
-    graphite_header header = {
+    hyperdag_header header = {
         .magic = {'G', 'R', 'P', 'H'},
         .version = 3,
         .endian = 0,
@@ -1419,11 +1419,11 @@ void create_graphite_file(const char* path, bundle_builder* builder) {
 
 ### Memory Mapping
 
-GRAPHITE files are designed for efficient memory mapping:
+HyperDAG files are designed for efficient memory mapping:
 
 ```c
-// Open GRAPHITE file with memory mapping
-graphite_bundle* graphite_open(const char* path) {
+// Open HyperDAG file with memory mapping
+hyperdag_bundle* hyperdag_open(const char* path) {
     // 1. Open file
     int fd = open(path, O_RDONLY);
     if (fd < 0) return NULL;
@@ -1442,15 +1442,15 @@ graphite_bundle* graphite_open(const char* path) {
     }
     
     // 4. Validate header
-    graphite_header* header = (graphite_header*)base;
-    if (!graphite_validate_header(header)) {
+    hyperdag_header* header = (hyperdag_header*)base;
+    if (!hyperdag_validate_header(header)) {
         munmap(base, file_size);
         close(fd);
         return NULL;
     }
     
     // 5. Create bundle structure
-    graphite_bundle* bundle = malloc(sizeof(graphite_bundle));
+    hyperdag_bundle* bundle = malloc(sizeof(hyperdag_bundle));
     bundle->fd = fd;
     bundle->base = base;
     bundle->size = file_size;
@@ -1458,9 +1458,9 @@ graphite_bundle* graphite_open(const char* path) {
     bundle->chunks = (chunk_entry*)(base + 128);
     
     // 6. Verify integrity if required
-    if (header->flags & GRAPHITE_FLAG_HASH_REQUIRED) {
+    if (header->flags & HYPERDAG_FLAG_HASH_REQUIRED) {
         if (!verify_integrity(bundle)) {
-            graphite_close(bundle);
+            hyperdag_close(bundle);
             return NULL;
         }
     }
@@ -1493,7 +1493,7 @@ typedef struct {
 
 // Streaming manifest (sent first)
 typedef struct {
-    graphite_header file_header;
+    hyperdag_header file_header;
     uint32_t chunk_count;
     chunk_entry chunks[];    // Chunk table
 } stream_manifest;
@@ -1510,7 +1510,7 @@ typedef struct {
     uint32_t error_offset;
 } validation_result;
 
-validation_result validate_graphite_file(const char* path) {
+validation_result validate_hyperdag_file(const char* path) {
     validation_result result = {.success = true};
     
     // ... (header validation as shown earlier)
@@ -1572,22 +1572,22 @@ validation_result validate_graphite_file(const char* path) {
 
 ### Format Evolution
 
-GRAPHITE is designed to evolve without breaking compatibility:
+HyperDAG is designed to evolve without breaking compatibility:
 
 ```c
 // Version 4 additions (hypothetical)
 typedef struct {
-    graphite_header_v3 base;     // Original header
+    hyperdag_header_v3 base;     // Original header
     uint64_t metadata_idx;       // Extended metadata graph
     uint64_t thumbnail_idx;      // Preview image blob
     uint8_t  extended_reserved[32];
-} graphite_header_v4;
+} hyperdag_header_v4;
 
 // Reading v4 files with v3 reader
-graphite_bundle* open_with_compatibility(const char* path) {
+hyperdag_bundle* open_with_compatibility(const char* path) {
     // Map file
     void* base = map_file(path);
-    graphite_header* header = (graphite_header*)base;
+    hyperdag_header* header = (hyperdag_header*)base;
     
     if (header->version > 3) {
         // Can we handle this?
@@ -1623,7 +1623,7 @@ The format is optimized for several access patterns:
 
 ### Real-World Example
 
-Here's a complete example of a minimal GRAPHITE file:
+Here's a complete example of a minimal HyperDAG file:
 
 ```
 Offset  Size  Description              Content
@@ -1655,11 +1655,11 @@ Offset  Size  Description              Content
 0x01D0  6     String Blob              "world\0"
 ```
 
-Total file size: 0x1D6 (470 bytes) for a complete, valid GRAPHITE file.
+Total file size: 0x1D6 (470 bytes) for a complete, valid HyperDAG file.
 
 ### Summary
 
-The GRAPHITE binary format achieves its goals through careful design:
+The HyperDAG binary format achieves its goals through careful design:
 
 1. **Memory-mapped operation** through aligned, fixed structures
 2. **Flexible chunk system** supporting any data type
@@ -1668,7 +1668,7 @@ The GRAPHITE binary format achieves its goals through careful design:
 5. **Streaming support** through independent chunks
 6. **Forward compatibility** through versioning and reserved space
 
-This format provides the foundation for GRAPHITE's promise: a universal asset format that's faster than specialized formats. The next chapter explores the runtime API that brings this format to life.
+This format provides the foundation for HyperDAG's promise: a universal asset format that's faster than specialized formats. The next chapter explores the runtime API that brings this format to life.
 
 ---
 
@@ -1685,11 +1685,11 @@ This format provides the foundation for GRAPHITE's promise: a universal asset fo
 
 ## Chapter 6: Runtime API
 
-The GRAPHITE runtime API is where the format's power becomes accessible to applications. Designed for both simplicity and performance, it provides direct access to graph structures while handling the complexity of memory mapping, decompression, and integrity verification behind the scenes. This chapter covers the complete API surface, from basic operations to advanced usage patterns.
+The HyperDAG runtime API is where the format's power becomes accessible to applications. Designed for both simplicity and performance, it provides direct access to graph structures while handling the complexity of memory mapping, decompression, and integrity verification behind the scenes. This chapter covers the complete API surface, from basic operations to advanced usage patterns.
 
 ### API Design Philosophy
 
-GRAPHITE's API embodies several core principles:
+HyperDAG's API embodies several core principles:
 
 1. **Zero-Copy Access**: Direct pointers to memory-mapped data
 2. **Progressive Disclosure**: Simple things simple, complex things possible
@@ -1699,7 +1699,7 @@ GRAPHITE's API embodies several core principles:
 
 ### Core API Overview
 
-The core API provides fundamental operations for working with GRAPHITE bundles:
+The core API provides fundamental operations for working with HyperDAG bundles:
 
 ```mermaid
 graph TB
@@ -1707,10 +1707,10 @@ graph TB
         APP[Your Application]
     end
     
-    subgraph "GRAPHITE API"
-        CORE[Core API<br/>graphite_core.h]
-        TOOL[Tooling API<br/>graphite_tooling.h]
-        EXT[Extension API<br/>graphite_ext.h]
+    subgraph "HyperDAG API"
+        CORE[Core API<br/>hyperdag_core.h]
+        TOOL[Tooling API<br/>turtlgraph_tooling.h]
+        EXT[Extension API<br/>hyperdag_ext.h]
     end
     
     subgraph "Platform Layer"
@@ -1734,21 +1734,21 @@ graph TB
 #### Opening Bundles
 
 ```c
-#include <graphite_core.h>
+#include <hyperdag_core.h>
 
 // Simple open - all features auto-detected
-graphite_bundle* bundle = graphite_open("assets/game.grph");
+hyperdag_bundle* bundle = hyperdag_open("assets/game.grph");
 if (!bundle) {
     fprintf(stderr, "Failed to open: %s\n", 
-            graphite_error_string(graphite_get_last_error()));
+            hyperdag_error_string(hyperdag_get_last_error()));
     return -1;
 }
 
 // Open with specific flags
-graphite_perf_stats stats = {0};
-graphite_bundle* bundle = graphite_open_with_flags(
+hyperdag_perf_stats stats = {0};
+hyperdag_bundle* bundle = hyperdag_open_with_flags(
     "assets/game.grph",
-    GRAPHITE_VERIFY_HASHES | GRAPHITE_PREFETCH | GRAPHITE_HW_CRC32,
+    HYPERDAG_VERIFY_HASHES | HYPERDAG_PREFETCH | HYPERDAG_HW_CRC32,
     &stats
 );
 
@@ -1763,29 +1763,29 @@ printf("  Total bytes: %zu MB\n", stats.total_bytes_processed / (1024*1024));
 
 ```c
 // Get root graph
-const graphite_graph* root = graphite_root(bundle);
+const hyperdag_graph* root = hyperdag_root(bundle);
 
 // Basic graph information
-uint32_t node_count = graphite_node_count(root);
-uint32_t edge_count = graphite_edge_count(root);
-uint32_t prop_count = graphite_get_property_count(root);
+uint32_t node_count = hyperdag_node_count(root);
+uint32_t edge_count = hyperdag_edge_count(root);
+uint32_t prop_count = hyperdag_get_property_count(root);
 
 printf("Root graph: %u nodes, %u edges, %u properties\n",
        node_count, edge_count, prop_count);
 
 // Iterate through nodes
 for (uint32_t i = 0; i < node_count; i++) {
-    const graphite_graph* node = graphite_get_node(root, i);
+    const hyperdag_graph* node = hyperdag_get_node(root, i);
     
     // Get node type
     char type_buf[256];
-    if (graphite_get_property(node, "type", type_buf, sizeof(type_buf))) {
+    if (hyperdag_get_property(node, "type", type_buf, sizeof(type_buf))) {
         printf("Node %u: type=%s\n", i, type_buf);
     }
 }
 
 // Property access with type conversion
-uint32_t version = graphite_get_property_u32(root, "version");
+uint32_t version = hyperdag_get_property_u32(root, "version");
 printf("Bundle version: %u\n", version);
 ```
 
@@ -1793,14 +1793,14 @@ printf("Bundle version: %u\n", version);
 
 ```c
 // Strings are deduplicated and accessed by ID
-const char* shader_name = graphite_get_string(bundle, shader_name_id);
+const char* shader_name = hyperdag_get_string(bundle, shader_name_id);
 
 // String IDs often come from properties
 char value[256];
-if (graphite_get_property(material, "shader", value, sizeof(value))) {
+if (hyperdag_get_property(material, "shader", value, sizeof(value))) {
     // value contains the string ID as text
     uint32_t string_id = atoi(value);
-    const char* shader = graphite_get_string(bundle, string_id);
+    const char* shader = hyperdag_get_string(bundle, string_id);
 }
 ```
 
@@ -1838,14 +1838,14 @@ graph TB
 
 ```c
 typedef struct {
-    void (*visit_node)(const graphite_graph* node, void* context);
-    void (*visit_edge)(const graphite_graph* from, 
-                      const graphite_graph* to,
-                      const graphite_graph* edge_data,
+    void (*visit_node)(const hyperdag_graph* node, void* context);
+    void (*visit_edge)(const hyperdag_graph* from, 
+                      const hyperdag_graph* to,
+                      const hyperdag_graph* edge_data,
                       void* context);
 } graph_visitor;
 
-void traverse_depth_first(const graphite_graph* graph, 
+void traverse_depth_first(const hyperdag_graph* graph, 
                          graph_visitor* visitor,
                          void* context) {
     // Mark visited to avoid cycles
@@ -1857,7 +1857,7 @@ void traverse_depth_first(const graphite_graph* graph,
     visited_set_destroy(visited);
 }
 
-static void traverse_recursive(const graphite_graph* graph,
+static void traverse_recursive(const hyperdag_graph* graph,
                              graph_visitor* visitor,
                              void* context,
                              visited_set* visited) {
@@ -1873,10 +1873,10 @@ static void traverse_recursive(const graphite_graph* graph,
     }
     
     // Visit all edges
-    graphite_edge_iterator* it = graphite_edge_iterator_create(graph);
-    while (graphite_edge_iterator_next(it)) {
-        const graphite_graph* target = graphite_edge_target(it);
-        const graphite_graph* edge_data = graphite_edge_data(it);
+    hyperdag_edge_iterator* it = hyperdag_edge_iterator_create(graph);
+    while (hyperdag_edge_iterator_next(it)) {
+        const hyperdag_graph* target = hyperdag_edge_target(it);
+        const hyperdag_graph* edge_data = hyperdag_edge_data(it);
         
         if (visitor->visit_edge) {
             visitor->visit_edge(graph, target, edge_data, context);
@@ -1885,7 +1885,7 @@ static void traverse_recursive(const graphite_graph* graph,
         // Recurse to target
         traverse_recursive(target, visitor, context, visited);
     }
-    graphite_edge_iterator_destroy(it);
+    hyperdag_edge_iterator_destroy(it);
 }
 ```
 
@@ -1893,32 +1893,32 @@ static void traverse_recursive(const graphite_graph* graph,
 
 ```c
 // Find all nodes matching criteria
-typedef bool (*node_predicate)(const graphite_graph* node, void* context);
+typedef bool (*node_predicate)(const hyperdag_graph* node, void* context);
 
-graphite_graph** find_nodes(const graphite_graph* root,
+hyperdag_graph** find_nodes(const hyperdag_graph* root,
                            node_predicate predicate,
                            void* context,
                            uint32_t* out_count) {
-    dynamic_array* results = array_create(sizeof(graphite_graph*));
+    dynamic_array* results = array_create(sizeof(hyperdag_graph*));
     
     // Search recursively
     search_recursive(root, predicate, context, results);
     
     *out_count = array_count(results);
-    return (graphite_graph**)array_steal_buffer(results);
+    return (hyperdag_graph**)array_steal_buffer(results);
 }
 
 // Example: Find all textures
-bool is_texture(const graphite_graph* node, void* context) {
+bool is_texture(const hyperdag_graph* node, void* context) {
     char type[64];
-    if (graphite_get_property(node, "type", type, sizeof(type))) {
+    if (hyperdag_get_property(node, "type", type, sizeof(type))) {
         return strcmp(type, "texture") == 0;
     }
     return false;
 }
 
 uint32_t texture_count;
-graphite_graph** textures = find_nodes(root, is_texture, NULL, &texture_count);
+hyperdag_graph** textures = find_nodes(root, is_texture, NULL, &texture_count);
 printf("Found %u textures\n", texture_count);
 ```
 
@@ -1934,16 +1934,16 @@ typedef struct {
     const char* mime_type;
 } asset_info;
 
-bool get_asset_data(const graphite_graph* asset_graph, asset_info* info) {
+bool get_asset_data(const hyperdag_graph* asset_graph, asset_info* info) {
     // Get blob chunk index
-    uint32_t blob_id = graphite_get_property_u32(asset_graph, "data_blob_id");
+    uint32_t blob_id = hyperdag_get_property_u32(asset_graph, "data_blob_id");
     if (blob_id == 0) {
         return false;
     }
     
     // Get blob data
-    graphite_blob blob;
-    if (!graphite_get_blob(graphite_get_bundle(asset_graph), blob_id, &blob)) {
+    hyperdag_blob blob;
+    if (!hyperdag_get_blob(hyperdag_get_bundle(asset_graph), blob_id, &blob)) {
         return false;
     }
     
@@ -1952,7 +1952,7 @@ bool get_asset_data(const graphite_graph* asset_graph, asset_info* info) {
     
     // Get MIME type
     char mime[256];
-    if (graphite_get_property(asset_graph, "mime_type", mime, sizeof(mime))) {
+    if (hyperdag_get_property(asset_graph, "mime_type", mime, sizeof(mime))) {
         info->mime_type = strdup(mime);
     } else {
         info->mime_type = "application/octet-stream";
@@ -1975,20 +1975,20 @@ if (get_asset_data(texture_node, &texture_info)) {
 ```c
 // Stream large assets without loading entire file
 typedef struct {
-    graphite_bundle* bundle;
+    hyperdag_bundle* bundle;
     uint32_t chunk_id;
     size_t offset;
     size_t remaining;
 } asset_stream;
 
-asset_stream* asset_stream_open(const graphite_graph* asset) {
+asset_stream* asset_stream_open(const hyperdag_graph* asset) {
     asset_stream* stream = malloc(sizeof(asset_stream));
-    stream->bundle = graphite_get_bundle(asset);
-    stream->chunk_id = graphite_get_property_u32(asset, "data_blob_id");
+    stream->bundle = hyperdag_get_bundle(asset);
+    stream->chunk_id = hyperdag_get_property_u32(asset, "data_blob_id");
     stream->offset = 0;
     
-    graphite_blob_info info;
-    graphite_get_blob_info(stream->bundle, stream->chunk_id, &info);
+    hyperdag_blob_info info;
+    hyperdag_get_blob_info(stream->bundle, stream->chunk_id, &info);
     stream->remaining = info.size;
     
     return stream;
@@ -1998,7 +1998,7 @@ size_t asset_stream_read(asset_stream* stream, void* buffer, size_t size) {
     size_t to_read = (size < stream->remaining) ? size : stream->remaining;
     
     if (to_read > 0) {
-        graphite_read_blob_range(stream->bundle, stream->chunk_id,
+        hyperdag_read_blob_range(stream->bundle, stream->chunk_id,
                                stream->offset, buffer, to_read);
         stream->offset += to_read;
         stream->remaining -= to_read;
@@ -2014,11 +2014,11 @@ size_t asset_stream_read(asset_stream* stream, void* buffer, size_t size) {
 
 ```c
 // Thread-local error state
-__thread graphite_error g_last_error = GRAPHITE_OK;
+__thread hyperdag_error g_last_error = HYPERDAG_OK;
 __thread char g_error_detail[256] = {0};
 
 // Set error with detail
-void set_error(graphite_error error, const char* format, ...) {
+void set_error(hyperdag_error error, const char* format, ...) {
     g_last_error = error;
     
     va_list args;
@@ -2028,35 +2028,35 @@ void set_error(graphite_error error, const char* format, ...) {
 }
 
 // Robust loading with detailed errors
-graphite_bundle* load_bundle_safe(const char* path) {
+hyperdag_bundle* load_bundle_safe(const char* path) {
     // Check file exists
     struct stat st;
     if (stat(path, &st) != 0) {
-        set_error(GRAPHITE_ERROR_FILE_NOT_FOUND, 
+        set_error(HYPERDAG_ERROR_FILE_NOT_FOUND, 
                  "File not found: %s", path);
         return NULL;
     }
     
     // Check file size
-    if (st.st_size < sizeof(graphite_header)) {
-        set_error(GRAPHITE_ERROR_INVALID_FORMAT,
+    if (st.st_size < sizeof(hyperdag_header)) {
+        set_error(HYPERDAG_ERROR_INVALID_FORMAT,
                  "File too small: %zu bytes", st.st_size);
         return NULL;
     }
     
     // Try to open
-    graphite_bundle* bundle = graphite_open(path);
+    hyperdag_bundle* bundle = hyperdag_open(path);
     if (!bundle) {
-        // Error already set by graphite_open
+        // Error already set by hyperdag_open
         return NULL;
     }
     
     // Validate structure
-    const graphite_graph* root = graphite_root(bundle);
+    const hyperdag_graph* root = hyperdag_root(bundle);
     if (!root) {
-        set_error(GRAPHITE_ERROR_CORRUPTED_DATA,
+        set_error(HYPERDAG_ERROR_CORRUPTED_DATA,
                  "Root graph not found");
-        graphite_close(bundle);
+        hyperdag_close(bundle);
         return NULL;
     }
     
@@ -2075,30 +2075,30 @@ typedef struct {
     size_t max_memory_gb;
 } recovery_options;
 
-graphite_bundle* load_with_recovery(const char* path, 
+hyperdag_bundle* load_with_recovery(const char* path, 
                                    const recovery_options* opts) {
     // Try normal load first
-    graphite_bundle* bundle = graphite_open(path);
+    hyperdag_bundle* bundle = hyperdag_open(path);
     if (bundle) {
         return bundle;
     }
     
     // Check specific error
-    graphite_error err = graphite_get_last_error();
+    hyperdag_error err = hyperdag_get_last_error();
     
-    if (err == GRAPHITE_ERROR_INTEGRITY_FAILURE && opts->ignore_hash_failures) {
+    if (err == HYPERDAG_ERROR_INTEGRITY_FAILURE && opts->ignore_hash_failures) {
         // Retry without hash verification
-        return graphite_open_with_flags(path, 
-            GRAPHITE_DECOMPRESS | GRAPHITE_PREFETCH, NULL);
+        return hyperdag_open_with_flags(path, 
+            HYPERDAG_DECOMPRESS | HYPERDAG_PREFETCH, NULL);
     }
     
-    if (err == GRAPHITE_ERROR_OUT_OF_MEMORY && opts->max_memory_gb > 0) {
+    if (err == HYPERDAG_ERROR_OUT_OF_MEMORY && opts->max_memory_gb > 0) {
         // Try with memory limit
-        graphite_memory_options mem_opts = {
+        hyperdag_memory_options mem_opts = {
             .max_arena_size = opts->max_memory_gb * 1024 * 1024 * 1024,
             .use_huge_pages = false
         };
-        return graphite_open_with_memory_options(path, &mem_opts);
+        return hyperdag_open_with_memory_options(path, &mem_opts);
     }
     
     return NULL;
@@ -2111,32 +2111,32 @@ graphite_bundle* load_with_recovery(const char* path,
 
 ```c
 // Prefetch nodes for upcoming access
-void prefetch_material_textures(const graphite_graph* material) {
-    uint32_t count = graphite_node_count(material);
+void prefetch_material_textures(const hyperdag_graph* material) {
+    uint32_t count = hyperdag_node_count(material);
     
     // Prefetch all texture nodes
     for (uint32_t i = 0; i < count; i++) {
-        const graphite_graph* node = graphite_get_node(material, i);
+        const hyperdag_graph* node = hyperdag_get_node(material, i);
         
         // Prefetch graph header
         __builtin_prefetch(node, 0, 3);  // Read, high temporal locality
         
         // Check if texture
         char type[64];
-        if (graphite_get_property(node, "type", type, sizeof(type))) {
+        if (hyperdag_get_property(node, "type", type, sizeof(type))) {
             if (strcmp(type, "texture") == 0) {
                 // Prefetch texture data location
-                uint32_t blob_id = graphite_get_property_u32(node, "data_blob_id");
-                graphite_prefetch_blob(graphite_get_bundle(material), blob_id);
+                uint32_t blob_id = hyperdag_get_property_u32(node, "data_blob_id");
+                hyperdag_prefetch_blob(hyperdag_get_bundle(material), blob_id);
             }
         }
     }
 }
 
 // Batch operations for cache efficiency
-void process_textures_batch(graphite_graph** textures, uint32_t count) {
+void process_textures_batch(hyperdag_graph** textures, uint32_t count) {
     // Sort by blob ID for sequential access
-    qsort(textures, count, sizeof(graphite_graph*), compare_by_blob_id);
+    qsort(textures, count, sizeof(hyperdag_graph*), compare_by_blob_id);
     
     // Process in cache-friendly order
     for (uint32_t i = 0; i < count; i++) {
@@ -2161,23 +2161,23 @@ typedef struct {
 } thread_pool;
 
 // Process graph nodes in parallel
-void parallel_process_nodes(const graphite_graph* root,
-                           void (*process)(const graphite_graph*)) {
+void parallel_process_nodes(const hyperdag_graph* root,
+                           void (*process)(const hyperdag_graph*)) {
     // Check if parallel processing allowed
-    if (!(graphite_get_flags(root) & GRAPHITE_FLAG_PARALLEL_GROUP)) {
+    if (!(hyperdag_get_flags(root) & HYPERDAG_FLAG_PARALLEL_GROUP)) {
         // Sequential fallback
-        for (uint32_t i = 0; i < graphite_node_count(root); i++) {
-            process(graphite_get_node(root, i));
+        for (uint32_t i = 0; i < hyperdag_node_count(root); i++) {
+            process(hyperdag_get_node(root, i));
         }
         return;
     }
     
     // Create work items
     thread_pool* pool = get_thread_pool();
-    uint32_t count = graphite_node_count(root);
+    uint32_t count = hyperdag_node_count(root);
     
     for (uint32_t i = 0; i < count; i++) {
-        work_item* item = create_work_item(process, graphite_get_node(root, i));
+        work_item* item = create_work_item(process, hyperdag_get_node(root, i));
         thread_pool_submit(pool, item);
     }
     
@@ -2206,11 +2206,11 @@ typedef struct {
     arena* string_arena;
 } graph_memory_context;
 
-graphite_graph* clone_graph_to_arena(const graphite_graph* src,
+hyperdag_graph* clone_graph_to_arena(const hyperdag_graph* src,
                                     graph_memory_context* ctx) {
     // Allocate header
-    graphite_graph* dst = arena_alloc(ctx->node_arena, 
-                                     sizeof(graphite_graph), 64);
+    hyperdag_graph* dst = arena_alloc(ctx->node_arena, 
+                                     sizeof(hyperdag_graph), 64);
     
     // Copy structure
     *dst = *src;
@@ -2261,7 +2261,7 @@ void get_memory_stats(memory_stats* stats) {
 }
 
 // Adaptive loading based on memory
-graphite_bundle* load_adaptive(const char* path) {
+hyperdag_bundle* load_adaptive(const char* path) {
     memory_stats stats;
     get_memory_stats(&stats);
     
@@ -2272,17 +2272,17 @@ graphite_bundle* load_adaptive(const char* path) {
     // Choose strategy
     if (available > 4ULL * 1024 * 1024 * 1024) {
         // Plenty of memory - aggressive prefetch
-        return graphite_open_with_flags(path,
-            GRAPHITE_PREFETCH | GRAPHITE_DECOMPRESS | GRAPHITE_NUMA_AWARE,
+        return hyperdag_open_with_flags(path,
+            HYPERDAG_PREFETCH | HYPERDAG_DECOMPRESS | HYPERDAG_NUMA_AWARE,
             NULL);
     } else if (available > 1ULL * 1024 * 1024 * 1024) {
         // Moderate memory - standard loading
-        return graphite_open_with_flags(path,
-            GRAPHITE_DECOMPRESS,
+        return hyperdag_open_with_flags(path,
+            HYPERDAG_DECOMPRESS,
             NULL);
     } else {
         // Low memory - minimal loading
-        return graphite_open_with_flags(path, 0, NULL);
+        return hyperdag_open_with_flags(path, 0, NULL);
     }
 }
 ```
@@ -2295,8 +2295,8 @@ graphite_bundle* load_adaptive(const char* path) {
 // Register custom graph type handler
 typedef struct {
     const char* type_name;
-    size_t (*calculate_size)(const graphite_graph* graph);
-    void* (*hydrate)(const graphite_graph* graph, void* buffer);
+    size_t (*calculate_size)(const hyperdag_graph* graph);
+    void* (*hydrate)(const hyperdag_graph* graph, void* buffer);
     void (*process)(void* hydrated_data, void* context);
 } graph_type_handler;
 
@@ -2310,9 +2310,9 @@ void register_graph_type(const graph_type_handler* handler) {
 }
 
 // Process graph with custom handler
-void process_custom_graph(const graphite_graph* graph, void* context) {
+void process_custom_graph(const hyperdag_graph* graph, void* context) {
     char type[64];
-    if (!graphite_get_property(graph, "type", type, sizeof(type))) {
+    if (!hyperdag_get_property(graph, "type", type, sizeof(type))) {
         return;
     }
     
@@ -2335,8 +2335,8 @@ typedef struct {
     const char* version;
     bool (*init)(void);
     void (*shutdown)(void);
-    void (*process_bundle)(graphite_bundle* bundle);
-} graphite_plugin;
+    void (*process_bundle)(hyperdag_bundle* bundle);
+} hyperdag_plugin;
 
 // Load plugins
 void load_plugins(const char* plugin_dir) {
@@ -2350,11 +2350,11 @@ void load_plugins(const char* plugin_dir) {
             
             void* handle = dlopen(path, RTLD_LAZY);
             if (handle) {
-                graphite_plugin* (*get_plugin)(void) = 
-                    dlsym(handle, "graphite_get_plugin");
+                hyperdag_plugin* (*get_plugin)(void) = 
+                    dlsym(handle, "hyperdag_get_plugin");
                     
                 if (get_plugin) {
-                    graphite_plugin* plugin = get_plugin();
+                    hyperdag_plugin* plugin = get_plugin();
                     if (plugin->init()) {
                         register_plugin(plugin);
                     }
@@ -2373,7 +2373,7 @@ void load_plugins(const char* plugin_dir) {
 ```c
 // Integrate with game asset system
 typedef struct {
-    graphite_bundle* bundle;
+    hyperdag_bundle* bundle;
     hash_table* asset_cache;
     thread_pool* loader_pool;
 } asset_manager;
@@ -2406,13 +2406,13 @@ void load_asset_async(asset_manager* mgr,
 // Worker thread function
 void load_asset_worker(load_request* req) {
     // Find asset in bundle
-    const graphite_graph* asset = find_asset_by_path(
+    const hyperdag_graph* asset = find_asset_by_path(
         req->manager->bundle, req->path);
     
     if (asset) {
         // Load based on type
         char type[64];
-        graphite_get_property(asset, "type", type, sizeof(type));
+        hyperdag_get_property(asset, "type", type, sizeof(type));
         
         void* loaded = NULL;
         if (strcmp(type, "texture") == 0) {
@@ -2452,44 +2452,44 @@ typedef struct {
 
 bool build_asset_bundle(const char** assets, uint32_t count,
                        const build_options* options) {
-    graphite_writer* writer = graphite_writer_create(options->output_path);
+    turtlgraph_writer* writer = turtlgraph_writer_create(options->output_path);
     
     // Configure compression
-    graphite_compression_options comp = {
+    hyperdag_compression_options comp = {
         .level = options->compression,
         .use_dictionary = true,
         .min_chunk_size = 1024,
         .compression_threshold = 0.9
     };
-    graphite_writer_set_compression(writer, &comp);
+    turtlgraph_writer_set_compression(writer, &comp);
     
     // Create root graph
-    graphite_graph_builder* root_builder = graphite_graph_builder_create();
-    graphite_graph_builder_set_property(root_builder, "type", "asset_bundle");
-    graphite_graph_builder_set_property(root_builder, "version", "1.0");
+    turtlgraph_graph_builder* root_builder = turtlgraph_graph_builder_create();
+    turtlgraph_graph_builder_set_property(root_builder, "type", "asset_bundle");
+    turtlgraph_graph_builder_set_property(root_builder, "version", "1.0");
     
     // Process each asset
     for (uint32_t i = 0; i < count; i++) {
-        graphite_graph* asset = process_asset_file(assets[i], options);
+        hyperdag_graph* asset = process_asset_file(assets[i], options);
         if (asset) {
-            uint32_t node_id = graphite_graph_builder_add_graph_node(
+            uint32_t node_id = turtlgraph_graph_builder_add_graph_node(
                 root_builder, asset);
             
             // Add to manifest
             char key[64];
             snprintf(key, sizeof(key), "asset_%u", i);
-            graphite_graph_builder_set_property(root_builder, key, assets[i]);
+            turtlgraph_graph_builder_set_property(root_builder, key, assets[i]);
         }
     }
     
     // Finalize
-    const graphite_graph* root = graphite_graph_builder_finalize(root_builder);
-    graphite_writer_set_root_graph(writer, root);
+    const hyperdag_graph* root = turtlgraph_graph_builder_finalize(root_builder);
+    turtlgraph_writer_set_root_graph(writer, root);
     
-    bool success = graphite_writer_finalize(writer);
+    bool success = turtlgraph_writer_finalize(writer);
     
-    graphite_graph_builder_destroy(root_builder);
-    graphite_writer_destroy(writer);
+    turtlgraph_graph_builder_destroy(root_builder);
+    turtlgraph_writer_destroy(writer);
     
     return success;
 }
@@ -2513,13 +2513,13 @@ typedef struct {
 static perf_counters g_counters = {0};
 
 // Instrumented graph access
-const graphite_graph* graphite_get_node_instrumented(
-    const graphite_graph* graph, uint32_t index) {
+const hyperdag_graph* hyperdag_get_node_instrumented(
+    const hyperdag_graph* graph, uint32_t index) {
     atomic_fetch_add(&g_counters.graphs_accessed, 1);
     
     // Check cache
     graph_cache_key key = {graph, index};
-    const graphite_graph* cached = graph_cache_get(&key);
+    const hyperdag_graph* cached = graph_cache_get(&key);
     if (cached) {
         atomic_fetch_add(&g_counters.cache_hits, 1);
         return cached;
@@ -2528,7 +2528,7 @@ const graphite_graph* graphite_get_node_instrumented(
     atomic_fetch_add(&g_counters.cache_misses, 1);
     
     // Load and cache
-    const graphite_graph* node = graphite_get_node(graph, index);
+    const hyperdag_graph* node = hyperdag_get_node(graph, index);
     graph_cache_put(&key, node);
     
     return node;
@@ -2536,7 +2536,7 @@ const graphite_graph* graphite_get_node_instrumented(
 
 // Report statistics
 void print_perf_report(void) {
-    printf("GRAPHITE Performance Report:\n");
+    printf("HyperDAG Performance Report:\n");
     printf("  Graphs accessed: %lu\n", g_counters.graphs_accessed);
     printf("  Cache hit rate: %.1f%%\n", 
            100.0 * g_counters.cache_hits / 
@@ -2553,18 +2553,18 @@ void print_perf_report(void) {
 ```c
 // RAII-style bundle management
 typedef struct {
-    graphite_bundle* bundle;
+    hyperdag_bundle* bundle;
 } bundle_guard;
 
 void bundle_guard_cleanup(bundle_guard* guard) {
     if (guard->bundle) {
-        graphite_close(guard->bundle);
+        hyperdag_close(guard->bundle);
     }
 }
 
 #define SCOPED_BUNDLE(name, path) \
-    bundle_guard name##_guard = {graphite_open(path)}; \
-    graphite_bundle* name __attribute__((cleanup(bundle_guard_cleanup))) = \
+    bundle_guard name##_guard = {hyperdag_open(path)}; \
+    hyperdag_bundle* name __attribute__((cleanup(bundle_guard_cleanup))) = \
         name##_guard.bundle
 
 // Usage
@@ -2575,7 +2575,7 @@ void process_assets(const char* bundle_path) {
     }
     
     // Bundle automatically closed on scope exit
-    const graphite_graph* root = graphite_root(bundle);
+    const hyperdag_graph* root = hyperdag_root(bundle);
     // ... process ...
 }
 ```
@@ -2588,31 +2588,31 @@ typedef struct {
     bool success;
     union {
         void* value;
-        graphite_error error;
+        hyperdag_error error;
     };
 } result;
 
 // Monadic error handling
-result load_texture_safe(const graphite_graph* texture_node) {
+result load_texture_safe(const hyperdag_graph* texture_node) {
     // Get blob ID
-    uint32_t blob_id = graphite_get_property_u32(texture_node, "data_blob_id");
+    uint32_t blob_id = hyperdag_get_property_u32(texture_node, "data_blob_id");
     if (blob_id == 0) {
         return (result){.success = false, 
-                       .error = GRAPHITE_ERROR_INVALID_FORMAT};
+                       .error = HYPERDAG_ERROR_INVALID_FORMAT};
     }
     
     // Get blob data
-    graphite_blob blob;
-    if (!graphite_get_blob(graphite_get_bundle(texture_node), blob_id, &blob)) {
+    hyperdag_blob blob;
+    if (!hyperdag_get_blob(hyperdag_get_bundle(texture_node), blob_id, &blob)) {
         return (result){.success = false,
-                       .error = GRAPHITE_ERROR_CORRUPTED_DATA};
+                       .error = HYPERDAG_ERROR_CORRUPTED_DATA};
     }
     
     // Parse texture
     texture* tex = parse_texture_data(blob.data, blob.size);
     if (!tex) {
         return (result){.success = false,
-                       .error = GRAPHITE_ERROR_INVALID_FORMAT};
+                       .error = HYPERDAG_ERROR_INVALID_FORMAT};
     }
     
     return (result){.success = true, .value = tex};
@@ -2627,59 +2627,59 @@ result load_texture_safe(const graphite_graph* texture_node) {
 import ctypes
 from typing import Optional, List
 
-class GraphiteBundle:
+class TurtlGraphBundle:
     def __init__(self, path: str):
-        self._lib = ctypes.CDLL("libgraphite.so")
+        self._lib = ctypes.CDLL("libturtlgraph.so")
         self._setup_functions()
-        self._handle = self._lib.graphite_open(path.encode())
+        self._handle = self._lib.hyperdag_open(path.encode())
         if not self._handle:
             raise RuntimeError(f"Failed to open {path}")
     
     def _setup_functions(self):
         # Define function signatures
-        self._lib.graphite_open.argtypes = [ctypes.c_char_p]
-        self._lib.graphite_open.restype = ctypes.c_void_p
+        self._lib.hyperdag_open.argtypes = [ctypes.c_char_p]
+        self._lib.hyperdag_open.restype = ctypes.c_void_p
         
-        self._lib.graphite_root.argtypes = [ctypes.c_void_p]
-        self._lib.graphite_root.restype = ctypes.c_void_p
+        self._lib.hyperdag_root.argtypes = [ctypes.c_void_p]
+        self._lib.hyperdag_root.restype = ctypes.c_void_p
         
-        self._lib.graphite_node_count.argtypes = [ctypes.c_void_p]
-        self._lib.graphite_node_count.restype = ctypes.c_uint32
+        self._lib.hyperdag_node_count.argtypes = [ctypes.c_void_p]
+        self._lib.hyperdag_node_count.restype = ctypes.c_uint32
     
     @property
-    def root(self) -> 'GraphiteGraph':
-        ptr = self._lib.graphite_root(self._handle)
-        return GraphiteGraph(self, ptr)
+    def root(self) -> 'TurtlGraphGraph':
+        ptr = self._lib.hyperdag_root(self._handle)
+        return TurtlGraphGraph(self, ptr)
     
     def __del__(self):
         if hasattr(self, '_handle') and self._handle:
-            self._lib.graphite_close(self._handle)
+            self._lib.hyperdag_close(self._handle)
 
-class GraphiteGraph:
-    def __init__(self, bundle: GraphiteBundle, ptr: ctypes.c_void_p):
+class TurtlGraphGraph:
+    def __init__(self, bundle: TurtlGraphBundle, ptr: ctypes.c_void_p):
         self._bundle = bundle
         self._ptr = ptr
     
     @property
     def node_count(self) -> int:
-        return self._bundle._lib.graphite_node_count(self._ptr)
+        return self._bundle._lib.hyperdag_node_count(self._ptr)
     
     def get_property(self, key: str) -> Optional[str]:
         buffer = ctypes.create_string_buffer(256)
-        if self._bundle._lib.graphite_get_property(
+        if self._bundle._lib.hyperdag_get_property(
             self._ptr, key.encode(), buffer, 256):
             return buffer.value.decode()
         return None
 
 # Usage
-bundle = GraphiteBundle("assets/game.grph")
+bundle = TurtlGraphBundle("assets/game.grph")
 print(f"Root has {bundle.root.node_count} nodes")
 print(f"Version: {bundle.root.get_property('version')}")
 ```
 
 ### Summary
 
-The GRAPHITE runtime API provides:
+The HyperDAG runtime API provides:
 
 1. **Simple access** to complex graph structures
 2. **Zero-copy performance** through memory mapping
@@ -2687,7 +2687,7 @@ The GRAPHITE runtime API provides:
 4. **Extensibility** through plugins and custom types
 5. **Language neutrality** enabling broad ecosystem support
 
-Whether you're loading a single texture or managing terabytes of game assets, the API scales from simple use cases to complex production systems. The next chapters explore how GRAPHITE's system services build on this foundation to provide memory management, streaming, and caching capabilities.
+Whether you're loading a single texture or managing terabytes of game assets, the API scales from simple use cases to complex production systems. The next chapters explore how HyperDAG's system services build on this foundation to provide memory management, streaming, and caching capabilities.
 
 ---
 

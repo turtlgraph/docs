@@ -22,21 +22,21 @@
   - [Performance Analysis](#performance-analysis)
 
 ### Overview
-GRAPHITE's system services form the foundation for its exceptional performance. These three chapters explore the memory management strategies that enable zero-copy operation, the streaming architecture that handles terabyte-scale assets, and the caching system that delivers consistent sub-millisecond access times. Together, they transform the theoretical graph architecture into a production-ready powerhouse.
+TurtlGraph's system services form the foundation for its exceptional performance. These three chapters explore the memory management strategies that enable zero-copy operation, the streaming architecture that handles terabyte-scale assets, and the caching system that delivers consistent sub-millisecond access times. Together, they transform the theoretical graph architecture into a production-ready powerhouse.
 
 ---
 
 ## Chapter 7: Memory Management
 
-Memory management in GRAPHITE isn't just about allocation and deallocation—it's about creating a zero-copy, cache-friendly environment where graph traversal approaches the theoretical limits of modern hardware. This chapter explores the sophisticated memory strategies that make GRAPHITE faster than traditional asset systems.
+Memory management in TurtlGraph isn't just about allocation and deallocation—it's about creating a zero-copy, cache-friendly environment where graph traversal approaches the theoretical limits of modern hardware. This chapter explores the sophisticated memory strategies that make TurtlGraph faster than traditional asset systems.
 
 ### Memory Architecture
 
-GRAPHITE employs a multi-tiered memory architecture optimized for different access patterns:
+TurtlGraph employs a multi-tiered memory architecture optimized for different access patterns:
 
 ```mermaid
 graph TB
-    subgraph "GRAPHITE Memory Hierarchy"
+    subgraph "HyperDAG Memory Hierarchy"
         MM["Memory Manager"]
         
         subgraph "Allocation Tiers"
@@ -93,21 +93,21 @@ typedef struct {
     // Cache settings
     size_t cache_line_size;         // CPU cache line (default: 64)
     size_t prefetch_distance;       // Prefetch ahead distance
-} graphite_memory_config;
+} hyperdag_memory_config;
 
 // Global memory manager
 typedef struct {
-    graphite_memory_config config;
-    arena_allocator* arenas[GRAPHITE_MAX_ARENAS];
-    pool_allocator* pools[GRAPHITE_MAX_POOLS];
+    hyperdag_memory_config config;
+    arena_allocator* arenas[HYPERDAG_MAX_ARENAS];
+    pool_allocator* pools[HYPERDAG_MAX_POOLS];
     memory_stats stats;
     pthread_mutex_t mutex;
-} graphite_memory_manager;
+} hyperdag_memory_manager;
 ```
 
 ### Arena Allocation
 
-Arena allocation is GRAPHITE's primary memory strategy for graph structures:
+Arena allocation is HyperDAG's primary memory strategy for graph structures:
 
 ```c
 // Arena allocator structure
@@ -150,7 +150,7 @@ arena_allocator* arena_create(size_t initial_size, int numa_node) {
     
     // Use huge pages if available
     #ifdef __linux__
-    if (graphite_config.use_huge_pages) {
+    if (hyperdag_config.use_huge_pages) {
         madvise(arena->base, initial_size, MADV_HUGEPAGE);
     }
     #endif
@@ -245,11 +245,11 @@ void arena_scope_end(arena_scope* scope) {
 }
 
 // Example: Build graph in arena
-graphite_graph* build_scene_graph(arena_allocator* arena) {
+hyperdag_graph* build_scene_graph(arena_allocator* arena) {
     arena_scope scope = arena_scope_begin(arena);
     
     // All allocations use the arena
-    graphite_graph* scene = arena_alloc(arena, sizeof(graphite_graph), 64);
+    hyperdag_graph* scene = arena_alloc(arena, sizeof(hyperdag_graph), 64);
     scene->nodes = arena_alloc(arena, 1024 * sizeof(node_ref), 16);
     scene->edges = arena_alloc(arena, 2048 * sizeof(edge_desc), 16);
     
@@ -267,7 +267,7 @@ graphite_graph* build_scene_graph(arena_allocator* arena) {
 
 ### Memory Mapping
 
-Memory mapping is fundamental to GRAPHITE's zero-copy architecture:
+Memory mapping is fundamental to HyperDAG's zero-copy architecture:
 
 ```c
 // Memory-mapped bundle structure
@@ -352,7 +352,7 @@ mapped_bundle* map_bundle_advanced(const char* path) {
     #endif
     
     // Lock critical data in memory
-    if (graphite_config.lock_in_memory) {
+    if (hyperdag_config.lock_in_memory) {
         // Lock header and chunk table
         size_t lock_size = min(bundle->size, 1024 * 1024);
         if (mlock(bundle->base, lock_size) == 0) {
@@ -367,7 +367,7 @@ mapped_bundle* map_bundle_advanced(const char* path) {
 void prefetch_for_traversal(mapped_bundle* bundle, size_t offset) {
     // Prefetch ahead for sequential traversal
     size_t prefetch_size = 64 * 1024;  // 64KB ahead
-    size_t prefetch_offset = offset + graphite_config.prefetch_distance;
+    size_t prefetch_offset = offset + hyperdag_config.prefetch_distance;
     
     if (prefetch_offset + prefetch_size <= bundle->size) {
         #ifdef __linux__
@@ -710,7 +710,7 @@ void* profiled_alloc(size_t size) {
 
 // Memory usage report
 void print_memory_profile(void) {
-    printf("=== GRAPHITE Memory Profile ===\n");
+    printf("=== TurtlGraph Memory Profile ===\n");
     printf("Current Usage: %.2f MB\n", 
            g_profile.current_usage / (1024.0 * 1024.0));
     printf("Peak Usage: %.2f MB\n",
@@ -862,7 +862,7 @@ void lockfree_pool_free(lockfree_pool* pool, void* ptr) {
 
 ```c
 // Optimized memory copy for different sizes
-void* graphite_memcpy_optimized(void* dst, const void* src, size_t size) {
+void* hyperdag_memcpy_optimized(void* dst, const void* src, size_t size) {
     // Small copies - use compiler builtin
     if (size <= 64) {
         return __builtin_memcpy(dst, src, size);
@@ -981,7 +981,7 @@ void parallel_memset(void* dst, int value, size_t size) {
 ### Memory Debugging
 
 ```c
-#ifdef GRAPHITE_DEBUG_MEMORY
+#ifdef HYPERDAG_DEBUG_MEMORY
 
 // Memory guard for buffer overflow detection
 typedef struct {
@@ -1107,7 +1107,7 @@ void report_memory_leaks(void) {
     pthread_mutex_unlock(&leak_mutex);
 }
 
-#endif  // GRAPHITE_DEBUG_MEMORY
+#endif  // HYPERDAG_DEBUG_MEMORY
 ```
 
 ### Performance Benchmarks
@@ -1196,7 +1196,7 @@ void run_memory_benchmarks(void) {
         // ... more benchmarks
     };
     
-    printf("=== GRAPHITE Memory Benchmarks ===\n");
+    printf("=== TurtlGraph Memory Benchmarks ===\n");
     printf("CPU: %s\n", get_cpu_name());
     printf("RAM: %zu GB\n", get_total_ram() >> 30);
     printf("Cache: L1=%zu KB, L2=%zu KB, L3=%zu MB\n",
@@ -1218,7 +1218,7 @@ void run_memory_benchmarks(void) {
 
 ### Summary
 
-GRAPHITE's memory management system achieves exceptional performance through:
+TurtlGraph's memory management system achieves exceptional performance through:
 
 1. **Zero-copy architecture** via memory mapping
 2. **Arena allocation** eliminating fragmentation
@@ -1244,7 +1244,7 @@ These techniques combine to deliver memory performance that matches or exceeds s
 
 ## Chapter 8: Streaming & Loading
 
-GRAPHITE's streaming system enables efficient loading of massive worlds and assets on-demand, with predictive prefetching and memory-aware resource management. This chapter explores the sophisticated architecture that enables seamless experiences even with terabyte-scale asset libraries.
+TurtlGraph's streaming system enables efficient loading of massive worlds and assets on-demand, with predictive prefetching and memory-aware resource management. This chapter explores the sophisticated architecture that enables seamless experiences even with terabyte-scale asset libraries.
 
 ### Streaming Architecture
 
@@ -1298,27 +1298,27 @@ graph TB
 ```c
 // Streaming priority levels
 typedef enum {
-    GRAPHITE_PRIORITY_CRITICAL = 0,  // Required for current frame
-    GRAPHITE_PRIORITY_HIGH = 1,      // Required for next frame
-    GRAPHITE_PRIORITY_MEDIUM = 2,    // Required soon
-    GRAPHITE_PRIORITY_LOW = 3,       // Background/predictive
-    GRAPHITE_PRIORITY_COUNT = 4
-} graphite_streaming_priority;
+    HYPERDAG_PRIORITY_CRITICAL = 0,  // Required for current frame
+    HYPERDAG_PRIORITY_HIGH = 1,      // Required for next frame
+    HYPERDAG_PRIORITY_MEDIUM = 2,    // Required soon
+    HYPERDAG_PRIORITY_LOW = 3,       // Background/predictive
+    HYPERDAG_PRIORITY_COUNT = 4
+} hyperdag_streaming_priority;
 
 // Streaming request
 typedef struct {
     uint64_t asset_id;
-    graphite_streaming_priority priority;
+    hyperdag_streaming_priority priority;
     uint64_t request_time;
     uint32_t estimated_size;
     float distance_factor;       // For LOD-based streaming
     void* user_data;
-    graphite_stream_callback callback;
-} graphite_stream_request;
+    hyperdag_stream_callback callback;
+} hyperdag_stream_request;
 
 // Streaming context
 typedef struct {
-    priority_queue* request_queues[GRAPHITE_PRIORITY_COUNT];
+    priority_queue* request_queues[HYPERDAG_PRIORITY_COUNT];
     thread_pool* io_pool;
     thread_pool* decompression_pool;
     memory_pool* streaming_pool;
@@ -1338,18 +1338,18 @@ typedef struct {
     atomic_uint64_t requests_completed;
     atomic_uint64_t cache_hits;
     atomic_uint64_t cache_misses;
-} graphite_streaming_context;
+} hyperdag_streaming_context;
 
 // Initialize streaming system
-graphite_streaming_context* graphite_streaming_init(
-    const graphite_streaming_config* config
+hyperdag_streaming_context* hyperdag_streaming_init(
+    const hyperdag_streaming_config* config
 ) {
-    graphite_streaming_context* ctx = calloc(1, sizeof(graphite_streaming_context));
+    hyperdag_streaming_context* ctx = calloc(1, sizeof(hyperdag_streaming_context));
     
     // Initialize priority queues
-    for (int i = 0; i < GRAPHITE_PRIORITY_COUNT; i++) {
+    for (int i = 0; i < HYPERDAG_PRIORITY_COUNT; i++) {
         ctx->request_queues[i] = priority_queue_create(
-            graphite_compare_requests, 1024);
+            hyperdag_compare_requests, 1024);
     }
     
     // Initialize thread pools
@@ -1387,11 +1387,11 @@ typedef struct {
     // Request tracking
     hashtable* active_requests;  // sqe -> request mapping
     atomic_uint32_t active_count;
-} graphite_uring_context;
+} hyperdag_uring_context;
 
 // Initialize io_uring for streaming
-graphite_result graphite_uring_init(
-    graphite_uring_context* context,
+hyperdag_result hyperdag_uring_init(
+    hyperdag_uring_context* context,
     uint32_t queue_depth
 ) {
     context->queue_depth = queue_depth;
@@ -1399,7 +1399,7 @@ graphite_result graphite_uring_init(
     // Initialize io_uring with specified queue depth
     int ret = io_uring_queue_init(queue_depth, &context->ring, 0);
     if (ret < 0) {
-        return GRAPHITE_ERROR_IO_INIT;
+        return HYPERDAG_ERROR_IO_INIT;
     }
     
     // Allocate tracking structures
@@ -1407,13 +1407,13 @@ graphite_result graphite_uring_init(
                                                hash_ptr, compare_ptr);
     atomic_init(&context->active_count, 0);
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
 
 // Submit async read request
-graphite_result graphite_uring_read_async(
-    graphite_uring_context* context,
-    const graphite_stream_request* request,
+hyperdag_result hyperdag_uring_read_async(
+    hyperdag_uring_context* context,
+    const hyperdag_stream_request* request,
     int fd,
     void* buffer,
     size_t size,
@@ -1422,7 +1422,7 @@ graphite_result graphite_uring_read_async(
     // Get submission queue entry
     struct io_uring_sqe* sqe = io_uring_get_sqe(&context->ring);
     if (!sqe) {
-        return GRAPHITE_ERROR_QUEUE_FULL;
+        return HYPERDAG_ERROR_QUEUE_FULL;
     }
     
     // Prepare read operation
@@ -1438,30 +1438,30 @@ graphite_result graphite_uring_read_async(
     if (submitted < 0) {
         hashtable_remove(context->active_requests, sqe);
         atomic_fetch_sub(&context->active_count, 1);
-        return GRAPHITE_ERROR_IO_SUBMIT;
+        return HYPERDAG_ERROR_IO_SUBMIT;
     }
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
 
 // Process completed I/O operations
-uint32_t graphite_uring_process_completions(
-    graphite_uring_context* context,
-    graphite_streaming_context* streaming
+uint32_t hyperdag_uring_process_completions(
+    hyperdag_uring_context* context,
+    hyperdag_streaming_context* streaming
 ) {
     struct io_uring_cqe* cqe;
     uint32_t completed = 0;
     
     // Process all available completions
     while (io_uring_peek_cqe(&context->ring, &cqe) == 0) {
-        graphite_stream_request* request = io_uring_cqe_get_data(cqe);
+        hyperdag_stream_request* request = io_uring_cqe_get_data(cqe);
         
         if (cqe->res >= 0) {
             // Success - process the loaded asset
-            graphite_process_loaded_asset(streaming, request, cqe->res);
+            hyperdag_process_loaded_asset(streaming, request, cqe->res);
         } else {
             // Error - handle failure
-            graphite_handle_stream_error(streaming, request, cqe->res);
+            hyperdag_handle_stream_error(streaming, request, cqe->res);
         }
         
         // Clean up tracking
@@ -1484,10 +1484,10 @@ typedef struct {
     OVERLAPPED* overlapped_pool;
     uint32_t pool_size;
     atomic_uint32_t pool_index;
-} graphite_iocp_context;
+} hyperdag_iocp_context;
 
-graphite_result graphite_iocp_init(
-    graphite_iocp_context* context,
+hyperdag_result hyperdag_iocp_init(
+    hyperdag_iocp_context* context,
     uint32_t thread_count
 ) {
     // Create I/O completion port
@@ -1495,7 +1495,7 @@ graphite_result graphite_iocp_init(
         INVALID_HANDLE_VALUE, NULL, 0, thread_count);
     
     if (!context->completion_port) {
-        return GRAPHITE_ERROR_IO_INIT;
+        return HYPERDAG_ERROR_IO_INIT;
     }
     
     // Allocate OVERLAPPED pool
@@ -1503,13 +1503,13 @@ graphite_result graphite_iocp_init(
     context->overlapped_pool = calloc(context->pool_size, 
                                      sizeof(OVERLAPPED));
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
 
 // Submit async read on Windows
-graphite_result graphite_iocp_read_async(
-    graphite_iocp_context* context,
-    const graphite_stream_request* request,
+hyperdag_result hyperdag_iocp_read_async(
+    hyperdag_iocp_context* context,
+    const hyperdag_stream_request* request,
     HANDLE file,
     void* buffer,
     DWORD size,
@@ -1530,20 +1530,20 @@ graphite_result graphite_iocp_read_async(
     if (!ReadFile(file, buffer, size, NULL, overlapped)) {
         DWORD error = GetLastError();
         if (error != ERROR_IO_PENDING) {
-            return GRAPHITE_ERROR_IO_READ;
+            return HYPERDAG_ERROR_IO_READ;
         }
     }
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
 #endif // _WIN32
 
 // Cross-platform async I/O abstraction
 typedef struct {
 #ifdef __linux__
-    graphite_uring_context uring;
+    hyperdag_uring_context uring;
 #elif defined(_WIN32)
-    graphite_iocp_context iocp;
+    hyperdag_iocp_context iocp;
 #elif defined(__APPLE__)
     dispatch_queue_t io_queue;
     dispatch_source_t* source_pool;
@@ -1551,7 +1551,7 @@ typedef struct {
     
     thread_pool* callback_pool;
     atomic_uint32_t active_operations;
-} graphite_async_io_context;
+} hyperdag_async_io_context;
 ```
 
 ### Priority Systems
@@ -1587,13 +1587,13 @@ typedef struct {
     float size_weight;         // Weight for asset size
     float time_weight;         // Weight for time since request
     float lod_weight;          // Weight for LOD importance
-} graphite_priority_weights;
+} hyperdag_priority_weights;
 
 // Calculate dynamic priority
-float graphite_calculate_priority(
-    const graphite_stream_request* request,
-    const graphite_player_state* player,
-    const graphite_priority_weights* weights
+float hyperdag_calculate_priority(
+    const hyperdag_stream_request* request,
+    const hyperdag_player_state* player,
+    const hyperdag_priority_weights* weights
 ) {
     float priority = 0.0f;
     
@@ -1626,12 +1626,12 @@ float graphite_calculate_priority(
 }
 
 // Priority queue management
-void graphite_update_priorities(
-    graphite_streaming_context* ctx,
-    const graphite_player_state* player
+void hyperdag_update_priorities(
+    hyperdag_streaming_context* ctx,
+    const hyperdag_player_state* player
 ) {
     // Recalculate priorities for all queued requests
-    for (int i = 0; i < GRAPHITE_PRIORITY_COUNT; i++) {
+    for (int i = 0; i < HYPERDAG_PRIORITY_COUNT; i++) {
         priority_queue* queue = ctx->request_queues[i];
         
         // Extract all items
@@ -1639,13 +1639,13 @@ void graphite_update_priorities(
         
         // Recalculate priorities and reinsert
         for (size_t j = 0; j < items->count; j++) {
-            graphite_stream_request* request = array_get(items, j);
-            request->dynamic_priority = graphite_calculate_priority(
+            hyperdag_stream_request* request = array_get(items, j);
+            request->dynamic_priority = hyperdag_calculate_priority(
                 request, player, &ctx->priority_weights);
             
             // Check if should move to different queue
-            graphite_streaming_priority new_priority = 
-                graphite_get_queue_for_distance(request->distance_factor);
+            hyperdag_streaming_priority new_priority = 
+                hyperdag_get_queue_for_distance(request->distance_factor);
             
             if (new_priority != i) {
                 // Move to appropriate queue
@@ -1675,19 +1675,19 @@ typedef struct {
     size_t bytes_since_measurement;
     
     // Per-priority bandwidth allocation
-    float priority_bandwidth_share[GRAPHITE_PRIORITY_COUNT];
-    size_t priority_bandwidth_used[GRAPHITE_PRIORITY_COUNT];
+    float priority_bandwidth_share[HYPERDAG_PRIORITY_COUNT];
+    size_t priority_bandwidth_used[HYPERDAG_PRIORITY_COUNT];
     
     // Adaptive throttling
     bool adaptive_throttling;
     float target_frame_time_ms;
     float current_frame_time_ms;
-} graphite_bandwidth_manager;
+} hyperdag_bandwidth_manager;
 
 // Allocate bandwidth to request
-bool graphite_allocate_bandwidth(
-    graphite_bandwidth_manager* bw,
-    const graphite_stream_request* request,
+bool hyperdag_allocate_bandwidth(
+    hyperdag_bandwidth_manager* bw,
+    const hyperdag_stream_request* request,
     size_t requested_bytes
 ) {
     // Update measurement window
@@ -1712,7 +1712,7 @@ bool graphite_allocate_bandwidth(
     if (bw->priority_bandwidth_used[request->priority] + requested_bytes 
         > priority_limit) {
         // Check if can borrow from lower priorities
-        for (int i = request->priority + 1; i < GRAPHITE_PRIORITY_COUNT; i++) {
+        for (int i = request->priority + 1; i < HYPERDAG_PRIORITY_COUNT; i++) {
             size_t available = (bw->max_bandwidth_bytes_per_sec * 
                               bw->priority_bandwidth_share[i]) -
                               bw->priority_bandwidth_used[i];
@@ -1733,7 +1733,7 @@ bool graphite_allocate_bandwidth(
 }
 
 // Adaptive bandwidth throttling based on frame time
-void graphite_adapt_bandwidth(graphite_bandwidth_manager* bw) {
+void hyperdag_adapt_bandwidth(hyperdag_bandwidth_manager* bw) {
     if (!bw->adaptive_throttling) return;
     
     float frame_ratio = bw->current_frame_time_ms / bw->target_frame_time_ms;
@@ -1799,7 +1799,7 @@ typedef struct {
     uint32_t hidden_layers;
     uint32_t output_assets;
     float learning_rate;
-} graphite_ml_predictor;
+} hyperdag_ml_predictor;
 
 // Feature vector for ML prediction
 typedef struct {
@@ -1823,17 +1823,17 @@ typedef struct {
     float player_state;         // Encoded game state
     float area_type;           // Encoded area classification
     float activity_level;      // Player activity metric
-} graphite_ml_features;
+} hyperdag_ml_features;
 
 // Run ML prediction
-void graphite_ml_predict(
-    graphite_ml_predictor* predictor,
-    const graphite_game_state* state,
-    graphite_prediction_result* results,
+void hyperdag_ml_predict(
+    hyperdag_ml_predictor* predictor,
+    const hyperdag_game_state* state,
+    hyperdag_prediction_result* results,
     uint32_t max_results
 ) {
     // Extract features
-    graphite_ml_features features;
+    hyperdag_ml_features features;
     extract_ml_features(predictor->feature_engine, state, &features);
     
     // Normalize features
@@ -1863,12 +1863,12 @@ void graphite_ml_predict(
 }
 
 // Online learning from prediction feedback
-void graphite_ml_update(
-    graphite_ml_predictor* predictor,
-    const graphite_prediction_feedback* feedback
+void hyperdag_ml_update(
+    hyperdag_ml_predictor* predictor,
+    const hyperdag_prediction_feedback* feedback
 ) {
     // Get cached prediction
-    graphite_prediction_result* prediction = 
+    hyperdag_prediction_result* prediction = 
         get_cached_prediction(predictor->recent_predictions, 
                             feedback->prediction_id);
     
@@ -1897,13 +1897,13 @@ typedef struct {
     float prediction_radius;
     float prediction_time;
     uint32_t max_predictions;
-} graphite_spatial_predictor;
+} hyperdag_spatial_predictor;
 
 // Predict based on movement
-void graphite_spatial_predict(
-    graphite_spatial_predictor* predictor,
-    const graphite_player_state* player,
-    graphite_streaming_context* streaming
+void hyperdag_spatial_predict(
+    hyperdag_spatial_predictor* predictor,
+    const hyperdag_player_state* player,
+    hyperdag_streaming_context* streaming
 ) {
     // Predict future position
     vec3 predicted_pos;
@@ -1962,9 +1962,9 @@ void graphite_spatial_predict(
     
     for (uint32_t i = 0; i < min(predictor->max_predictions, nearby->count); i++) {
         if (scores[i].score > 0.1f) {  // Minimum score threshold
-            graphite_stream_request request = {
+            hyperdag_stream_request request = {
                 .asset_id = scores[i].asset_id,
-                .priority = GRAPHITE_PRIORITY_LOW,
+                .priority = HYPERDAG_PRIORITY_LOW,
                 .distance_factor = scores[i].score,
                 .callback = NULL  // Predictive loads are fire-and-forget
             };
@@ -1990,13 +1990,13 @@ typedef struct {
     uint32_t max_pattern_length;
     float min_confidence;
     uint32_t pattern_memory;
-} graphite_pattern_predictor;
+} hyperdag_pattern_predictor;
 
 // Pattern matching using suffix tree
-void graphite_pattern_predict(
-    graphite_pattern_predictor* predictor,
+void hyperdag_pattern_predict(
+    hyperdag_pattern_predictor* predictor,
     uint64_t current_asset,
-    graphite_streaming_context* streaming
+    hyperdag_streaming_context* streaming
 ) {
     // Add to history
     circular_buffer_push(predictor->access_history, &current_asset);
@@ -2022,9 +2022,9 @@ void graphite_pattern_predict(
                 pattern_prediction* pred = &node->predictions[i];
                 
                 if (!asset_is_loaded(streaming, pred->asset_id)) {
-                    graphite_stream_request request = {
+                    hyperdag_stream_request request = {
                         .asset_id = pred->asset_id,
-                        .priority = GRAPHITE_PRIORITY_LOW,
+                        .priority = HYPERDAG_PRIORITY_LOW,
                         .distance_factor = pred->confidence,
                         .estimated_size = get_asset_size(pred->asset_id)
                     };
@@ -2042,7 +2042,7 @@ void graphite_pattern_predict(
 }
 
 // Learn patterns from access history
-void learn_patterns_from_history(graphite_pattern_predictor* predictor) {
+void learn_patterns_from_history(hyperdag_pattern_predictor* predictor) {
     uint64_t* history = circular_buffer_get_array(predictor->access_history);
     size_t history_len = circular_buffer_size(predictor->access_history);
     
@@ -2102,7 +2102,7 @@ typedef struct {
     float size_weight;           // Weight for asset size
     float priority_weight;       // Weight for asset priority
     float distance_weight;       // Weight for distance from player
-} graphite_memory_budget;
+} hyperdag_memory_budget;
 
 // Memory pressure levels
 typedef enum {
@@ -2114,20 +2114,20 @@ typedef enum {
 
 // Intelligent eviction system
 typedef struct {
-    graphite_memory_budget budget;
+    hyperdag_memory_budget budget;
     memory_pressure_level pressure;
     eviction_statistics stats;
     
     // Eviction scoring
     float (*score_function)(const cached_asset*, void*);
     void* score_context;
-} graphite_eviction_system;
+} hyperdag_eviction_system;
 
 // Calculate eviction score
 float calculate_eviction_score(
     const cached_asset* asset,
-    const graphite_eviction_system* eviction,
-    const graphite_player_state* player
+    const hyperdag_eviction_system* eviction,
+    const hyperdag_player_state* player
 ) {
     float score = 0.0f;
     
@@ -2141,7 +2141,7 @@ float calculate_eviction_score(
     score += eviction->budget.size_weight * size_score;
     
     // Priority component (prefer evicting low priority)
-    float priority_score = 1.0f - (float)asset->priority / GRAPHITE_PRIORITY_COUNT;
+    float priority_score = 1.0f - (float)asset->priority / HYPERDAG_PRIORITY_COUNT;
     score += eviction->budget.priority_weight * priority_score;
     
     // Distance component
@@ -2162,10 +2162,10 @@ float calculate_eviction_score(
 
 // Perform memory eviction
 size_t evict_assets(
-    graphite_eviction_system* eviction,
+    hyperdag_eviction_system* eviction,
     lru_cache* cache,
     size_t target_bytes,
-    const graphite_player_state* player
+    const hyperdag_player_state* player
 ) {
     // Build scored list of candidates
     typedef struct {
@@ -2265,11 +2265,11 @@ typedef struct {
     float target_hit_rate;          // Target prefetch hit rate
     float adaptation_rate;          // How quickly to adapt
     float distance_step;            // Distance adjustment step
-} graphite_prefetch_config;
+} hyperdag_prefetch_config;
 
 // Smart prefetch manager
 typedef struct {
-    graphite_prefetch_config config;
+    hyperdag_prefetch_config config;
     circular_buffer* access_history;
     pattern_analyzer* analyzer;
     
@@ -2279,13 +2279,13 @@ typedef struct {
     uint32_t total_prefetches;
     float current_hit_rate;
     uint64_t last_adaptation;
-} graphite_prefetch_manager;
+} hyperdag_prefetch_manager;
 
 // Analyze access patterns and prefetch
 void analyze_and_prefetch(
-    graphite_prefetch_manager* mgr,
+    hyperdag_prefetch_manager* mgr,
     uint64_t accessed_asset,
-    graphite_streaming_context* streaming
+    hyperdag_streaming_context* streaming
 ) {
     // Record access
     circular_buffer_push(mgr->access_history, &accessed_asset);
@@ -2327,9 +2327,9 @@ void analyze_and_prefetch(
 
 // Sequential prefetching
 void prefetch_sequential(
-    graphite_prefetch_manager* mgr,
+    hyperdag_prefetch_manager* mgr,
     const pattern_analysis* analysis,
-    graphite_streaming_context* streaming
+    hyperdag_streaming_context* streaming
 ) {
     uint64_t stride = analysis->sequential.stride;
     uint64_t last_asset = analysis->sequential.last_asset;
@@ -2348,9 +2348,9 @@ void prefetch_sequential(
         }
         
         // Submit prefetch request
-        graphite_stream_request request = {
+        hyperdag_stream_request request = {
             .asset_id = predicted_asset,
-            .priority = GRAPHITE_PRIORITY_LOW,
+            .priority = HYPERDAG_PRIORITY_LOW,
             .flags = STREAM_FLAG_PREFETCH,
             .callback = NULL
         };
@@ -2361,7 +2361,7 @@ void prefetch_sequential(
 }
 
 // Adaptive parameter tuning
-void adapt_prefetch_parameters(graphite_prefetch_manager* mgr) {
+void adapt_prefetch_parameters(hyperdag_prefetch_manager* mgr) {
     // Calculate current hit rate
     uint32_t total = mgr->prefetch_hits + mgr->prefetch_misses;
     if (total == 0) return;
@@ -2406,7 +2406,7 @@ typedef struct {
     uint32_t timeout_ms;
     bool use_compression;
     bool use_range_requests;
-} graphite_network_config;
+} hyperdag_network_config;
 
 // HTTP/2 streaming context
 typedef struct {
@@ -2421,11 +2421,11 @@ typedef struct {
     atomic_uint64_t bytes_downloaded;
     atomic_uint32_t active_connections;
     bandwidth_monitor* bandwidth;
-} graphite_network_context;
+} hyperdag_network_context;
 
 // Network streaming request
 typedef struct {
-    graphite_stream_request base;
+    hyperdag_stream_request base;
     char url[512];
     size_t offset;
     size_t size;
@@ -2442,7 +2442,7 @@ typedef struct {
 
 // Start network streaming
 void start_network_stream(
-    graphite_network_context* net,
+    hyperdag_network_context* net,
     network_stream_request* request
 ) {
     // Get available connection
@@ -2479,7 +2479,7 @@ void start_network_stream(
 }
 
 // Process network transfers
-void process_network_transfers(graphite_network_context* net) {
+void process_network_transfers(hyperdag_network_context* net) {
     int running_handles;
     CURLMcode mc = curl_multi_perform(net->multi_handle, &running_handles);
     
@@ -2547,8 +2547,8 @@ typedef struct {
     gauge* eviction_rate;
     
     // Queue metrics
-    gauge* queue_depths[GRAPHITE_PRIORITY_COUNT];
-    counter* requests_completed[GRAPHITE_PRIORITY_COUNT];
+    gauge* queue_depths[HYPERDAG_PRIORITY_COUNT];
+    counter* requests_completed[HYPERDAG_PRIORITY_COUNT];
 } streaming_metrics;
 
 // Update streaming metrics
@@ -2618,7 +2618,7 @@ void generate_streaming_report(
     report->eviction_rate_per_sec = gauge_get(metrics->eviction_rate);
     
     // Queue statistics
-    for (int i = 0; i < GRAPHITE_PRIORITY_COUNT; i++) {
+    for (int i = 0; i < HYPERDAG_PRIORITY_COUNT; i++) {
         report->queue_depths[i] = gauge_get(metrics->queue_depths[i]);
         report->requests_completed[i] = counter_get(metrics->requests_completed[i]);
     }
@@ -2627,7 +2627,7 @@ void generate_streaming_report(
 
 ### Summary
 
-GRAPHITE's streaming system achieves exceptional performance through:
+TurtlGraph's streaming system achieves exceptional performance through:
 
 1. **Asynchronous I/O** using platform-specific APIs (io_uring, IOCP)
 2. **Intelligent prioritization** based on player state and prediction
@@ -2653,7 +2653,7 @@ These systems work together to provide seamless asset streaming that scales from
 
 ## Chapter 9: Caching System
 
-The GRAPHITE caching system delivers sub-millisecond asset access through a sophisticated multi-tier architecture that spans from CPU caches to distributed network caches. By treating caching as a first-class concern, GRAPHITE achieves performance that rivals native file system access while maintaining data integrity and coherency across complex dependency graphs.
+The TurtlGraph caching system delivers sub-millisecond asset access through a sophisticated multi-tier architecture that spans from CPU caches to distributed network caches. By treating caching as a first-class concern, TurtlGraph achieves performance that rivals native file system access while maintaining data integrity and coherency across complex dependency graphs.
 
 ### Cache Architecture
 
@@ -2702,7 +2702,7 @@ typedef enum {
     CACHE_LEVEL_MMAP,     // Memory-mapped files
     CACHE_LEVEL_DISK,     // Local disk cache
     CACHE_LEVEL_NETWORK   // Remote/CDN cache
-} graphite_cache_level;
+} hyperdag_cache_level;
 
 // Cache entry metadata
 typedef struct {
@@ -2722,7 +2722,7 @@ typedef struct {
     // Performance tracking
     uint64_t total_access_time_ns;
     uint32_t cache_hits[CACHE_LEVEL_NETWORK + 1];
-} graphite_cache_entry;
+} hyperdag_cache_entry;
 
 // Main cache structure
 typedef struct {
@@ -2742,7 +2742,7 @@ typedef struct {
     atomic_uint64_t bytes_saved;
     
     // Configuration
-    graphite_cache_config config;
+    hyperdag_cache_config config;
     
     // Thread safety
     pthread_rwlock_t cache_lock;
@@ -2750,7 +2750,7 @@ typedef struct {
     // Eviction thread
     pthread_t eviction_thread;
     atomic_bool eviction_running;
-} graphite_cache_system;
+} hyperdag_cache_system;
 ```
 
 ### Cache Operations
@@ -2758,12 +2758,12 @@ typedef struct {
 #### Cache Lookup with Level Cascading
 
 ```c
-graphite_result graphite_cache_get(
-    graphite_cache_system* cache,
+hyperdag_result hyperdag_cache_get(
+    hyperdag_cache_system* cache,
     uint64_t asset_id,
     void** data,
     size_t* size,
-    graphite_cache_stats* stats
+    hyperdag_cache_stats* stats
 ) {
     struct timespec start, end;
     clock_gettime(CLOCK_MONOTONIC, &start);
@@ -2777,12 +2777,12 @@ graphite_result graphite_cache_get(
     // Level 2: Memory cache lookup
     pthread_rwlock_rdlock(&cache->cache_lock);
     
-    graphite_cache_entry* entry = lru_cache_get(cache->memory_cache, &asset_id);
+    hyperdag_cache_entry* entry = lru_cache_get(cache->memory_cache, &asset_id);
     if (entry) {
         // Hit in memory cache
         atomic_fetch_add(&cache->total_hits, 1);
         atomic_fetch_add(&entry->access_count, 1);
-        entry->last_access_time = graphite_get_time_ns();
+        entry->last_access_time = hyperdag_get_time_ns();
         
         if (stats) {
             stats->cache_level = CACHE_LEVEL_MEMORY;
@@ -2804,7 +2804,7 @@ graphite_result graphite_cache_get(
             stats->access_time_ns = timespec_diff_ns(&start, &end);
         }
         
-        return GRAPHITE_SUCCESS;
+        return HYPERDAG_SUCCESS;
     }
     
     pthread_rwlock_unlock(&cache->cache_lock);
@@ -2823,12 +2823,12 @@ graphite_result graphite_cache_get(
                                    MAP_PRIVATE | MAP_POPULATE, fd, 0);
                 if (mapped != MAP_FAILED) {
                     // Verify integrity
-                    graphite_cache_header* header = (graphite_cache_header*)mapped;
+                    hyperdag_cache_header* header = (hyperdag_cache_header*)mapped;
                     if (verify_cache_integrity(header)) {
                         // Promote to memory cache
                         promote_to_memory_cache(cache, asset_id, mapped, st.st_size);
                         
-                        *data = (uint8_t*)mapped + sizeof(graphite_cache_header);
+                        *data = (uint8_t*)mapped + sizeof(hyperdag_cache_header);
                         *size = header->data_size;
                         
                         if (stats) {
@@ -2837,7 +2837,7 @@ graphite_result graphite_cache_get(
                         }
                         
                         close(fd);
-                        return GRAPHITE_SUCCESS;
+                        return HYPERDAG_SUCCESS;
                     }
                     munmap(mapped, st.st_size);
                 }
@@ -2853,7 +2853,7 @@ graphite_result graphite_cache_get(
     
     FILE* cache_file = fopen(cache_path, "rb");
     if (cache_file) {
-        graphite_cache_header header;
+        hyperdag_cache_header header;
         if (fread(&header, sizeof(header), 1, cache_file) == 1) {
             if (verify_cache_integrity(&header)) {
                 void* cache_data = malloc(header.data_size);
@@ -2870,7 +2870,7 @@ graphite_result graphite_cache_get(
                     }
                     
                     fclose(cache_file);
-                    return GRAPHITE_SUCCESS;
+                    return HYPERDAG_SUCCESS;
                 }
                 free(cache_data);
             }
@@ -2887,13 +2887,13 @@ graphite_result graphite_cache_get(
         stats->access_time_ns = timespec_diff_ns(&start, &end);
     }
     
-    return GRAPHITE_ERROR_CACHE_MISS;
+    return HYPERDAG_ERROR_CACHE_MISS;
 }
 ```
 
 ### Eviction Policies
 
-GRAPHITE implements sophisticated eviction policies that consider multiple factors:
+HyperDAG implements sophisticated eviction policies that consider multiple factors:
 
 ```mermaid
 graph TD
@@ -2919,15 +2919,15 @@ graph TD
 ```c
 // Eviction candidate scoring
 typedef struct {
-    graphite_cache_entry* entry;
+    hyperdag_cache_entry* entry;
     double eviction_score;
     size_t memory_impact;
 } eviction_candidate;
 
 // Calculate eviction score with multiple factors
 double calculate_eviction_score(
-    const graphite_cache_entry* entry,
-    const graphite_cache_stats* global_stats,
+    const hyperdag_cache_entry* entry,
+    const hyperdag_cache_stats* global_stats,
     uint64_t current_time
 ) {
     // Time-based factor (exponential decay)
@@ -2952,7 +2952,7 @@ double calculate_eviction_score(
 
 // Adaptive eviction based on memory pressure
 void* eviction_thread_func(void* arg) {
-    graphite_cache_system* cache = (graphite_cache_system*)arg;
+    hyperdag_cache_system* cache = (hyperdag_cache_system*)arg;
     
     while (atomic_load(&cache->eviction_running)) {
         // Check memory pressure
@@ -2979,7 +2979,7 @@ void* eviction_thread_func(void* arg) {
 
 // Perform cache eviction
 void perform_eviction(
-    graphite_cache_system* cache,
+    hyperdag_cache_system* cache,
     size_t bytes_to_free,
     double memory_pressure
 ) {
@@ -2991,18 +2991,18 @@ void perform_eviction(
     lru_cache_iterator iter;
     lru_cache_iter_init(&iter, cache->memory_cache);
     
-    graphite_cache_stats global_stats;
+    hyperdag_cache_stats global_stats;
     calculate_global_stats(cache, &global_stats);
     
-    uint64_t current_time = graphite_get_time_ns();
+    uint64_t current_time = hyperdag_get_time_ns();
     
     while (lru_cache_iter_next(&iter)) {
-        graphite_cache_entry* entry = iter.value;
+        hyperdag_cache_entry* entry = iter.value;
         
         eviction_candidate candidate = {
             .entry = entry,
             .eviction_score = calculate_eviction_score(entry, &global_stats, current_time),
-            .memory_impact = entry->size + sizeof(graphite_cache_entry)
+            .memory_impact = entry->size + sizeof(hyperdag_cache_entry)
         };
         
         dynamic_array_push(candidates, &candidate);
@@ -3050,13 +3050,13 @@ typedef enum {
     WARM_STRATEGY_DEPENDENCY,    // Follow dependency graph
     WARM_STRATEGY_HISTORICAL,    // Based on access history
     WARM_STRATEGY_ML_PREDICT     // Machine learning prediction
-} graphite_warm_strategy;
+} hyperdag_warm_strategy;
 
 // Cache warming context
 typedef struct {
-    graphite_cache_system* cache;
-    graphite_bundle* bundle;
-    graphite_warm_strategy strategy;
+    hyperdag_cache_system* cache;
+    hyperdag_bundle* bundle;
+    hyperdag_warm_strategy strategy;
     thread_pool* warm_pool;
     
     // Progress tracking
@@ -3065,11 +3065,11 @@ typedef struct {
     
     // ML prediction model (optional)
     void* ml_model;
-} graphite_cache_warmer;
+} hyperdag_cache_warmer;
 
 // Intelligent cache warming
-graphite_result graphite_cache_warm(
-    graphite_cache_warmer* warmer,
+hyperdag_result hyperdag_cache_warm(
+    hyperdag_cache_warmer* warmer,
     const char** hints,
     size_t hint_count
 ) {
@@ -3114,12 +3114,12 @@ graphite_result graphite_cache_warm(
     
     dynamic_array_destroy(candidates);
     
-    return GRAPHITE_SUCCESS;
+    return HYPERDAG_SUCCESS;
 }
 
 // Dependency-based warming
 dynamic_array* build_dependency_warming_list(
-    graphite_cache_warmer* warmer,
+    hyperdag_cache_warmer* warmer,
     const char** hints,
     size_t hint_count
 ) {
@@ -3128,7 +3128,7 @@ dynamic_array* build_dependency_warming_list(
     
     // Start with hint assets
     for (size_t i = 0; i < hint_count; i++) {
-        uint64_t asset_id = graphite_get_asset_id(warmer->bundle, hints[i]);
+        uint64_t asset_id = hyperdag_get_asset_id(warmer->bundle, hints[i]);
         if (asset_id != INVALID_ASSET_ID) {
             traverse_dependencies_for_warming(warmer, asset_id, candidates, visited, 0);
         }
@@ -3140,7 +3140,7 @@ dynamic_array* build_dependency_warming_list(
 
 // ML-based predictive warming
 dynamic_array* build_ml_predicted_list(
-    graphite_cache_warmer* warmer,
+    hyperdag_cache_warmer* warmer,
     const char** hints,
     size_t hint_count
 ) {
@@ -3181,7 +3181,7 @@ dynamic_array* build_ml_predicted_list(
 
 ### Distributed Caching
 
-For large-scale deployments, GRAPHITE supports distributed caching:
+For large-scale deployments, TurtlGraph supports distributed caching:
 
 ```c
 // Distributed cache node
@@ -3225,7 +3225,7 @@ typedef struct {
 } distributed_cache;
 
 // Get from distributed cache with fallback
-graphite_result distributed_cache_get(
+hyperdag_result distributed_cache_get(
     distributed_cache* dcache,
     uint64_t asset_id,
     void** data,
@@ -3239,14 +3239,14 @@ graphite_result distributed_cache_get(
         // Primary unhealthy, find replica
         primary = find_healthy_replica(dcache, hash);
         if (!primary) {
-            return GRAPHITE_ERROR_NO_HEALTHY_NODES;
+            return HYPERDAG_ERROR_NO_HEALTHY_NODES;
         }
     }
     
     // Get connection from pool
     cache_connection* conn = connection_pool_acquire(dcache->conn_pool, primary);
     if (!conn) {
-        return GRAPHITE_ERROR_CONNECTION_FAILED;
+        return HYPERDAG_ERROR_CONNECTION_FAILED;
     }
     
     // Send request
@@ -3255,8 +3255,8 @@ graphite_result distributed_cache_get(
         .asset_id = asset_id
     };
     
-    graphite_result result = send_cache_request(conn, &req);
-    if (result != GRAPHITE_SUCCESS) {
+    hyperdag_result result = send_cache_request(conn, &req);
+    if (result != HYPERDAG_SUCCESS) {
         connection_pool_release(dcache->conn_pool, conn);
         
         // Try replica on failure
@@ -3275,7 +3275,7 @@ graphite_result distributed_cache_get(
     connection_pool_release(dcache->conn_pool, conn);
     
     // Update metrics
-    if (result == GRAPHITE_SUCCESS) {
+    if (result == HYPERDAG_SUCCESS) {
         atomic_fetch_add(&primary->requests_served, 1);
         atomic_fetch_add(&primary->bytes_served, *size);
     }
@@ -3284,7 +3284,7 @@ graphite_result distributed_cache_get(
 }
 
 // Distributed cache coherency protocol
-graphite_result distributed_cache_invalidate(
+hyperdag_result distributed_cache_invalidate(
     distributed_cache* dcache,
     uint64_t asset_id,
     uint64_t new_version
@@ -3296,7 +3296,7 @@ graphite_result distributed_cache_invalidate(
     invalidation_request inv = {
         .asset_id = asset_id,
         .new_version = new_version,
-        .timestamp = graphite_get_time_ns()
+        .timestamp = hyperdag_get_time_ns()
     };
     
     size_t success_count = 0;
@@ -3304,7 +3304,7 @@ graphite_result distributed_cache_invalidate(
     
     for (size_t i = 0; i < dcache->replication_factor; i++) {
         if (nodes[i] && atomic_load(&nodes[i]->is_healthy)) {
-            if (send_invalidation(dcache, nodes[i], &inv) == GRAPHITE_SUCCESS) {
+            if (send_invalidation(dcache, nodes[i], &inv) == HYPERDAG_SUCCESS) {
                 success_count++;
             }
         }
@@ -3312,13 +3312,13 @@ graphite_result distributed_cache_invalidate(
     
     // Require majority acknowledgment
     return success_count >= required_acks ? 
-           GRAPHITE_SUCCESS : GRAPHITE_ERROR_QUORUM_NOT_MET;
+           HYPERDAG_SUCCESS : HYPERDAG_ERROR_QUORUM_NOT_MET;
 }
 ```
 
 ### Cache Performance Analysis
 
-GRAPHITE provides comprehensive cache performance monitoring:
+TurtlGraph provides comprehensive cache performance monitoring:
 
 ```mermaid
 graph LR
@@ -3396,7 +3396,7 @@ void record_cache_operation(
     cache_operation_type op_type,
     uint64_t asset_id,
     size_t size,
-    graphite_cache_level hit_level,
+    hyperdag_cache_level hit_level,
     uint64_t latency_ns
 ) {
     // Update metrics
@@ -3418,7 +3418,7 @@ void record_cache_operation(
         pthread_mutex_lock(&analyzer->trace_mutex);
         
         trace_entry entry = {
-            .timestamp = graphite_get_time_ns(),
+            .timestamp = hyperdag_get_time_ns(),
             .op_type = op_type,
             .asset_id = asset_id,
             .size = size,
